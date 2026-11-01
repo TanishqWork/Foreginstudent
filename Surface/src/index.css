@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+@theme {
+  --color-canvas: #f6f5f1;
+  --color-surface: #ffffff;
+  --color-ink: #191a20;
+  --color-navy: #11131b;
+  --color-navy-soft: #202438;
+  --color-accent: #5758e8;
+  --color-accent-dark: #3e3fc5;
+  --color-accent-soft: #b8c0ff;
+  --color-slate: #565a68;
+  --color-muted: #5f6372;
+  --color-parchment: #ebeafd;
+  --color-sand: #dfe3ff;
+  --color-lilac: #ced5ff;
+  --color-mint: #bfead9;
+  --color-positive: #197360;
+  --color-danger: #87384d;
+  --color-coral: #ff7358;
+  --color-line: rgb(17 19 27 / 12%);
+  --color-line-light: rgb(255 255 255 / 15%);
+  --color-chrome: #f6f6f8;
+  --color-subtle: #fafafd;
+
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: Georgia, "Times New Roman", serif;
+
+  --radius-control: 0.875rem;
+  --radius-card: 1.25rem;
+  --radius-panel: 2.125rem;
+
+  --shadow-card: 0 32px 90px rgb(27 30 53 / 14%);
+  --shadow-soft: 0 18px 52px rgb(27 30 53 / 8%);
+  --shadow-header: 0 8px 30px rgb(17 19 27 / 3.5%);
+  --shadow-action: 0 16px 34px rgb(87 88 232 / 24%);
+  --shadow-action-hover: 0 20px 46px rgb(62 63 197 / 28%);
+  --shadow-report: 0 42px 100px rgb(38 42 72 / 18%), inset 0 3px 0 rgb(255 255 255 / 80%);
+
+  --ease-studio: cubic-bezier(0.2, 0.8, 0.2, 1);
+}

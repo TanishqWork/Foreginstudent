@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-labelledby="title desc">
+  <title id="title">Statement Lab monogram</title>
+  <desc id="desc">A custom interlocking S and L monogram inside a double frame.</desc>
+  <rect x="4" y="4" width="88" height="88" fill="#0B1628" stroke="#A9874E" stroke-width="1.6"/>
+  <rect x="10" y="10" width="76" height="76" fill="none" stroke="#A9874E" stroke-width="0.7" opacity="0.55"/>
+  <path d="M63 26c-4.4-5.4-11.1-8.1-19.6-8.1-10.5 0-18.2 5.1-18.2 12.8 0 6.9 5.1 10.5 15.7 13.5l7.8 2.3c7.9 2.3 11.7 5.3 11.7 10.4 0 6.5-6.3 11.2-15.6 11.2-8.8 0-16.1-3.2-21-9.6" fill="none" stroke="#F4F0E8" stroke-width="3.3" stroke-linecap="round"/>
+  <path d="M58 23v50h19" fill="none" stroke="#A9874E" stroke-width="3.4" stroke-linecap="square"/>
+  <circle cx="58" cy="23" r="2.4" fill="#A9874E"/>
+</svg>
