@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link, useLocation } from 'react-router'
+import { useAuth } from '../../account/auth-context'
 
 const navigationItems = [
   { label: 'Pathways', to: '/#pathways', description: 'Choose the right review track' },
@@ -14,6 +15,7 @@ const desktopLinkClasses = `relative py-3 text-[.84rem] font-semibold text-slate
 const utilityLinkClasses = `flex min-h-11 items-center justify-center rounded-[13px] border border-line bg-white/50 px-[13px] text-center text-[.78rem] font-bold text-ink no-underline transition-colors hover:bg-white ${focusClasses}`
 
 export default function SiteHeader() {
+  const { session } = useAuth()
   const location = useLocation()
   const [menuLocationKey, setMenuLocationKey] = useState<string | null>(null)
   const menuOpen = menuLocationKey === location.key
@@ -106,7 +108,7 @@ export default function SiteHeader() {
               {item.label}
             </Link>
           ))}
-          <Link className={desktopLinkClasses} to="/account" aria-current={isCurrentSection('/account') ? 'location' : undefined}>Sign in</Link>
+          <Link className={desktopLinkClasses} to="/account" aria-current={isCurrentSection('/account') ? 'location' : undefined}>{session ? 'My account' : 'Sign in'}</Link>
         </nav>
 
         <div className="flex items-center justify-end gap-3">
@@ -164,7 +166,7 @@ export default function SiteHeader() {
           </div>
           <div className="grid grid-cols-2 gap-2">
             <Link className={utilityLinkClasses} to="/pricing" onClick={() => closeMenu()}>Expert review</Link>
-            <Link className={utilityLinkClasses} to="/account" aria-current={isCurrentSection('/account') ? 'location' : undefined} onClick={() => closeMenu()}>Sign in</Link>
+            <Link className={utilityLinkClasses} to="/account" aria-current={isCurrentSection('/account') ? 'location' : undefined} onClick={() => closeMenu()}>{session ? 'My account' : 'Sign in'}</Link>
           </div>
           <Link className={`flex min-h-[54px] items-center justify-between rounded-2xl bg-accent px-[18px] text-[.88rem] font-bold text-white no-underline shadow-action transition-colors hover:bg-accent-dark ${focusClasses}`} to="/assessment" onClick={() => closeMenu()}>
             <span>Review my draft free</span><i className="text-base not-italic" aria-hidden="true">↗</i>

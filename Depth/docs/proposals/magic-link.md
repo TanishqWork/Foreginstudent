@@ -1,3 +1,9 @@
+# Inactive proposal: email magic links
+
+This is an archived design note, not an implemented or supported authentication flow. The application uses email and password only. Adding magic links later requires an explicit instruction.
+
+---
+
 Understood. You want 100% self-hosted authentication, with no dependency on Supabase, Firebase, Auth0, Clerk, or similar services that might charge you later.
 
 You can build the entire Magic Link system inside your existing React + Python backend.
