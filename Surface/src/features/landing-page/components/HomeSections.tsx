@@ -64,7 +64,7 @@ export function PathwaysSection() {
       <SectionHeading number="02" overline="Specialist pathways" title="One platform, different admissions standards." description="Each pathway changes the intake questions, review priorities, score labels, and report language." />
       <div className="border-t border-line">
         {pathways.map((pathway) => (
-          <Link className={`${ui.focus} grid min-h-[104px] grid-cols-[42px_1fr_auto] items-center gap-[18px] border-b border-line px-3.5 py-6 text-left no-underline transition-all duration-200 hover:rounded-2xl hover:bg-parchment hover:px-[22px] max-[720px]:grid-cols-[32px_1fr] max-[720px]:px-1 max-[720px]:py-5 motion-reduce:transition-none`} to={`/?panel=assessment&pathway=${pathway.id}`} key={pathway.id}>
+          <Link className={`${ui.focus} grid min-h-[104px] grid-cols-[42px_1fr_auto] items-center gap-[18px] border-b border-line px-3.5 py-6 text-left no-underline transition-all duration-200 hover:rounded-2xl hover:bg-parchment hover:px-[22px] max-[720px]:grid-cols-[32px_1fr] max-[720px]:px-1 max-[720px]:py-5 motion-reduce:transition-none`} to={`/assessment?pathway=${pathway.id}`} key={pathway.id}>
             <span className="font-bold text-accent-dark" aria-hidden="true">{pathway.index}</span>
             <span><strong className="block text-base font-bold">{pathway.title}</strong><small className="mt-[5px] block text-[.84rem] leading-normal text-slate">{pathway.description}</small></span>
             <span className="text-[.8rem] font-bold text-accent-dark max-[720px]:col-start-2">Open pathway</span>
@@ -103,7 +103,7 @@ export function FounderSection() {
         <p className={`${ui.overline} mb-[18px] text-accent-dark`}>Framework leadership</p><h2 className={`${ui.heading} mb-6`}>Built with practitioner and admissions mentoring experience.</h2>
         <p className="mb-4 leading-[1.65] text-slate">Dr Banda Khalifa is a physician scientist, epidemiologist, global health expert, graduate admissions mentor, and Johns Hopkins trained public health and business professional.</p>
         <p className="mb-4 leading-[1.65] text-slate">The assessment framework reflects years of reviewing graduate applications and helping applicants strengthen evidence, fit, purpose, and narrative coherence.</p>
-        <Link className={ui.textLink} to="/#methodology">Read the methodology</Link>
+        <Link className={ui.textLink} to="/methodology">Read the methodology</Link>
       </div>
     </section>
   )
@@ -168,7 +168,7 @@ export function PricingSection() {
         {plans.map((plan) => {
           const recommended = plan.id === 'cycle'
           return (
-            <Link className={`${ui.focus} grid w-full grid-cols-[1fr_auto] items-center gap-[30px] border-b border-line px-2 py-[26px] text-left no-underline transition-all duration-200 hover:px-[18px] motion-reduce:transition-none ${recommended ? 'my-2.5 rounded-[22px] border-0 bg-navy bg-[radial-gradient(circle_at_92%_0%,rgba(87,88,232,.5),transparent_17rem)] px-5 py-[30px] text-white shadow-soft hover:bg-navy-soft' : 'hover:bg-parchment'}`} to={plan.id === 'free' ? '/?panel=assessment' : `/?panel=checkout&plan=${plan.id}`} key={plan.id}>
+            <Link className={`${ui.focus} grid w-full grid-cols-[1fr_auto] items-center gap-[30px] border-b border-line px-2 py-[26px] text-left no-underline transition-all duration-200 hover:px-[18px] motion-reduce:transition-none ${recommended ? 'my-2.5 rounded-[22px] border-0 bg-navy bg-[radial-gradient(circle_at_92%_0%,rgba(87,88,232,.5),transparent_17rem)] px-5 py-[30px] text-white shadow-soft hover:bg-navy-soft' : 'hover:bg-parchment'}`} to={plan.id === 'free' ? '/assessment' : `/?panel=checkout&plan=${plan.id}`} key={plan.id}>
               <span>
                 {recommended && <b className="mb-2 inline-block rounded-full bg-accent px-2 py-[5px] text-[.8rem] font-bold tracking-[.1em] text-white uppercase">Recommended</b>}
                 <strong className="block text-[1.05rem] font-bold">{plan.title}</strong>
@@ -190,7 +190,7 @@ export function ClosingSection() {
     <section className={`${ui.darkPanel} py-[clamp(86px,10vw,132px)]`}>
       <div className={`${ui.shell} grid grid-cols-[minmax(0,1fr)_auto] items-end gap-x-[72px] gap-y-6 max-[760px]:grid-cols-1`}>
         <div><p className={`${ui.overline} mb-[18px] text-mint`}>Start with the draft you have</p><h2 className="max-w-[900px] font-display text-[clamp(2.8rem,5.4vw,5.6rem)] font-normal leading-[1.06] tracking-[-.025em]">Give the committee fewer reasons to hesitate.</h2></div>
-        <Link className={`${ui.button} min-h-13 bg-white px-6 text-ink hover:bg-parchment max-[760px]:justify-self-start`} to="/?panel=assessment">Review my draft free</Link>
+        <Link className={`${ui.button} min-h-13 bg-white px-6 text-ink hover:bg-parchment max-[760px]:justify-self-start`} to="/assessment">Review my draft free</Link>
       </div>
     </section>
   )

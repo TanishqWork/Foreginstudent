@@ -1,6 +1,6 @@
-import { useLocation, useNavigate, useSearchParams } from 'react-router'
+import { Navigate, useLocation, useNavigate, useSearchParams } from 'react-router'
 import { Dialog } from './Dialog'
-import { pathways, plans } from '../homepage.data'
+import { plans } from '../homepage.data'
 
 /** The homepage keeps excluded product flows explicit without collecting data. */
 export default function HomeDialogs() {
@@ -84,36 +84,14 @@ export default function HomeDialogs() {
   }
 
   if (panel === 'assessment') {
-    const selectedPathway = pathways.find((pathway) => pathway.id === searchParams.get('pathway'))
-    return (
-      <Dialog
-        key={panel}
-        title="Your first read starts here."
-        eyebrow="Statement assessment"
-        onDismiss={dismiss}
-      >
-        {selectedPathway && <p className="mb-6 rounded-card bg-parchment p-4 text-sm text-ink"><strong>Selected pathway:</strong> {selectedPathway.title}</p>}
-        <p className="mb-6">
-          Draft assessments are not available yet. You can explore the sample
-          assessment on the homepage while the review service is being prepared.
-        </p>
-        {returnButton}
-      </Dialog>
-    )
+    const pathway = searchParams.get('pathway')
+    const next = new URLSearchParams()
+    if (pathway) next.set('pathway', pathway)
+    return <Navigate to={{ pathname: '/assessment', search: next.size ? `?${next.toString()}` : '' }} replace />
   }
 
   if (panel === 'account') {
-    return (
-      <Dialog
-        key={panel}
-        title="Account access is coming soon."
-        eyebrow="Statement Studio"
-        onDismiss={dismiss}
-      >
-        <p className="mb-6">Sign-in and saved reports are not available yet.</p>
-        {returnButton}
-      </Dialog>
-    )
+    return <Navigate to="/account" replace />
   }
 
   if (panel === 'privacy') {

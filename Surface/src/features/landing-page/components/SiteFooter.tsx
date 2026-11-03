@@ -14,10 +14,10 @@ export default function SiteFooter() {
           </span>
         </div>
         <nav className="flex flex-wrap gap-x-5 gap-y-3" aria-label="Footer navigation">
-          <Link className={footerLinkClasses} to="/#methodology">Methodology</Link>
+          <Link className={footerLinkClasses} to="/methodology">Methodology</Link>
           <Link className={footerLinkClasses} to="/?panel=privacy">Privacy and standards</Link>
-          <Link className={footerLinkClasses} to="/#pricing">Pricing</Link>
-          <Link className={footerLinkClasses} to="/?panel=account">Access my account</Link>
+          <Link className={footerLinkClasses} to="/pricing">Pricing</Link>
+          <Link className={footerLinkClasses} to="/account">Access my account</Link>
         </nav>
         <p className="m-0 text-[.84rem] text-[#d4d6df]">Writing guidance only. No admission guarantee.</p>
       </div>

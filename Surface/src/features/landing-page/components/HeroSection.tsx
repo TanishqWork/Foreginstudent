@@ -18,8 +18,8 @@ export default function HeroSection() {
           <h1 className="mb-7 max-w-[790px] font-display text-[clamp(4rem,6.1vw,6.8rem)] font-normal leading-[.91] tracking-[-.045em] text-balance text-navy min-[941px]:max-[1360px]:mb-5 min-[941px]:max-[1360px]:text-[clamp(3.7rem,5.5vw,4.75rem)] max-[940px]:text-[clamp(4rem,10vw,6.5rem)] max-[720px]:text-[clamp(3.25rem,14vw,4.7rem)] max-[720px]:leading-[.92]">Find the sentence that makes an admissions reader hesitate.</h1>
           <p className="mb-8 max-w-[680px] text-[clamp(1.05rem,1.25vw,1.2rem)] leading-[1.68] text-[#454957] min-[941px]:max-[1360px]:mb-[22px] max-[720px]:text-[1.02rem]">Paste your draft and the exact program prompt. Statement Studio marks the evidence that holds, the gaps a reader will notice, and the first revision to make.</p>
           <div className="mb-6 flex flex-wrap items-center gap-6 max-[720px]:grid max-[720px]:gap-3">
-            <Link className={`${ui.button} ${ui.primary} min-h-[58px] px-[27px] max-[720px]:min-h-[52px]`} to="/?panel=assessment">Review my draft free <span aria-hidden="true">↗</span></Link>
-            <Link className={`${ui.textLink} max-[720px]:justify-self-center`} to="/#sample-report">Open a sample report</Link>
+            <Link className={`${ui.button} ${ui.primary} min-h-[58px] px-[27px] max-[720px]:min-h-[52px]`} to="/assessment">Review my draft free <span aria-hidden="true">↗</span></Link>
+            <Link className={`${ui.textLink} max-[720px]:justify-self-center`} to="/sample-report">Open a sample report</Link>
           </div>
           <div className="mb-[22px] flex flex-wrap gap-2 max-[720px]:grid" aria-label="Free assessment details">
             {['No account required', 'First findings in about 3 seconds', 'Writing quality, not admission odds'].map((detail) => (

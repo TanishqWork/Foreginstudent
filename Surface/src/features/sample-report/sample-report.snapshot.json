@@ -1,0 +1,2463 @@
+{
+  "provenance": {
+    "source": "statement-studio-developer-handoff/dist/app.js",
+    "sampleKey": "mphmba",
+    "fictional": true,
+    "assessmentMode": "Precomputed local-rules sample",
+    "standardVersion": "1.9"
+  },
+  "input": {
+    "pathway": "business",
+    "degree": "MPH/MBA",
+    "degreeType": "MPH/MBA",
+    "statementType": "combined_degree",
+    "statementTypeLabel": "Combined degree statement",
+    "fieldLabel": "Health systems and healthcare management",
+    "field": "health_systems",
+    "institution": "Johns Hopkins University",
+    "targetProgram": "Johns Hopkins University | MPH and MBA dual degree",
+    "program": "MPH and MBA dual degree",
+    "prompt": "Describe your professional goals, why you are pursuing both the MPH and MBA, and how the combined degree will prepare you to lead change in health systems.",
+    "essayText": "During a vaccine delivery project in northern Ghana, I watched a technically sound public health plan fail because operational decisions were fragmented. Twelve rural communities had missed scheduled outreach for two consecutive weeks. As a health delivery adviser, I led a six person district team to analyze weekly coverage data, map delayed routes, and review cold chain and transport constraints. We redesigned the dispatch schedule, assigned clear decision rights, and introduced a weekly operations review. Within eight weeks, the district reduced missed settlements by 38 percent, restored regular outreach across all twelve communities, and vaccinated more than 18,000 children.\n\nThe project changed how I understood health leadership. Epidemiologic evidence could define who was being missed, but delivery depended on financing, supply chain management, team performance, negotiation, and accountability. I later managed a broader implementation portfolio with a budget of approximately $250,000, coordinated district health teams and nonprofit partners, and trained 42 frontline health workers on performance review. These responsibilities strengthened my ability to lead under pressure, but they also exposed gaps in my preparation. I could assess the health problem and recommend interventions, yet I lacked formal training in organizational strategy, managerial finance, and operations at scale.\n\nMy public health training has prepared me to evaluate disease burden, interpret quantitative evidence, and design programs for population impact. I have conducted statistical analysis using R, supported survey design, and used implementation data to compare performance across districts. This preparation allows me to ask which populations are being missed, why delivery differs across settings, and whether an intervention is producing equitable results. The MPH will deepen my training in health systems, program evaluation, and policy analysis so that I can design strategies that are technically credible and responsive to population needs.\n\nThe MBA is equally necessary. My career goal is to lead health delivery organizations that can allocate resources, manage multidisciplinary teams, build sustainable partnerships, and make disciplined decisions under uncertainty. The MBA will give me the finance, operations, and organizational leadership skills I still lack. The combined degree is not a collection of two credentials. It is the training required to connect population evidence with institutional execution. The MPH will help me determine what should be done and how impact should be measured. The MBA will prepare me to build the organization, financing model, and operating system required to deliver it.\n\nI am drawn to this program because the curriculum combines courses in health systems, operations, finance, and strategy with an applied practicum. I am also interested in faculty and research centers whose work on health financing, implementation, and organizational performance aligns with my goal of improving delivery in low resource settings. The opportunity to learn with public health practitioners and business leaders would help me test solutions from both perspectives. I would contribute experience from clinical practice, outbreak response, policy advising, quantitative analysis, and implementation across government and nonprofit settings.\n\nAfter completing the degree, I plan to lead regional health delivery initiatives and scale operating models that improve emergency preparedness, vaccination, and essential health services. In the long term, my objective is to build an organization that helps governments translate policy into reliable delivery systems. I want to leave the program able to connect evidence with execution, public purpose with financial discipline, and health goals with accountable management.",
+    "wordLimit": 800,
+    "applicantType": "international",
+    "reviewGoal": "structure",
+    "reviewGoalLabel": "Combined degree coherence"
+  },
+  "report": {
+    "scores": {
+      "structure": 96,
+      "clarity": 82,
+      "programFit": 82,
+      "specificity": 69,
+      "evidenceAchievement": 71,
+      "careerGoalClarity": 98,
+      "leadershipImpact": 98,
+      "writingQuality": 72,
+      "overall": 81
+    },
+    "signals": {
+      "wordCount": 544,
+      "paragraphCount": 6,
+      "paragraphs": [
+        "During a vaccine delivery project in northern Ghana, I watched a technically sound public health plan fail because operational decisions were fragmented. Twelve rural communities had missed scheduled outreach for two consecutive weeks. As a health delivery adviser, I led a six person district team to analyze weekly coverage data, map delayed routes, and review cold chain and transport constraints. We redesigned the dispatch schedule, assigned clear decision rights, and introduced a weekly operations review. Within eight weeks, the district reduced missed settlements by 38 percent, restored regular outreach across all twelve communities, and vaccinated more than 18,000 children.",
+        "The project changed how I understood health leadership. Epidemiologic evidence could define who was being missed, but delivery depended on financing, supply chain management, team performance, negotiation, and accountability. I later managed a broader implementation portfolio with a budget of approximately $250,000, coordinated district health teams and nonprofit partners, and trained 42 frontline health workers on performance review. These responsibilities strengthened my ability to lead under pressure, but they also exposed gaps in my preparation. I could assess the health problem and recommend interventions, yet I lacked formal training in organizational strategy, managerial finance, and operations at scale.",
+        "My public health training has prepared me to evaluate disease burden, interpret quantitative evidence, and design programs for population impact. I have conducted statistical analysis using R, supported survey design, and used implementation data to compare performance across districts. This preparation allows me to ask which populations are being missed, why delivery differs across settings, and whether an intervention is producing equitable results. The MPH will deepen my training in health systems, program evaluation, and policy analysis so that I can design strategies that are technically credible and responsive to population needs.",
+        "The MBA is equally necessary. My career goal is to lead health delivery organizations that can allocate resources, manage multidisciplinary teams, build sustainable partnerships, and make disciplined decisions under uncertainty. The MBA will give me the finance, operations, and organizational leadership skills I still lack. The combined degree is not a collection of two credentials. It is the training required to connect population evidence with institutional execution. The MPH will help me determine what should be done and how impact should be measured. The MBA will prepare me to build the organization, financing model, and operating system required to deliver it.",
+        "I am drawn to this program because the curriculum combines courses in health systems, operations, finance, and strategy with an applied practicum. I am also interested in faculty and research centers whose work on health financing, implementation, and organizational performance aligns with my goal of improving delivery in low resource settings. The opportunity to learn with public health practitioners and business leaders would help me test solutions from both perspectives. I would contribute experience from clinical practice, outbreak response, policy advising, quantitative analysis, and implementation across government and nonprofit settings.",
+        "After completing the degree, I plan to lead regional health delivery initiatives and scale operating models that improve emergency preparedness, vaccination, and essential health services. In the long term, my objective is to build an organization that helps governments translate policy into reliable delivery systems. I want to leave the program able to connect evidence with execution, public purpose with financial discipline, and health goals with accountable management."
+      ],
+      "sentenceCount": 28,
+      "avgSentenceLen": 19.428571428571427,
+      "longSentences": 0,
+      "maxParagraphWords": 101,
+      "maxParagraphSentences": 7,
+      "properNouns": 6,
+      "numbers": 4,
+      "generic": {
+        "total": 0,
+        "found": []
+      },
+      "unsupportedGeneric": 0,
+      "broadClaims": {
+        "total": 0,
+        "found": []
+      },
+      "biography": {
+        "total": 0,
+        "found": []
+      },
+      "filler": {
+        "total": 8,
+        "found": [
+          "very"
+        ]
+      },
+      "action": {
+        "total": 8,
+        "found": [
+          "led",
+          "designed",
+          "managed",
+          "coordinated",
+          "conducted",
+          "reduced",
+          "trained"
+        ]
+      },
+      "goals": {
+        "total": 6,
+        "found": [
+          "my goal",
+          "i plan to",
+          "long term",
+          "career goal",
+          "after completing",
+          "my objective is"
+        ]
+      },
+      "leadership": {
+        "total": 4,
+        "found": [
+          "led",
+          "managed",
+          "coordinated"
+        ]
+      },
+      "strategy": {
+        "total": 18,
+        "found": [
+          "strategy",
+          "business",
+          "management",
+          "operations",
+          "financing",
+          "budget",
+          "organizational",
+          "supply chain",
+          "operational"
+        ]
+      },
+      "positive": {
+        "population": 3,
+        "problem": 2,
+        "setting": 4,
+        "role": 0,
+        "methods": 5,
+        "measurable": 3,
+        "careerGoal": 2,
+        "degreeRationale": 5,
+        "programFit": 5,
+        "facultyAlignment": 5,
+        "researchQuestion": 0,
+        "leadershipImpl": 4,
+        "fieldExperience": 1,
+        "dataWork": 1
+      },
+      "fields": {
+        "perField": {
+          "epidemiology": 2,
+          "global_health": 1,
+          "health_policy": 1,
+          "health_systems": 4,
+          "biostatistics": 0,
+          "environmental_health": 0,
+          "public_health_practice": 2,
+          "implementation_science": 4,
+          "health_security": 3,
+          "infectious_disease_epi": 1
+        },
+        "total": 18,
+        "selectedMatches": 4
+      },
+      "transitions": 1,
+      "sensitive": {
+        "total": 0,
+        "found": []
+      },
+      "overusedTerms": [
+        "delivery",
+        "health"
+      ],
+      "firstParaWords": 97,
+      "firstParagraph": "During a vaccine delivery project in northern Ghana, I watched a technically sound public health plan fail because operational decisions were fragmented. Twelve rural communities had missed scheduled outreach for two consecutive weeks. As a health delivery adviser, I led a six person district team to analyze weekly coverage data, map delayed routes, and review cold chain and transport constraints. We redesigned the dispatch schedule, assigned clear decision rights, and introduced a weekly operations review. Within eight weeks, the district reduced missed settlements by 38 percent, restored regular outreach across all twelve communities, and vaccinated more than 18,000 children."
+    },
+    "scoreExplanations": {
+      "structure": {
+        "evidence": "strong",
+        "why": "Based on 6 paragraph(s) and 1 transition(s) between sections."
+      },
+      "clarity": {
+        "evidence": "strong",
+        "why": "Based on 28 sentence(s). Sentence lengths are manageable. 8 filler word(s) detected."
+      },
+      "programFit": {
+        "evidence": "strong",
+        "why": "Based on 15 program or faculty fit reference(s) and a named target program."
+      },
+      "specificity": {
+        "evidence": "strong",
+        "why": "Based on 32 concrete cue(s) such as numbers, names, populations, and methods."
+      },
+      "evidenceAchievement": {
+        "evidence": "strong",
+        "why": "Based on 18 evidence cue(s) such as action verbs, methods, results, and data work and 4 numbers."
+      },
+      "careerGoalClarity": {
+        "evidence": "strong",
+        "why": "Based on 13 goal or degree-rationale cue(s)."
+      },
+      "leadershipImpact": {
+        "evidence": "strong",
+        "why": "Based on 8 leadership or implementation cue(s)."
+      },
+      "writingQuality": {
+        "evidence": "strong",
+        "why": "Based on 544 word(s). 2 overused term(s). Few broad claims."
+      }
+    },
+    "authenticity": {
+      "level": "medium",
+      "levelLabel": "Mixed voice",
+      "classificationLabel": "Mixed voice",
+      "why": "The draft contains real applicant-specific material, but several passages rely on transferable wording, repeated structures, or reflection that is stated rather than demonstrated.",
+      "score": 8,
+      "internalPatternScore": 8,
+      "distinctCategories": 3,
+      "groundingDensity": 5.8,
+      "defensibleRatio": 0.5,
+      "distinctiveRatio": 0.18,
+      "sentenceCount": 28,
+      "defensibleCount": 14,
+      "distinctiveCount": 5,
+      "metrics": {
+        "grounding": {
+          "label": "Thin",
+          "value": 0.17857142857142858,
+          "display": "5 of 28 sentences contain multiple distinctive details"
+        },
+        "defensibility": {
+          "label": "Mixed",
+          "value": 0.5,
+          "display": "14 of 28 sentences contain material the applicant could explain specifically"
+        },
+        "patternLoad": {
+          "label": "Moderate",
+          "value": 0.3125,
+          "display": "3 pattern categories identified"
+        },
+        "sentenceVariation": {
+          "label": "Natural",
+          "value": 0.85,
+          "display": "No major repeated rhythm pattern detected"
+        }
+      },
+      "findings": [
+        {
+          "category": "lowGrounding",
+          "label": "Limited applicant-specific grounding",
+          "phrase": "18% of sentences contain multiple distinctive details",
+          "count": 1,
+          "severity": 4,
+          "evidence": "strong",
+          "paragraphs": [],
+          "sentences": [],
+          "excerpt": "",
+          "direction": "Add the actual role, setting, method, decision, population, or result behind the claim."
+        },
+        {
+          "category": "lowDefensibility",
+          "label": "Some claims need stronger grounding",
+          "phrase": "50% of sentences contain interview-defensible detail",
+          "count": 1,
+          "severity": 2,
+          "evidence": "strong",
+          "paragraphs": [],
+          "sentences": [],
+          "excerpt": "",
+          "direction": "Rewrite the sentence so the applicant could answer a specific interview question about it."
+        },
+        {
+          "category": "uniformParagraphs",
+          "label": "Unusually uniform paragraph length",
+          "phrase": "paragraphs are nearly identical in length",
+          "count": 1,
+          "severity": 1.5,
+          "evidence": "strong",
+          "paragraphs": [],
+          "sentences": [],
+          "excerpt": "",
+          "direction": "Let paragraph length follow function and evidence rather than an identical template."
+        }
+      ],
+      "categorySummaries": [
+        {
+          "key": "lowGrounding",
+          "label": "Limited applicant-specific grounding",
+          "count": 1,
+          "direction": "Add the actual role, setting, method, decision, population, or result behind the claim."
+        },
+        {
+          "key": "lowDefensibility",
+          "label": "Some claims need stronger grounding",
+          "count": 1,
+          "direction": "Rewrite the sentence so the applicant could answer a specific interview question about it."
+        },
+        {
+          "key": "uniformParagraphs",
+          "label": "Unusually uniform paragraph length",
+          "count": 1,
+          "direction": "Let paragraph length follow function and evidence rather than an identical template."
+        }
+      ],
+      "paragraphsAffected": [],
+      "checklist": [
+        "Keep only statements the applicant can explain with a specific answer in an interview.",
+        "Replace lesson sentences with the real event, action, decision, or consequence.",
+        "Remove patterns that could be transferred unchanged to another applicant.",
+        "Vary sentence openings and rhythm according to the content, not a template.",
+        "Protect the applicant's own wording while making every claim concrete and defensible."
+      ],
+      "disclaimer": "This is a writing-pattern review, not an AI detector. It does not determine authorship, calculate an AI probability, or accuse the applicant of using any tool.",
+      "methodologyNote": "The review checks observable language and structure. It cannot determine who or what wrote the statement."
+    },
+    "riskFlags": [],
+    "paragraphFeedback": [
+      {
+        "index": 1,
+        "excerptPreview": "During a vaccine delivery project in northern Ghana, I watched a technically sound public health plan fail because opera...",
+        "wordCount": 97,
+        "notes": [
+          "Good: the opening includes concrete detail. Make sure it points clearly to your motivation for this degree.",
+          "Trim filler words to tighten this paragraph.",
+          "Good: shows action and ownership. Quantify the impact if you can."
+        ]
+      },
+      {
+        "index": 2,
+        "excerptPreview": "The project changed how I understood health leadership. Epidemiologic evidence could define who was being missed, but de...",
+        "wordCount": 96,
+        "notes": [
+          "Good: shows action and ownership. Quantify the impact if you can."
+        ]
+      },
+      {
+        "index": 3,
+        "excerptPreview": "My public health training has prepared me to evaluate disease burden, interpret quantitative evidence, and design progra...",
+        "wordCount": 92,
+        "notes": [
+          "Reads cleanly. Check that it advances your central argument for fit."
+        ]
+      },
+      {
+        "index": 4,
+        "excerptPreview": "The MBA is equally necessary. My career goal is to lead health delivery organizations that can allocate resources, manag...",
+        "wordCount": 101,
+        "notes": [
+          "Adds little concrete evidence. Name an outcome, a number, a method, or a specific result."
+        ]
+      },
+      {
+        "index": 5,
+        "excerptPreview": "I am drawn to this program because the curriculum combines courses in health systems, operations, finance, and strategy ...",
+        "wordCount": 90,
+        "notes": [
+          "Reads cleanly. Check that it advances your central argument for fit."
+        ]
+      },
+      {
+        "index": 6,
+        "excerptPreview": "After completing the degree, I plan to lead regional health delivery initiatives and scale operating models that improve...",
+        "wordCount": 68,
+        "notes": [
+          "Adds little concrete evidence. Name an outcome, a number, a method, or a specific result.",
+          "Trim filler words to tighten this paragraph."
+        ]
+      }
+    ],
+    "revisionPriorities": [
+      {
+        "rank": 1,
+        "key": "specificity",
+        "title": "Add specificity",
+        "why": "A specific population, problem, setting, role, and method make your story credible.",
+        "action": "Replace general claims with a specific population, problem, setting, and quantified result.",
+        "score": 52
+      },
+      {
+        "rank": 2,
+        "key": "evidenceAchievement",
+        "title": "Back claims with evidence",
+        "why": "Outcomes and methods prove your readiness better than adjectives.",
+        "action": "Add action verbs, methods, and measurable results to your experience paragraphs.",
+        "score": 60
+      },
+      {
+        "rank": 3,
+        "key": "writingQuality",
+        "title": "Polish writing quality",
+        "why": "Clean, varied, authentic prose builds reader trust.",
+        "action": "Vary sentence length, remove repeated terms and broad claims, and read aloud to catch awkward phrasing.",
+        "score": 72
+      },
+      {
+        "rank": 4,
+        "key": "programFit",
+        "title": "Show genuine program fit",
+        "why": "Readers want evidence you understand and want this specific program.",
+        "action": "Name specific faculty, labs, courses, centers, or a practicum, and tie them to your goals.",
+        "score": 74
+      },
+      {
+        "rank": 5,
+        "key": "clarity",
+        "title": "Improve clarity",
+        "why": "Long sentences and filler make readers work harder than they should.",
+        "action": "Shorten sentences over 30 words and cut filler words such as very, really, and just.",
+        "score": 82
+      }
+    ],
+    "whatToCut": [
+      "Filler words: very.",
+      "Overused terms you repeat often: delivery, health."
+    ],
+    "whatToExpand": [
+      "Connect business strategy to health systems. Show implementation, management scope, and how the two disciplines combine in your goals.",
+      "Benchmark guidance for MPH/MBA: strong statements reward leadership, strategy, health systems thinking. Watch for two separate goals not integrated, management language without health grounding."
+    ],
+    "needsStrongerEvidence": [
+      "Your experience needs outcomes. Add what changed and by how much."
+    ],
+    "soundsGeneric": [
+      "No common cliche phrases detected. Keep the voice specific and personal."
+    ],
+    "soundsCompelling": [
+      "You reference concrete program or faculty fit.",
+      "You use specific numbers or measurable outcomes.",
+      "You name specific methods or analyses.",
+      "You ground your work in a specific population, problem, and setting.",
+      "You show ownership through strong action and implementation.",
+      "Your language is well matched to your chosen field."
+    ],
+    "revisionPlan": [
+      {
+        "step": 1,
+        "instruction": "Read your statement aloud once before changing anything. Mark every line that sounds generic or unclear."
+      },
+      {
+        "step": 2,
+        "instruction": "Add specificity: Replace general claims with a specific population, problem, setting, and quantified result."
+      },
+      {
+        "step": 3,
+        "instruction": "Back claims with evidence: Add action verbs, methods, and measurable results to your experience paragraphs."
+      },
+      {
+        "step": 4,
+        "instruction": "Polish writing quality: Vary sentence length, remove repeated terms and broad claims, and read aloud to catch awkward phrasing."
+      },
+      {
+        "step": 5,
+        "instruction": "Verify every claim has a specific example, method, name, or number behind it."
+      },
+      {
+        "step": 6,
+        "instruction": "Cut to fit the word limit and tighten the opening and closing lines."
+      },
+      {
+        "step": 7,
+        "instruction": "Do a final mechanics pass for grammar, repetition, and flow. Keep your own authentic voice throughout."
+      }
+    ],
+    "meta": {
+      "wordCount": 544,
+      "paragraphCount": 6,
+      "degreeProfile": "MPH/MBA",
+      "stageFacts": {
+        "structure": 6,
+        "clarity": 28,
+        "degreeFit": "MPH/MBA",
+        "programFit": 15,
+        "specificity": 32,
+        "risk": 0,
+        "authenticity": "Mixed voice",
+        "priorities": 5
+      },
+      "input": {
+        "essayText": "During a vaccine delivery project in northern Ghana, I watched a technically sound public health plan fail because operational decisions were fragmented. Twelve rural communities had missed scheduled outreach for two consecutive weeks. As a health delivery adviser, I led a six person district team to analyze weekly coverage data, map delayed routes, and review cold chain and transport constraints. We redesigned the dispatch schedule, assigned clear decision rights, and introduced a weekly operations review. Within eight weeks, the district reduced missed settlements by 38 percent, restored regular outreach across all twelve communities, and vaccinated more than 18,000 children.\n\nThe project changed how I understood health leadership. Epidemiologic evidence could define who was being missed, but delivery depended on financing, supply chain management, team performance, negotiation, and accountability. I later managed a broader implementation portfolio with a budget of approximately $250,000, coordinated district health teams and nonprofit partners, and trained 42 frontline health workers on performance review. These responsibilities strengthened my ability to lead under pressure, but they also exposed gaps in my preparation. I could assess the health problem and recommend interventions, yet I lacked formal training in organizational strategy, managerial finance, and operations at scale.\n\nMy public health training has prepared me to evaluate disease burden, interpret quantitative evidence, and design programs for population impact. I have conducted statistical analysis using R, supported survey design, and used implementation data to compare performance across districts. This preparation allows me to ask which populations are being missed, why delivery differs across settings, and whether an intervention is producing equitable results. The MPH will deepen my training in health systems, program evaluation, and policy analysis so that I can design strategies that are technically credible and responsive to population needs.\n\nThe MBA is equally necessary. My career goal is to lead health delivery organizations that can allocate resources, manage multidisciplinary teams, build sustainable partnerships, and make disciplined decisions under uncertainty. The MBA will give me the finance, operations, and organizational leadership skills I still lack. The combined degree is not a collection of two credentials. It is the training required to connect population evidence with institutional execution. The MPH will help me determine what should be done and how impact should be measured. The MBA will prepare me to build the organization, financing model, and operating system required to deliver it.\n\nI am drawn to this program because the curriculum combines courses in health systems, operations, finance, and strategy with an applied practicum. I am also interested in faculty and research centers whose work on health financing, implementation, and organizational performance aligns with my goal of improving delivery in low resource settings. The opportunity to learn with public health practitioners and business leaders would help me test solutions from both perspectives. I would contribute experience from clinical practice, outbreak response, policy advising, quantitative analysis, and implementation across government and nonprofit settings.\n\nAfter completing the degree, I plan to lead regional health delivery initiatives and scale operating models that improve emergency preparedness, vaccination, and essential health services. In the long term, my objective is to build an organization that helps governments translate policy into reliable delivery systems. I want to leave the program able to connect evidence with execution, public purpose with financial discipline, and health goals with accountable management.",
+        "degreeType": "MPH/MBA",
+        "field": "health_systems",
+        "targetProgram": "Johns Hopkins University | MPH and MBA dual degree",
+        "wordLimit": 800,
+        "applicantType": "international",
+        "reviewGoal": "structure"
+      }
+    },
+    "extended": {
+      "clarity": 82,
+      "structure": 96,
+      "specificity": 69,
+      "evidenceAchievement": 71,
+      "programFit": 82,
+      "careerGoalClarity": 98,
+      "leadershipImpact": 98,
+      "writingQuality": 72,
+      "purpose": 76,
+      "maturity": 93,
+      "originality": 93,
+      "leadershipNarrative": 96,
+      "decisionImpact": 78,
+      "combinedCoherence": 95,
+      "technicalPreparation": 69,
+      "researchFit": 66,
+      "methodsReadiness": 66,
+      "scholarlyPotential": 76,
+      "policyDefinition": 87,
+      "analyticalPreparation": 71,
+      "publicContribution": 96,
+      "promptCoverage": {
+        "total": 11,
+        "matched": 9,
+        "terms": [
+          "professional",
+          "goals",
+          "pursuing",
+          "both",
+          "combined",
+          "degree",
+          "prepare",
+          "lead",
+          "change",
+          "health",
+          "systems"
+        ],
+        "matchedTerms": [
+          "goals",
+          "both",
+          "combined",
+          "degree",
+          "prepare",
+          "lead",
+          "change",
+          "health",
+          "systems"
+        ]
+      }
+    },
+    "input": {
+      "pathway": "business",
+      "degree": "MPH/MBA",
+      "degreeType": "MPH/MBA",
+      "statementType": "combined_degree",
+      "statementTypeLabel": "Combined degree statement",
+      "fieldLabel": "Health systems and healthcare management",
+      "field": "health_systems",
+      "institution": "Johns Hopkins University",
+      "targetProgram": "Johns Hopkins University | MPH and MBA dual degree",
+      "program": "MPH and MBA dual degree",
+      "prompt": "Describe your professional goals, why you are pursuing both the MPH and MBA, and how the combined degree will prepare you to lead change in health systems.",
+      "essayText": "During a vaccine delivery project in northern Ghana, I watched a technically sound public health plan fail because operational decisions were fragmented. Twelve rural communities had missed scheduled outreach for two consecutive weeks. As a health delivery adviser, I led a six person district team to analyze weekly coverage data, map delayed routes, and review cold chain and transport constraints. We redesigned the dispatch schedule, assigned clear decision rights, and introduced a weekly operations review. Within eight weeks, the district reduced missed settlements by 38 percent, restored regular outreach across all twelve communities, and vaccinated more than 18,000 children.\n\nThe project changed how I understood health leadership. Epidemiologic evidence could define who was being missed, but delivery depended on financing, supply chain management, team performance, negotiation, and accountability. I later managed a broader implementation portfolio with a budget of approximately $250,000, coordinated district health teams and nonprofit partners, and trained 42 frontline health workers on performance review. These responsibilities strengthened my ability to lead under pressure, but they also exposed gaps in my preparation. I could assess the health problem and recommend interventions, yet I lacked formal training in organizational strategy, managerial finance, and operations at scale.\n\nMy public health training has prepared me to evaluate disease burden, interpret quantitative evidence, and design programs for population impact. I have conducted statistical analysis using R, supported survey design, and used implementation data to compare performance across districts. This preparation allows me to ask which populations are being missed, why delivery differs across settings, and whether an intervention is producing equitable results. The MPH will deepen my training in health systems, program evaluation, and policy analysis so that I can design strategies that are technically credible and responsive to population needs.\n\nThe MBA is equally necessary. My career goal is to lead health delivery organizations that can allocate resources, manage multidisciplinary teams, build sustainable partnerships, and make disciplined decisions under uncertainty. The MBA will give me the finance, operations, and organizational leadership skills I still lack. The combined degree is not a collection of two credentials. It is the training required to connect population evidence with institutional execution. The MPH will help me determine what should be done and how impact should be measured. The MBA will prepare me to build the organization, financing model, and operating system required to deliver it.\n\nI am drawn to this program because the curriculum combines courses in health systems, operations, finance, and strategy with an applied practicum. I am also interested in faculty and research centers whose work on health financing, implementation, and organizational performance aligns with my goal of improving delivery in low resource settings. The opportunity to learn with public health practitioners and business leaders would help me test solutions from both perspectives. I would contribute experience from clinical practice, outbreak response, policy advising, quantitative analysis, and implementation across government and nonprofit settings.\n\nAfter completing the degree, I plan to lead regional health delivery initiatives and scale operating models that improve emergency preparedness, vaccination, and essential health services. In the long term, my objective is to build an organization that helps governments translate policy into reliable delivery systems. I want to leave the program able to connect evidence with execution, public purpose with financial discipline, and health goals with accountable management.",
+      "wordLimit": 800,
+      "applicantType": "international",
+      "reviewGoal": "structure",
+      "reviewGoalLabel": "Combined degree coherence"
+    },
+    "draft": {
+      "wordCount": 550,
+      "paragraphCount": 6,
+      "evidenceCount": 4,
+      "quantifiedCount": 5,
+      "fitReferenceCount": 5,
+      "promptCoveragePercent": 100,
+      "coverageRows": [
+        {
+          "label": "Reason for the degree",
+          "status": "Covered",
+          "matched": [
+            "will prepare",
+            "i lack",
+            "necessary"
+          ]
+        },
+        {
+          "label": "Preparation and evidence",
+          "status": "Covered",
+          "matched": [
+            "led",
+            "managed",
+            "designed"
+          ]
+        },
+        {
+          "label": "Career direction",
+          "status": "Covered",
+          "matched": [
+            "my goal",
+            "my objective",
+            "i plan to"
+          ]
+        },
+        {
+          "label": "Program or school fit",
+          "status": "Covered",
+          "matched": [
+            "curriculum",
+            "course",
+            "faculty"
+          ]
+        },
+        {
+          "label": "Combined degree coherence",
+          "status": "Covered",
+          "matched": [
+            "combined degree",
+            "mph",
+            "mba"
+          ]
+        },
+        {
+          "label": "Why both degrees are necessary",
+          "status": "Covered",
+          "matched": [
+            "combined degree",
+            "mph",
+            "mba"
+          ]
+        },
+        {
+          "label": "Integration of the two disciplines",
+          "status": "Covered",
+          "matched": [
+            "connect",
+            "evidence with execution",
+            "public health"
+          ]
+        }
+      ],
+      "strongestExcerpt": "Within eight weeks, the district reduced missed settlements by 38 percent, restored regular outreach across all twelve communities, and vaccinated more than 18,000 children.",
+      "partialExcerpt": "I could assess the health problem and recommend interventions, yet I lacked formal training in organizational strategy, managerial finance, and operations at scale.",
+      "gapExcerpt": "My career goal is to lead health delivery organizations that can allocate resources, manage multidisciplinary teams, build sustainable partnerships, and make disciplined decisions under uncertainty.",
+      "strongestSentence": {
+        "index": 5,
+        "text": "Within eight weeks, the district reduced missed settlements by 38 percent, restored regular outreach across all twelve communities, and vaccinated more than 18,000 children.",
+        "score": 92,
+        "status": "Keep",
+        "cls": "keep",
+        "tags": [
+          "Outcome",
+          "Quantified",
+          "Problem framing",
+          "Evidence chain"
+        ],
+        "whatWorks": "It establishes scale or urgency, giving the reader a concrete frame for the problem.",
+        "readerMessage": "The stakes are clear, but the reader is still waiting to see the applicant’s agency.",
+        "guidance": "Retain the problem framing and move immediately to the applicant’s decision, action, or analysis.",
+        "signals": {
+          "quantified": true,
+          "action": false,
+          "outcome": true,
+          "fit": false,
+          "goal": false,
+          "rationale": false,
+          "insight": false,
+          "problem": true,
+          "contribution": false,
+          "generic": false,
+          "wordCount": 25,
+          "linkedOutcome": true
+        }
+      },
+      "riskSentence": {
+        "index": 16,
+        "text": "My career goal is to lead health delivery organizations that can allocate resources, manage multidisciplinary teams, build sustainable partnerships, and make disciplined decisions under uncertainty.",
+        "score": 60,
+        "status": "Refine",
+        "cls": "refine",
+        "tags": [
+          "Career direction"
+        ],
+        "whatWorks": "It clarifies the applicant’s direction or explains why further training is needed.",
+        "readerMessage": "The ambition is clear, but it is not yet supported by preparation or program logic.",
+        "guidance": "Link the goal to prior evidence and the specific training required next.",
+        "signals": {
+          "quantified": false,
+          "action": false,
+          "outcome": false,
+          "fit": false,
+          "goal": true,
+          "rationale": false,
+          "insight": false,
+          "problem": false,
+          "contribution": false,
+          "generic": false,
+          "wordCount": 25,
+          "linkedOutcome": false
+        }
+      },
+      "sentenceRows": [
+        {
+          "index": 1,
+          "text": "During a vaccine delivery project in northern Ghana, I watched a technically sound public health plan fail because operational decisions were fragmented.",
+          "score": 61,
+          "status": "Refine",
+          "cls": "refine",
+          "tags": [
+            "Problem framing"
+          ],
+          "whatWorks": "It establishes a concrete problem and gives the opening a clear reason to continue reading.",
+          "readerMessage": "The stakes are clear, but the reader is still waiting to see the applicant’s agency.",
+          "guidance": "Retain the problem framing and move immediately to the applicant’s decision, action, or analysis.",
+          "signals": {
+            "quantified": false,
+            "action": false,
+            "outcome": false,
+            "fit": false,
+            "goal": false,
+            "rationale": false,
+            "insight": false,
+            "problem": true,
+            "contribution": false,
+            "generic": false,
+            "wordCount": 22,
+            "linkedOutcome": false
+          }
+        },
+        {
+          "index": 2,
+          "text": "Twelve rural communities had missed scheduled outreach for two consecutive weeks.",
+          "score": 76,
+          "status": "Keep",
+          "cls": "keep",
+          "tags": [
+            "Quantified",
+            "Problem framing"
+          ],
+          "whatWorks": "It establishes scale or urgency, giving the reader a concrete frame for the problem.",
+          "readerMessage": "The context is concrete, but the applicant’s role or decision is not yet visible in this sentence.",
+          "guidance": "Keep the scale, then connect it quickly to what the applicant did or learned.",
+          "signals": {
+            "quantified": true,
+            "action": false,
+            "outcome": false,
+            "fit": false,
+            "goal": false,
+            "rationale": false,
+            "insight": false,
+            "problem": true,
+            "contribution": false,
+            "generic": false,
+            "wordCount": 11,
+            "linkedOutcome": false
+          }
+        },
+        {
+          "index": 3,
+          "text": "As a health delivery adviser, I led a six person district team to analyze weekly coverage data, map delayed routes, and review cold chain and transport constraints.",
+          "score": 80,
+          "status": "Keep",
+          "cls": "keep",
+          "tags": [
+            "Action",
+            "Quantified"
+          ],
+          "whatWorks": "It identifies a concrete responsibility and gives the reader useful scale.",
+          "readerMessage": "The action is visible, but the result and significance remain unclear.",
+          "guidance": "Add the result, scale, change, or lesson that followed the action.",
+          "signals": {
+            "quantified": true,
+            "action": true,
+            "outcome": false,
+            "fit": false,
+            "goal": false,
+            "rationale": false,
+            "insight": false,
+            "problem": false,
+            "contribution": false,
+            "generic": false,
+            "wordCount": 27,
+            "linkedOutcome": false
+          }
+        },
+        {
+          "index": 4,
+          "text": "We redesigned the dispatch schedule, assigned clear decision rights, and introduced a weekly operations review.",
+          "score": 68,
+          "status": "Refine",
+          "cls": "refine",
+          "tags": [
+            "Action",
+            "Evidence chain"
+          ],
+          "whatWorks": "The sentence has a clear grammatical function but needs a more visible admissions purpose.",
+          "readerMessage": "The reader may understand the sentence but still lack a reason to connect it to readiness for this degree.",
+          "guidance": "Make the sentence carry one clear function and connect it to evidence, fit, or future direction.",
+          "signals": {
+            "quantified": false,
+            "action": true,
+            "outcome": false,
+            "fit": false,
+            "goal": false,
+            "rationale": false,
+            "insight": false,
+            "problem": false,
+            "contribution": false,
+            "generic": false,
+            "wordCount": 15,
+            "linkedOutcome": true
+          }
+        },
+        {
+          "index": 5,
+          "text": "Within eight weeks, the district reduced missed settlements by 38 percent, restored regular outreach across all twelve communities, and vaccinated more than 18,000 children.",
+          "score": 92,
+          "status": "Keep",
+          "cls": "keep",
+          "tags": [
+            "Outcome",
+            "Quantified",
+            "Problem framing",
+            "Evidence chain"
+          ],
+          "whatWorks": "It establishes scale or urgency, giving the reader a concrete frame for the problem.",
+          "readerMessage": "The stakes are clear, but the reader is still waiting to see the applicant’s agency.",
+          "guidance": "Retain the problem framing and move immediately to the applicant’s decision, action, or analysis.",
+          "signals": {
+            "quantified": true,
+            "action": false,
+            "outcome": true,
+            "fit": false,
+            "goal": false,
+            "rationale": false,
+            "insight": false,
+            "problem": true,
+            "contribution": false,
+            "generic": false,
+            "wordCount": 25,
+            "linkedOutcome": true
+          }
+        },
+        {
+          "index": 6,
+          "text": "The project changed how I understood health leadership.",
+          "score": 66,
+          "status": "Refine",
+          "cls": "refine",
+          "tags": [
+            "Reflection"
+          ],
+          "whatWorks": "It interprets the experience and shows how the applicant’s judgment changed.",
+          "readerMessage": "The sentence shows reflection, but the reader still needs a direct bridge to the degree or next responsibility.",
+          "guidance": "Keep the reflection and state how it changed the applicant’s preparation or decision.",
+          "signals": {
+            "quantified": false,
+            "action": false,
+            "outcome": false,
+            "fit": false,
+            "goal": false,
+            "rationale": false,
+            "insight": true,
+            "problem": false,
+            "contribution": false,
+            "generic": false,
+            "wordCount": 8,
+            "linkedOutcome": false
+          }
+        },
+        {
+          "index": 7,
+          "text": "Epidemiologic evidence could define who was being missed, but delivery depended on financing, supply chain management, team performance, negotiation, and accountability.",
+          "score": 82,
+          "status": "Keep",
+          "cls": "keep",
+          "tags": [
+            "Reflection",
+            "Problem framing"
+          ],
+          "whatWorks": "It establishes a concrete problem and gives the opening a clear reason to continue reading.",
+          "readerMessage": "The stakes are clear, but the reader is still waiting to see the applicant’s agency.",
+          "guidance": "Retain the problem framing and move immediately to the applicant’s decision, action, or analysis.",
+          "signals": {
+            "quantified": false,
+            "action": false,
+            "outcome": false,
+            "fit": false,
+            "goal": false,
+            "rationale": false,
+            "insight": true,
+            "problem": true,
+            "contribution": false,
+            "generic": false,
+            "wordCount": 21,
+            "linkedOutcome": false
+          }
+        },
+        {
+          "index": 8,
+          "text": "I later managed a broader implementation portfolio with a budget of approximately $250,000, coordinated district health teams and nonprofit partners, and trained 42 frontline health workers on performance review.",
+          "score": 88,
+          "status": "Keep",
+          "cls": "keep",
+          "tags": [
+            "Action",
+            "Quantified",
+            "Evidence chain"
+          ],
+          "whatWorks": "It identifies a concrete responsibility and gives the reader useful scale.",
+          "readerMessage": "This sentence gives the reader a credible reason to believe the applicant’s claim.",
+          "guidance": "Retain the evidence and state how it supports readiness for the degree.",
+          "signals": {
+            "quantified": true,
+            "action": true,
+            "outcome": false,
+            "fit": false,
+            "goal": false,
+            "rationale": false,
+            "insight": false,
+            "problem": false,
+            "contribution": false,
+            "generic": false,
+            "wordCount": 30,
+            "linkedOutcome": true
+          }
+        },
+        {
+          "index": 9,
+          "text": "These responsibilities strengthened my ability to lead under pressure, but they also exposed gaps in my preparation.",
+          "score": 85,
+          "status": "Keep",
+          "cls": "keep",
+          "tags": [
+            "Outcome",
+            "Reflection",
+            "Evidence chain"
+          ],
+          "whatWorks": "It interprets the experience and shows how the applicant’s judgment changed.",
+          "readerMessage": "The result is plausible, but the reader cannot judge its scale or importance.",
+          "guidance": "Add a number, timeframe, comparison, or affected population when accurate.",
+          "signals": {
+            "quantified": false,
+            "action": false,
+            "outcome": true,
+            "fit": false,
+            "goal": false,
+            "rationale": false,
+            "insight": true,
+            "problem": false,
+            "contribution": false,
+            "generic": false,
+            "wordCount": 17,
+            "linkedOutcome": true
+          }
+        },
+        {
+          "index": 10,
+          "text": "I could assess the health problem and recommend interventions, yet I lacked formal training in organizational strategy, managerial finance, and operations at scale.",
+          "score": 79,
+          "status": "Keep",
+          "cls": "keep",
+          "tags": [
+            "Degree rationale",
+            "Problem framing"
+          ],
+          "whatWorks": "It establishes a concrete problem and gives the opening a clear reason to continue reading.",
+          "readerMessage": "The stakes are clear, but the reader is still waiting to see the applicant’s agency.",
+          "guidance": "Retain the problem framing and move immediately to the applicant’s decision, action, or analysis.",
+          "signals": {
+            "quantified": false,
+            "action": false,
+            "outcome": false,
+            "fit": false,
+            "goal": false,
+            "rationale": true,
+            "insight": false,
+            "problem": true,
+            "contribution": false,
+            "generic": false,
+            "wordCount": 23,
+            "linkedOutcome": false
+          }
+        },
+        {
+          "index": 11,
+          "text": "My public health training has prepared me to evaluate disease burden, interpret quantitative evidence, and design programs for population impact.",
+          "score": 66,
+          "status": "Refine",
+          "cls": "refine",
+          "tags": [
+            "Reflection"
+          ],
+          "whatWorks": "It interprets the experience and shows how the applicant’s judgment changed.",
+          "readerMessage": "The sentence shows reflection, but the reader still needs a direct bridge to the degree or next responsibility.",
+          "guidance": "Keep the reflection and state how it changed the applicant’s preparation or decision.",
+          "signals": {
+            "quantified": false,
+            "action": false,
+            "outcome": false,
+            "fit": false,
+            "goal": false,
+            "rationale": false,
+            "insight": true,
+            "problem": false,
+            "contribution": false,
+            "generic": false,
+            "wordCount": 20,
+            "linkedOutcome": false
+          }
+        },
+        {
+          "index": 12,
+          "text": "I have conducted statistical analysis using R, supported survey design, and used implementation data to compare performance across districts.",
+          "score": 60,
+          "status": "Refine",
+          "cls": "refine",
+          "tags": [
+            "Action"
+          ],
+          "whatWorks": "The sentence has a clear grammatical function but needs a more visible admissions purpose.",
+          "readerMessage": "The action is visible, but the result and significance remain unclear.",
+          "guidance": "Add the result, scale, change, or lesson that followed the action.",
+          "signals": {
+            "quantified": false,
+            "action": true,
+            "outcome": false,
+            "fit": false,
+            "goal": false,
+            "rationale": false,
+            "insight": false,
+            "problem": false,
+            "contribution": false,
+            "generic": false,
+            "wordCount": 19,
+            "linkedOutcome": false
+          }
+        },
+        {
+          "index": 13,
+          "text": "This preparation allows me to ask which populations are being missed, why delivery differs across settings, and whether an intervention is producing equitable results.",
+          "score": 82,
+          "status": "Keep",
+          "cls": "keep",
+          "tags": [
+            "Reflection",
+            "Problem framing"
+          ],
+          "whatWorks": "It establishes a concrete problem and gives the opening a clear reason to continue reading.",
+          "readerMessage": "The stakes are clear, but the reader is still waiting to see the applicant’s agency.",
+          "guidance": "Retain the problem framing and move immediately to the applicant’s decision, action, or analysis.",
+          "signals": {
+            "quantified": false,
+            "action": false,
+            "outcome": false,
+            "fit": false,
+            "goal": false,
+            "rationale": false,
+            "insight": true,
+            "problem": true,
+            "contribution": false,
+            "generic": false,
+            "wordCount": 24,
+            "linkedOutcome": false
+          }
+        },
+        {
+          "index": 14,
+          "text": "The MPH will deepen my training in health systems, program evaluation, and policy analysis so that I can design strategies that are technically credible and responsive to population needs.",
+          "score": 63,
+          "status": "Refine",
+          "cls": "refine",
+          "tags": [
+            "Degree rationale"
+          ],
+          "whatWorks": "It clarifies the applicant’s direction or explains why further training is needed.",
+          "readerMessage": "The reader may understand the sentence but still lack a reason to connect it to readiness for this degree.",
+          "guidance": "Make the sentence carry one clear function and connect it to evidence, fit, or future direction.",
+          "signals": {
+            "quantified": false,
+            "action": false,
+            "outcome": false,
+            "fit": false,
+            "goal": false,
+            "rationale": true,
+            "insight": false,
+            "problem": false,
+            "contribution": false,
+            "generic": false,
+            "wordCount": 29,
+            "linkedOutcome": false
+          }
+        },
+        {
+          "index": 15,
+          "text": "The MBA is equally necessary.",
+          "score": 63,
+          "status": "Refine",
+          "cls": "refine",
+          "tags": [
+            "Degree rationale"
+          ],
+          "whatWorks": "It clarifies the applicant’s direction or explains why further training is needed.",
+          "readerMessage": "The reader may understand the sentence but still lack a reason to connect it to readiness for this degree.",
+          "guidance": "Make the sentence carry one clear function and connect it to evidence, fit, or future direction.",
+          "signals": {
+            "quantified": false,
+            "action": false,
+            "outcome": false,
+            "fit": false,
+            "goal": false,
+            "rationale": true,
+            "insight": false,
+            "problem": false,
+            "contribution": false,
+            "generic": false,
+            "wordCount": 5,
+            "linkedOutcome": false
+          }
+        },
+        {
+          "index": 16,
+          "text": "My career goal is to lead health delivery organizations that can allocate resources, manage multidisciplinary teams, build sustainable partnerships, and make disciplined decisions under uncertainty.",
+          "score": 60,
+          "status": "Refine",
+          "cls": "refine",
+          "tags": [
+            "Career direction"
+          ],
+          "whatWorks": "It clarifies the applicant’s direction or explains why further training is needed.",
+          "readerMessage": "The ambition is clear, but it is not yet supported by preparation or program logic.",
+          "guidance": "Link the goal to prior evidence and the specific training required next.",
+          "signals": {
+            "quantified": false,
+            "action": false,
+            "outcome": false,
+            "fit": false,
+            "goal": true,
+            "rationale": false,
+            "insight": false,
+            "problem": false,
+            "contribution": false,
+            "generic": false,
+            "wordCount": 25,
+            "linkedOutcome": false
+          }
+        },
+        {
+          "index": 17,
+          "text": "The MBA will give me the finance, operations, and organizational leadership skills I still lack.",
+          "score": 63,
+          "status": "Refine",
+          "cls": "refine",
+          "tags": [
+            "Degree rationale"
+          ],
+          "whatWorks": "It clarifies the applicant’s direction or explains why further training is needed.",
+          "readerMessage": "The reader may understand the sentence but still lack a reason to connect it to readiness for this degree.",
+          "guidance": "Make the sentence carry one clear function and connect it to evidence, fit, or future direction.",
+          "signals": {
+            "quantified": false,
+            "action": false,
+            "outcome": false,
+            "fit": false,
+            "goal": false,
+            "rationale": true,
+            "insight": false,
+            "problem": false,
+            "contribution": false,
+            "generic": false,
+            "wordCount": 15,
+            "linkedOutcome": false
+          }
+        },
+        {
+          "index": 18,
+          "text": "The combined degree is not a collection of two credentials.",
+          "score": 89,
+          "status": "Keep",
+          "cls": "keep",
+          "tags": [
+            "Quantified",
+            "Program fit",
+            "Degree rationale"
+          ],
+          "whatWorks": "It establishes scale or urgency, giving the reader a concrete frame for the problem.",
+          "readerMessage": "The context is concrete, but the applicant’s role or decision is not yet visible in this sentence.",
+          "guidance": "Keep the scale, then connect it quickly to what the applicant did or learned.",
+          "signals": {
+            "quantified": true,
+            "action": false,
+            "outcome": false,
+            "fit": true,
+            "goal": false,
+            "rationale": true,
+            "insight": false,
+            "problem": false,
+            "contribution": false,
+            "generic": false,
+            "wordCount": 10,
+            "linkedOutcome": false
+          }
+        },
+        {
+          "index": 19,
+          "text": "It is the training required to connect population evidence with institutional execution.",
+          "score": 63,
+          "status": "Refine",
+          "cls": "refine",
+          "tags": [
+            "Degree rationale"
+          ],
+          "whatWorks": "It clarifies the applicant’s direction or explains why further training is needed.",
+          "readerMessage": "The reader may understand the sentence but still lack a reason to connect it to readiness for this degree.",
+          "guidance": "Make the sentence carry one clear function and connect it to evidence, fit, or future direction.",
+          "signals": {
+            "quantified": false,
+            "action": false,
+            "outcome": false,
+            "fit": false,
+            "goal": false,
+            "rationale": true,
+            "insight": false,
+            "problem": false,
+            "contribution": false,
+            "generic": false,
+            "wordCount": 12,
+            "linkedOutcome": false
+          }
+        },
+        {
+          "index": 20,
+          "text": "The MPH will help me determine what should be done and how impact should be measured.",
+          "score": 63,
+          "status": "Refine",
+          "cls": "refine",
+          "tags": [
+            "Degree rationale"
+          ],
+          "whatWorks": "It clarifies the applicant’s direction or explains why further training is needed.",
+          "readerMessage": "The reader may understand the sentence but still lack a reason to connect it to readiness for this degree.",
+          "guidance": "Make the sentence carry one clear function and connect it to evidence, fit, or future direction.",
+          "signals": {
+            "quantified": false,
+            "action": false,
+            "outcome": false,
+            "fit": false,
+            "goal": false,
+            "rationale": true,
+            "insight": false,
+            "problem": false,
+            "contribution": false,
+            "generic": false,
+            "wordCount": 16,
+            "linkedOutcome": false
+          }
+        },
+        {
+          "index": 21,
+          "text": "The MBA will prepare me to build the organization, financing model, and operating system required to deliver it.",
+          "score": 63,
+          "status": "Refine",
+          "cls": "refine",
+          "tags": [
+            "Degree rationale"
+          ],
+          "whatWorks": "It clarifies the applicant’s direction or explains why further training is needed.",
+          "readerMessage": "The reader may understand the sentence but still lack a reason to connect it to readiness for this degree.",
+          "guidance": "Make the sentence carry one clear function and connect it to evidence, fit, or future direction.",
+          "signals": {
+            "quantified": false,
+            "action": false,
+            "outcome": false,
+            "fit": false,
+            "goal": false,
+            "rationale": true,
+            "insight": false,
+            "problem": false,
+            "contribution": false,
+            "generic": false,
+            "wordCount": 18,
+            "linkedOutcome": false
+          }
+        },
+        {
+          "index": 22,
+          "text": "I am drawn to this program because the curriculum combines courses in health systems, operations, finance, and strategy with an applied practicum.",
+          "score": 56,
+          "status": "Refine",
+          "cls": "refine",
+          "tags": [
+            "Program fit"
+          ],
+          "whatWorks": "It attempts to connect the applicant to the target program or learning environment.",
+          "readerMessage": "The fit language risks reading as program description rather than applicant-program alignment.",
+          "guidance": "Name the resource and show how the applicant would use it. Add the applicant’s contribution when it is specific.",
+          "signals": {
+            "quantified": false,
+            "action": false,
+            "outcome": false,
+            "fit": true,
+            "goal": false,
+            "rationale": false,
+            "insight": false,
+            "problem": false,
+            "contribution": false,
+            "generic": false,
+            "wordCount": 22,
+            "linkedOutcome": false
+          }
+        },
+        {
+          "index": 23,
+          "text": "I am also interested in faculty and research centers whose work on health financing, implementation, and organizational performance aligns with my goal of improving delivery in low resource settings.",
+          "score": 68,
+          "status": "Refine",
+          "cls": "refine",
+          "tags": [
+            "Program fit",
+            "Career direction"
+          ],
+          "whatWorks": "It attempts to connect the applicant to the target program or learning environment.",
+          "readerMessage": "The fit language risks reading as program description rather than applicant-program alignment.",
+          "guidance": "Name the resource and show how the applicant would use it. Add the applicant’s contribution when it is specific.",
+          "signals": {
+            "quantified": false,
+            "action": false,
+            "outcome": false,
+            "fit": true,
+            "goal": true,
+            "rationale": false,
+            "insight": false,
+            "problem": false,
+            "contribution": false,
+            "generic": false,
+            "wordCount": 29,
+            "linkedOutcome": false
+          }
+        },
+        {
+          "index": 24,
+          "text": "The opportunity to learn with public health practitioners and business leaders would help me test solutions from both perspectives.",
+          "score": 65,
+          "status": "Refine",
+          "cls": "refine",
+          "tags": [
+            "Contribution"
+          ],
+          "whatWorks": "It states what the applicant may add to the learning community.",
+          "readerMessage": "The contribution is promising, but the value to peers or the program is still broad.",
+          "guidance": "Specify the perspective, method, network, or experience the applicant would contribute.",
+          "signals": {
+            "quantified": false,
+            "action": false,
+            "outcome": false,
+            "fit": false,
+            "goal": false,
+            "rationale": false,
+            "insight": false,
+            "problem": false,
+            "contribution": true,
+            "generic": false,
+            "wordCount": 19,
+            "linkedOutcome": false
+          }
+        },
+        {
+          "index": 25,
+          "text": "I would contribute experience from clinical practice, outbreak response, policy advising, quantitative analysis, and implementation across government and nonprofit settings.",
+          "score": 65,
+          "status": "Refine",
+          "cls": "refine",
+          "tags": [
+            "Contribution"
+          ],
+          "whatWorks": "It states what the applicant may add to the learning community.",
+          "readerMessage": "The contribution is promising, but the value to peers or the program is still broad.",
+          "guidance": "Specify the perspective, method, network, or experience the applicant would contribute.",
+          "signals": {
+            "quantified": false,
+            "action": false,
+            "outcome": false,
+            "fit": false,
+            "goal": false,
+            "rationale": false,
+            "insight": false,
+            "problem": false,
+            "contribution": true,
+            "generic": false,
+            "wordCount": 20,
+            "linkedOutcome": false
+          }
+        },
+        {
+          "index": 26,
+          "text": "After completing the degree, I plan to lead regional health delivery initiatives and scale operating models that improve emergency preparedness, vaccination, and essential health services.",
+          "score": 68,
+          "status": "Refine",
+          "cls": "refine",
+          "tags": [
+            "Program fit",
+            "Career direction"
+          ],
+          "whatWorks": "It attempts to connect the applicant to the target program or learning environment.",
+          "readerMessage": "The fit language risks reading as program description rather than applicant-program alignment.",
+          "guidance": "Name the resource and show how the applicant would use it. Add the applicant’s contribution when it is specific.",
+          "signals": {
+            "quantified": false,
+            "action": false,
+            "outcome": false,
+            "fit": true,
+            "goal": true,
+            "rationale": false,
+            "insight": false,
+            "problem": false,
+            "contribution": false,
+            "generic": false,
+            "wordCount": 25,
+            "linkedOutcome": false
+          }
+        },
+        {
+          "index": 27,
+          "text": "In the long term, my objective is to build an organization that helps governments translate policy into reliable delivery systems.",
+          "score": 60,
+          "status": "Refine",
+          "cls": "refine",
+          "tags": [
+            "Career direction"
+          ],
+          "whatWorks": "It clarifies the applicant’s direction or explains why further training is needed.",
+          "readerMessage": "The ambition is clear, but it is not yet supported by preparation or program logic.",
+          "guidance": "Link the goal to prior evidence and the specific training required next.",
+          "signals": {
+            "quantified": false,
+            "action": false,
+            "outcome": false,
+            "fit": false,
+            "goal": true,
+            "rationale": false,
+            "insight": false,
+            "problem": false,
+            "contribution": false,
+            "generic": false,
+            "wordCount": 20,
+            "linkedOutcome": false
+          }
+        },
+        {
+          "index": 28,
+          "text": "I want to leave the program able to connect evidence with execution, public purpose with financial discipline, and health goals with accountable management.",
+          "score": 68,
+          "status": "Refine",
+          "cls": "refine",
+          "tags": [
+            "Program fit",
+            "Career direction"
+          ],
+          "whatWorks": "It attempts to connect the applicant to the target program or learning environment.",
+          "readerMessage": "The fit language risks reading as program description rather than applicant-program alignment.",
+          "guidance": "Name the resource and show how the applicant would use it. Add the applicant’s contribution when it is specific.",
+          "signals": {
+            "quantified": false,
+            "action": false,
+            "outcome": false,
+            "fit": true,
+            "goal": true,
+            "rationale": false,
+            "insight": false,
+            "problem": false,
+            "contribution": false,
+            "generic": false,
+            "wordCount": 23,
+            "linkedOutcome": false
+          }
+        }
+      ],
+      "sentenceSummary": {
+        "keep": 9,
+        "refine": 19,
+        "rebuild": 0
+      },
+      "readerRisk": {
+        "score": 15,
+        "label": "Low",
+        "copy": "Most sentences communicate a clear function, with limited risk from generic or unsupported language."
+      },
+      "paragraphRows": [
+        {
+          "index": 1,
+          "text": "During a vaccine delivery project in northern Ghana, I watched a technically sound public health plan fail because operational decisions were fragmented. Twelve rural communities had missed scheduled outreach for two consecutive weeks. As a health delivery adviser, I led a six person district team to analyze weekly coverage data, map delayed routes, and review cold chain and transport constraints. We redesigned the dispatch schedule, assigned clear decision rights, and introduced a weekly operations review. Within eight weeks, the district reduced missed settlements by 38 percent, restored regular outreach across all twelve communities, and vaccinated more than 18,000 children.",
+          "wordCount": 100,
+          "score": 90,
+          "role": "Opening and motivation",
+          "quantified": 3,
+          "action": 2,
+          "outcome": 1,
+          "fit": 0,
+          "generic": 0
+        },
+        {
+          "index": 2,
+          "text": "The project changed how I understood health leadership. Epidemiologic evidence could define who was being missed, but delivery depended on financing, supply chain management, team performance, negotiation, and accountability. I later managed a broader implementation portfolio with a budget of approximately $250,000, coordinated district health teams and nonprofit partners, and trained 42 frontline health workers on performance review. These responsibilities strengthened my ability to lead under pressure, but they also exposed gaps in my preparation. I could assess the health problem and recommend interventions, yet I lacked formal training in organizational strategy, managerial finance, and operations at scale.",
+          "wordCount": 99,
+          "score": 78,
+          "role": "Leadership and impact",
+          "quantified": 1,
+          "action": 1,
+          "outcome": 1,
+          "fit": 0,
+          "generic": 0
+        },
+        {
+          "index": 3,
+          "text": "My public health training has prepared me to evaluate disease burden, interpret quantitative evidence, and design programs for population impact. I have conducted statistical analysis using R, supported survey design, and used implementation data to compare performance across districts. This preparation allows me to ask which populations are being missed, why delivery differs across settings, and whether an intervention is producing equitable results. The MPH will deepen my training in health systems, program evaluation, and policy analysis so that I can design strategies that are technically credible and responsive to population needs.",
+          "wordCount": 92,
+          "score": 65,
+          "role": "Program fit",
+          "quantified": 0,
+          "action": 1,
+          "outcome": 0,
+          "fit": 0,
+          "generic": 0
+        },
+        {
+          "index": 4,
+          "text": "The MBA is equally necessary. My career goal is to lead health delivery organizations that can allocate resources, manage multidisciplinary teams, build sustainable partnerships, and make disciplined decisions under uncertainty. The MBA will give me the finance, operations, and organizational leadership skills I still lack. The combined degree is not a collection of two credentials. It is the training required to connect population evidence with institutional execution. The MPH will help me determine what should be done and how impact should be measured. The MBA will prepare me to build the organization, financing model, and operating system required to deliver it.",
+          "wordCount": 101,
+          "score": 76,
+          "role": "Career direction",
+          "quantified": 1,
+          "action": 0,
+          "outcome": 0,
+          "fit": 1,
+          "generic": 0
+        },
+        {
+          "index": 5,
+          "text": "I am drawn to this program because the curriculum combines courses in health systems, operations, finance, and strategy with an applied practicum. I am also interested in faculty and research centers whose work on health financing, implementation, and organizational performance aligns with my goal of improving delivery in low resource settings. The opportunity to learn with public health practitioners and business leaders would help me test solutions from both perspectives. I would contribute experience from clinical practice, outbreak response, policy advising, quantitative analysis, and implementation across government and nonprofit settings.",
+          "wordCount": 90,
+          "score": 70,
+          "role": "Program fit",
+          "quantified": 0,
+          "action": 0,
+          "outcome": 0,
+          "fit": 2,
+          "generic": 0
+        },
+        {
+          "index": 6,
+          "text": "After completing the degree, I plan to lead regional health delivery initiatives and scale operating models that improve emergency preparedness, vaccination, and essential health services. In the long term, my objective is to build an organization that helps governments translate policy into reliable delivery systems. I want to leave the program able to connect evidence with execution, public purpose with financial discipline, and health goals with accountable management.",
+          "wordCount": 68,
+          "score": 74,
+          "role": "Program fit",
+          "quantified": 0,
+          "action": 0,
+          "outcome": 0,
+          "fit": 2,
+          "generic": 0
+        }
+      ],
+      "confidence": "High confidence",
+      "revisionOpportunity": "Low"
+    },
+    "criterion": {
+      "version": "1.9",
+      "standardName": "Statement Studio criterion referenced standard",
+      "statementType": "Combined degree statement",
+      "dimensions": [
+        {
+          "id": "promptAlignment",
+          "label": "Prompt alignment",
+          "weight": 12,
+          "score": 100,
+          "level": 4,
+          "levelLabel": "Exemplary",
+          "band": {
+            "label": "Highly developed",
+            "cls": "highly",
+            "path": "Refine"
+          },
+          "why": "The draft consistently demonstrates direct coverage of the supplied prompt, response to the selected statement type, visible alignment with the target degree or program.",
+          "evidence": "The combined degree is not a collection of two credentials.",
+          "nextAction": "Preserve this strength while tightening language and removing repetition.",
+          "criteriaMet": [
+            "direct coverage of the supplied prompt",
+            "response to the selected statement type",
+            "visible alignment with the target degree or program"
+          ],
+          "criteriaGaps": []
+        },
+        {
+          "id": "throughlineStructure",
+          "label": "Throughline and structure",
+          "weight": 14,
+          "score": 90,
+          "level": 4,
+          "levelLabel": "Exemplary",
+          "band": {
+            "label": "Highly developed",
+            "cls": "highly",
+            "path": "Refine"
+          },
+          "why": "The draft demonstrates one coherent throughline across the statement and logical paragraph progression, but it is constrained by a specific opening that establishes the central concern.",
+          "evidence": "During a vaccine delivery project in northern Ghana, I watched a technically sound public health plan fail because operational decisions were fragmented.",
+          "nextAction": "Replace the opening with a specific earned moment, problem, or idea that establishes the central thread.",
+          "criteriaMet": [
+            "one coherent throughline across the statement",
+            "logical paragraph progression",
+            "purposeful paragraph length and separation",
+            "a close that resolves the direction of the statement"
+          ],
+          "criteriaGaps": [
+            "a specific opening that establishes the central concern"
+          ]
+        },
+        {
+          "id": "evidenceSpecificity",
+          "label": "Evidence and specificity",
+          "weight": 18,
+          "score": 100,
+          "level": 4,
+          "levelLabel": "Exemplary",
+          "band": {
+            "label": "Highly developed",
+            "cls": "highly",
+            "path": "Refine"
+          },
+          "why": "The draft consistently demonstrates specific actions taken by the applicant, visible outcomes or consequences, quantified scale where appropriate.",
+          "evidence": "I later managed a broader implementation portfolio with a budget of approximately $250,000, coordinated district health teams and nonprofit partners, and trained 42 frontline health workers on performance review.",
+          "nextAction": "Preserve this strength while tightening language and removing repetition.",
+          "criteriaMet": [
+            "specific actions taken by the applicant",
+            "visible outcomes or consequences",
+            "quantified scale where appropriate",
+            "depth rather than a resume style list",
+            "claims supported by direct evidence"
+          ],
+          "criteriaGaps": []
+        },
+        {
+          "id": "proseControl",
+          "label": "Prose control",
+          "weight": 10,
+          "score": 90,
+          "level": 4,
+          "levelLabel": "Exemplary",
+          "band": {
+            "label": "Highly developed",
+            "cls": "highly",
+            "path": "Refine"
+          },
+          "why": "The draft demonstrates control of repetition and generic language and sentence length and syntactic control, but it is constrained by sentence clarity and readability.",
+          "evidence": "During a vaccine delivery project in northern Ghana, I watched a technically sound public health plan fail because operational decisions were fragmented.",
+          "nextAction": "Shorten or divide sentences that carry several ideas at once.",
+          "criteriaMet": [
+            "control of repetition and generic language",
+            "sentence length and syntactic control",
+            "word limit discipline",
+            "paragraph level economy"
+          ],
+          "criteriaGaps": [
+            "sentence clarity and readability"
+          ]
+        },
+        {
+          "id": "voiceAuthenticity",
+          "label": "Voice, grounding, and originality",
+          "weight": 8,
+          "score": 60,
+          "level": 2,
+          "levelLabel": "Developing",
+          "band": {
+            "label": "Material gaps",
+            "cls": "developing",
+            "path": "Refine"
+          },
+          "why": "The draft demonstrates reflection carried by evidence rather than a stated moral, but it is constrained by applicant-specific grounding and distinctive detail that belongs to this applicant. This dimension reviews writing patterns and grounding. It does not determine authorship or estimate AI use.",
+          "evidence": "These responsibilities strengthened my ability to lead under pressure, but they also exposed gaps in my preparation.",
+          "nextAction": "Add the actual role, setting, method, decision, population, or result behind each major claim.",
+          "criteriaMet": [
+            "reflection carried by evidence rather than a stated moral"
+          ],
+          "criteriaGaps": [
+            "applicant-specific grounding",
+            "distinctive detail that belongs to this applicant",
+            "control of formulaic and transferable patterns",
+            "interview-defensible sentences"
+          ]
+        },
+        {
+          "id": "goalsDirection",
+          "label": "Goals and direction",
+          "weight": 8,
+          "score": 100,
+          "level": 4,
+          "levelLabel": "Exemplary",
+          "band": {
+            "label": "Highly developed",
+            "cls": "highly",
+            "path": "Refine"
+          },
+          "why": "The draft consistently demonstrates a specific short or long term direction, a clear reason the degree is needed now, goals proportionate to the evidence.",
+          "evidence": "The combined degree is not a collection of two credentials.",
+          "nextAction": "Preserve this strength while tightening language and removing repetition.",
+          "criteriaMet": [
+            "a specific short or long term direction",
+            "a clear reason the degree is needed now",
+            "goals proportionate to the evidence",
+            "connection between goals and program training"
+          ],
+          "criteriaGaps": []
+        },
+        {
+          "id": "degreeIntegration",
+          "label": "Integration of both degrees",
+          "weight": 12,
+          "score": 100,
+          "level": 4,
+          "levelLabel": "Exemplary",
+          "band": {
+            "label": "Highly developed",
+            "cls": "highly",
+            "path": "Refine"
+          },
+          "why": "The draft consistently demonstrates both degrees are explicitly necessary, the disciplines are integrated rather than listed separately, integration connected to a concrete career problem.",
+          "evidence": "The combined degree is not a collection of two credentials.",
+          "nextAction": "Preserve this strength while tightening language and removing repetition.",
+          "criteriaMet": [
+            "both degrees are explicitly necessary",
+            "the disciplines are integrated rather than listed separately",
+            "integration connected to a concrete career problem"
+          ],
+          "criteriaGaps": []
+        },
+        {
+          "id": "leadershipImpact",
+          "label": "Leadership and demonstrated impact",
+          "weight": 8,
+          "score": 100,
+          "level": 4,
+          "levelLabel": "Exemplary",
+          "band": {
+            "label": "Highly developed",
+            "cls": "highly",
+            "path": "Refine"
+          },
+          "why": "The draft consistently demonstrates a clear leadership role or decision, people, resources, or partnerships influenced, visible impact or outcome.",
+          "evidence": "I later managed a broader implementation portfolio with a budget of approximately $250,000, coordinated district health teams and nonprofit partners, and trained 42 frontline health workers on performance review.",
+          "nextAction": "Preserve this strength while tightening language and removing repetition.",
+          "criteriaMet": [
+            "a clear leadership role or decision",
+            "people, resources, or partnerships influenced",
+            "visible impact or outcome"
+          ],
+          "criteriaGaps": []
+        },
+        {
+          "id": "careerLogicWhyNow",
+          "label": "Career logic and why now",
+          "weight": 10,
+          "score": 100,
+          "level": 4,
+          "levelLabel": "Exemplary",
+          "band": {
+            "label": "Highly developed",
+            "cls": "highly",
+            "path": "Refine"
+          },
+          "why": "The draft consistently demonstrates a clear reason for pursuing the degree now, logical progression from past to next step, degree connected to specific future work.",
+          "evidence": "The combined degree is not a collection of two credentials.",
+          "nextAction": "Preserve this strength while tightening language and removing repetition.",
+          "criteriaMet": [
+            "a clear reason for pursuing the degree now",
+            "logical progression from past to next step",
+            "degree connected to specific future work"
+          ],
+          "criteriaGaps": []
+        }
+      ],
+      "overall": 94,
+      "band": {
+        "label": "Highly developed",
+        "cls": "highly",
+        "path": "Refine"
+      },
+      "strongest": {
+        "id": "promptAlignment",
+        "label": "Prompt alignment",
+        "weight": 12,
+        "score": 100,
+        "level": 4,
+        "levelLabel": "Exemplary",
+        "band": {
+          "label": "Highly developed",
+          "cls": "highly",
+          "path": "Refine"
+        },
+        "why": "The draft consistently demonstrates direct coverage of the supplied prompt, response to the selected statement type, visible alignment with the target degree or program.",
+        "evidence": "The combined degree is not a collection of two credentials.",
+        "nextAction": "Preserve this strength while tightening language and removing repetition.",
+        "criteriaMet": [
+          "direct coverage of the supplied prompt",
+          "response to the selected statement type",
+          "visible alignment with the target degree or program"
+        ],
+        "criteriaGaps": []
+      },
+      "weakest": {
+        "id": "voiceAuthenticity",
+        "label": "Voice, grounding, and originality",
+        "weight": 8,
+        "score": 60,
+        "level": 2,
+        "levelLabel": "Developing",
+        "band": {
+          "label": "Material gaps",
+          "cls": "developing",
+          "path": "Refine"
+        },
+        "why": "The draft demonstrates reflection carried by evidence rather than a stated moral, but it is constrained by applicant-specific grounding and distinctive detail that belongs to this applicant. This dimension reviews writing patterns and grounding. It does not determine authorship or estimate AI use.",
+        "evidence": "These responsibilities strengthened my ability to lead under pressure, but they also exposed gaps in my preparation.",
+        "nextAction": "Add the actual role, setting, method, decision, population, or result behind each major claim.",
+        "criteriaMet": [
+          "reflection carried by evidence rather than a stated moral"
+        ],
+        "criteriaGaps": [
+          "applicant-specific grounding",
+          "distinctive detail that belongs to this applicant",
+          "control of formulaic and transferable patterns",
+          "interview-defensible sentences"
+        ]
+      },
+      "biggestProblem": "Voice, grounding, and originality: Add the actual role, setting, method, decision, population, or result behind each major claim.",
+      "path": "Refine",
+      "revisionOpportunity": "Low",
+      "integrityFlags": [],
+      "calibrationNote": "Criterion referenced against Statement Studio standard v1.9. Before-and-after statement pairs inform the behavioural anchors, not admission prediction."
+    },
+    "displayScore": 94
+  },
+  "categories": [
+    {
+      "label": "Prompt alignment",
+      "key": "promptAlignment",
+      "score": 100,
+      "level": 4,
+      "levelLabel": "Exemplary",
+      "why": "The draft consistently demonstrates direct coverage of the supplied prompt, response to the selected statement type, visible alignment with the target degree or program.",
+      "evidence": "The combined degree is not a collection of two credentials.",
+      "nextAction": "Preserve this strength while tightening language and removing repetition.",
+      "weight": 12,
+      "criteriaMet": [
+        "direct coverage of the supplied prompt",
+        "response to the selected statement type",
+        "visible alignment with the target degree or program"
+      ],
+      "criteriaGaps": []
+    },
+    {
+      "label": "Throughline and structure",
+      "key": "throughlineStructure",
+      "score": 90,
+      "level": 4,
+      "levelLabel": "Exemplary",
+      "why": "The draft demonstrates one coherent throughline across the statement and logical paragraph progression, but it is constrained by a specific opening that establishes the central concern.",
+      "evidence": "During a vaccine delivery project in northern Ghana, I watched a technically sound public health plan fail because operational decisions were fragmented.",
+      "nextAction": "Replace the opening with a specific earned moment, problem, or idea that establishes the central thread.",
+      "weight": 14,
+      "criteriaMet": [
+        "one coherent throughline across the statement",
+        "logical paragraph progression",
+        "purposeful paragraph length and separation",
+        "a close that resolves the direction of the statement"
+      ],
+      "criteriaGaps": [
+        "a specific opening that establishes the central concern"
+      ]
+    },
+    {
+      "label": "Evidence and specificity",
+      "key": "evidenceSpecificity",
+      "score": 100,
+      "level": 4,
+      "levelLabel": "Exemplary",
+      "why": "The draft consistently demonstrates specific actions taken by the applicant, visible outcomes or consequences, quantified scale where appropriate.",
+      "evidence": "I later managed a broader implementation portfolio with a budget of approximately $250,000, coordinated district health teams and nonprofit partners, and trained 42 frontline health workers on performance review.",
+      "nextAction": "Preserve this strength while tightening language and removing repetition.",
+      "weight": 18,
+      "criteriaMet": [
+        "specific actions taken by the applicant",
+        "visible outcomes or consequences",
+        "quantified scale where appropriate",
+        "depth rather than a resume style list",
+        "claims supported by direct evidence"
+      ],
+      "criteriaGaps": []
+    },
+    {
+      "label": "Prose control",
+      "key": "proseControl",
+      "score": 90,
+      "level": 4,
+      "levelLabel": "Exemplary",
+      "why": "The draft demonstrates control of repetition and generic language and sentence length and syntactic control, but it is constrained by sentence clarity and readability.",
+      "evidence": "During a vaccine delivery project in northern Ghana, I watched a technically sound public health plan fail because operational decisions were fragmented.",
+      "nextAction": "Shorten or divide sentences that carry several ideas at once.",
+      "weight": 10,
+      "criteriaMet": [
+        "control of repetition and generic language",
+        "sentence length and syntactic control",
+        "word limit discipline",
+        "paragraph level economy"
+      ],
+      "criteriaGaps": [
+        "sentence clarity and readability"
+      ]
+    },
+    {
+      "label": "Voice, grounding, and originality",
+      "key": "voiceAuthenticity",
+      "score": 60,
+      "level": 2,
+      "levelLabel": "Developing",
+      "why": "The draft demonstrates reflection carried by evidence rather than a stated moral, but it is constrained by applicant-specific grounding and distinctive detail that belongs to this applicant. This dimension reviews writing patterns and grounding. It does not determine authorship or estimate AI use.",
+      "evidence": "These responsibilities strengthened my ability to lead under pressure, but they also exposed gaps in my preparation.",
+      "nextAction": "Add the actual role, setting, method, decision, population, or result behind each major claim.",
+      "weight": 8,
+      "criteriaMet": [
+        "reflection carried by evidence rather than a stated moral"
+      ],
+      "criteriaGaps": [
+        "applicant-specific grounding",
+        "distinctive detail that belongs to this applicant",
+        "control of formulaic and transferable patterns",
+        "interview-defensible sentences"
+      ]
+    },
+    {
+      "label": "Goals and direction",
+      "key": "goalsDirection",
+      "score": 100,
+      "level": 4,
+      "levelLabel": "Exemplary",
+      "why": "The draft consistently demonstrates a specific short or long term direction, a clear reason the degree is needed now, goals proportionate to the evidence.",
+      "evidence": "The combined degree is not a collection of two credentials.",
+      "nextAction": "Preserve this strength while tightening language and removing repetition.",
+      "weight": 8,
+      "criteriaMet": [
+        "a specific short or long term direction",
+        "a clear reason the degree is needed now",
+        "goals proportionate to the evidence",
+        "connection between goals and program training"
+      ],
+      "criteriaGaps": []
+    },
+    {
+      "label": "Integration of both degrees",
+      "key": "degreeIntegration",
+      "score": 100,
+      "level": 4,
+      "levelLabel": "Exemplary",
+      "why": "The draft consistently demonstrates both degrees are explicitly necessary, the disciplines are integrated rather than listed separately, integration connected to a concrete career problem.",
+      "evidence": "The combined degree is not a collection of two credentials.",
+      "nextAction": "Preserve this strength while tightening language and removing repetition.",
+      "weight": 12,
+      "criteriaMet": [
+        "both degrees are explicitly necessary",
+        "the disciplines are integrated rather than listed separately",
+        "integration connected to a concrete career problem"
+      ],
+      "criteriaGaps": []
+    },
+    {
+      "label": "Leadership and demonstrated impact",
+      "key": "leadershipImpact",
+      "score": 100,
+      "level": 4,
+      "levelLabel": "Exemplary",
+      "why": "The draft consistently demonstrates a clear leadership role or decision, people, resources, or partnerships influenced, visible impact or outcome.",
+      "evidence": "I later managed a broader implementation portfolio with a budget of approximately $250,000, coordinated district health teams and nonprofit partners, and trained 42 frontline health workers on performance review.",
+      "nextAction": "Preserve this strength while tightening language and removing repetition.",
+      "weight": 8,
+      "criteriaMet": [
+        "a clear leadership role or decision",
+        "people, resources, or partnerships influenced",
+        "visible impact or outcome"
+      ],
+      "criteriaGaps": []
+    },
+    {
+      "label": "Career logic and why now",
+      "key": "careerLogicWhyNow",
+      "score": 100,
+      "level": 4,
+      "levelLabel": "Exemplary",
+      "why": "The draft consistently demonstrates a clear reason for pursuing the degree now, logical progression from past to next step, degree connected to specific future work.",
+      "evidence": "The combined degree is not a collection of two credentials.",
+      "nextAction": "Preserve this strength while tightening language and removing repetition.",
+      "weight": 10,
+      "criteriaMet": [
+        "a clear reason for pursuing the degree now",
+        "logical progression from past to next step",
+        "degree connected to specific future work"
+      ],
+      "criteriaGaps": []
+    }
+  ],
+  "readiness": [
+    "Highly developed",
+    "The draft meets most criterion anchors at a high level. Final work should focus on precision, economy, and any remaining prompt gaps."
+  ],
+  "context": "Combined degree statement · MPH/MBA · Health systems and healthcare management · Business and leadership · Johns Hopkins University · MPH and MBA dual degree",
+  "strongestCategory": {
+    "label": "Prompt alignment",
+    "key": "promptAlignment",
+    "score": 100,
+    "level": 4,
+    "levelLabel": "Exemplary",
+    "why": "The draft consistently demonstrates direct coverage of the supplied prompt, response to the selected statement type, visible alignment with the target degree or program.",
+    "evidence": "The combined degree is not a collection of two credentials.",
+    "nextAction": "Preserve this strength while tightening language and removing repetition.",
+    "weight": 12,
+    "criteriaMet": [
+      "direct coverage of the supplied prompt",
+      "response to the selected statement type",
+      "visible alignment with the target degree or program"
+    ],
+    "criteriaGaps": []
+  },
+  "weakestCategory": {
+    "label": "Voice, grounding, and originality",
+    "key": "voiceAuthenticity",
+    "score": 60,
+    "level": 2,
+    "levelLabel": "Developing",
+    "why": "The draft demonstrates reflection carried by evidence rather than a stated moral, but it is constrained by applicant-specific grounding and distinctive detail that belongs to this applicant. This dimension reviews writing patterns and grounding. It does not determine authorship or estimate AI use.",
+    "evidence": "These responsibilities strengthened my ability to lead under pressure, but they also exposed gaps in my preparation.",
+    "nextAction": "Add the actual role, setting, method, decision, population, or result behind each major claim.",
+    "weight": 8,
+    "criteriaMet": [
+      "reflection carried by evidence rather than a stated moral"
+    ],
+    "criteriaGaps": [
+      "applicant-specific grounding",
+      "distinctive detail that belongs to this applicant",
+      "control of formulaic and transferable patterns",
+      "interview-defensible sentences"
+    ]
+  },
+  "maturityDimension": {
+    "id": "careerLogicWhyNow",
+    "label": "Career logic and why now",
+    "weight": 10,
+    "score": 100,
+    "level": 4,
+    "levelLabel": "Exemplary",
+    "band": {
+      "label": "Highly developed",
+      "cls": "highly",
+      "path": "Refine"
+    },
+    "why": "The draft consistently demonstrates a clear reason for pursuing the degree now, logical progression from past to next step, degree connected to specific future work.",
+    "evidence": "The combined degree is not a collection of two credentials.",
+    "nextAction": "Preserve this strength while tightening language and removing repetition.",
+    "criteriaMet": [
+      "a clear reason for pursuing the degree now",
+      "logical progression from past to next step",
+      "degree connected to specific future work"
+    ],
+    "criteriaGaps": []
+  },
+  "sentenceFindings": [
+    {
+      "index": 22,
+      "text": "I am drawn to this program because the curriculum combines courses in health systems, operations, finance, and strategy with an applied practicum.",
+      "score": 56,
+      "status": "Refine",
+      "cls": "refine",
+      "tags": [
+        "Program fit"
+      ],
+      "whatWorks": "It attempts to connect the applicant to the target program or learning environment.",
+      "readerMessage": "The fit language risks reading as program description rather than applicant-program alignment.",
+      "guidance": "Name the resource and show how the applicant would use it. Add the applicant’s contribution when it is specific.",
+      "signals": {
+        "quantified": false,
+        "action": false,
+        "outcome": false,
+        "fit": true,
+        "goal": false,
+        "rationale": false,
+        "insight": false,
+        "problem": false,
+        "contribution": false,
+        "generic": false,
+        "wordCount": 22,
+        "linkedOutcome": false
+      }
+    },
+    {
+      "index": 12,
+      "text": "I have conducted statistical analysis using R, supported survey design, and used implementation data to compare performance across districts.",
+      "score": 60,
+      "status": "Refine",
+      "cls": "refine",
+      "tags": [
+        "Action"
+      ],
+      "whatWorks": "The sentence has a clear grammatical function but needs a more visible admissions purpose.",
+      "readerMessage": "The action is visible, but the result and significance remain unclear.",
+      "guidance": "Add the result, scale, change, or lesson that followed the action.",
+      "signals": {
+        "quantified": false,
+        "action": true,
+        "outcome": false,
+        "fit": false,
+        "goal": false,
+        "rationale": false,
+        "insight": false,
+        "problem": false,
+        "contribution": false,
+        "generic": false,
+        "wordCount": 19,
+        "linkedOutcome": false
+      }
+    },
+    {
+      "index": 16,
+      "text": "My career goal is to lead health delivery organizations that can allocate resources, manage multidisciplinary teams, build sustainable partnerships, and make disciplined decisions under uncertainty.",
+      "score": 60,
+      "status": "Refine",
+      "cls": "refine",
+      "tags": [
+        "Career direction"
+      ],
+      "whatWorks": "It clarifies the applicant’s direction or explains why further training is needed.",
+      "readerMessage": "The ambition is clear, but it is not yet supported by preparation or program logic.",
+      "guidance": "Link the goal to prior evidence and the specific training required next.",
+      "signals": {
+        "quantified": false,
+        "action": false,
+        "outcome": false,
+        "fit": false,
+        "goal": true,
+        "rationale": false,
+        "insight": false,
+        "problem": false,
+        "contribution": false,
+        "generic": false,
+        "wordCount": 25,
+        "linkedOutcome": false
+      }
+    },
+    {
+      "index": 27,
+      "text": "In the long term, my objective is to build an organization that helps governments translate policy into reliable delivery systems.",
+      "score": 60,
+      "status": "Refine",
+      "cls": "refine",
+      "tags": [
+        "Career direction"
+      ],
+      "whatWorks": "It clarifies the applicant’s direction or explains why further training is needed.",
+      "readerMessage": "The ambition is clear, but it is not yet supported by preparation or program logic.",
+      "guidance": "Link the goal to prior evidence and the specific training required next.",
+      "signals": {
+        "quantified": false,
+        "action": false,
+        "outcome": false,
+        "fit": false,
+        "goal": true,
+        "rationale": false,
+        "insight": false,
+        "problem": false,
+        "contribution": false,
+        "generic": false,
+        "wordCount": 20,
+        "linkedOutcome": false
+      }
+    },
+    {
+      "index": 5,
+      "text": "Within eight weeks, the district reduced missed settlements by 38 percent, restored regular outreach across all twelve communities, and vaccinated more than 18,000 children.",
+      "score": 92,
+      "status": "Keep",
+      "cls": "keep",
+      "tags": [
+        "Outcome",
+        "Quantified",
+        "Problem framing",
+        "Evidence chain"
+      ],
+      "whatWorks": "It establishes scale or urgency, giving the reader a concrete frame for the problem.",
+      "readerMessage": "The stakes are clear, but the reader is still waiting to see the applicant’s agency.",
+      "guidance": "Retain the problem framing and move immediately to the applicant’s decision, action, or analysis.",
+      "signals": {
+        "quantified": true,
+        "action": false,
+        "outcome": true,
+        "fit": false,
+        "goal": false,
+        "rationale": false,
+        "insight": false,
+        "problem": true,
+        "contribution": false,
+        "generic": false,
+        "wordCount": 25,
+        "linkedOutcome": true
+      }
+    },
+    {
+      "index": 18,
+      "text": "The combined degree is not a collection of two credentials.",
+      "score": 89,
+      "status": "Keep",
+      "cls": "keep",
+      "tags": [
+        "Quantified",
+        "Program fit",
+        "Degree rationale"
+      ],
+      "whatWorks": "It establishes scale or urgency, giving the reader a concrete frame for the problem.",
+      "readerMessage": "The context is concrete, but the applicant’s role or decision is not yet visible in this sentence.",
+      "guidance": "Keep the scale, then connect it quickly to what the applicant did or learned.",
+      "signals": {
+        "quantified": true,
+        "action": false,
+        "outcome": false,
+        "fit": true,
+        "goal": false,
+        "rationale": true,
+        "insight": false,
+        "problem": false,
+        "contribution": false,
+        "generic": false,
+        "wordCount": 10,
+        "linkedOutcome": false
+      }
+    },
+    {
+      "index": 8,
+      "text": "I later managed a broader implementation portfolio with a budget of approximately $250,000, coordinated district health teams and nonprofit partners, and trained 42 frontline health workers on performance review.",
+      "score": 88,
+      "status": "Keep",
+      "cls": "keep",
+      "tags": [
+        "Action",
+        "Quantified",
+        "Evidence chain"
+      ],
+      "whatWorks": "It identifies a concrete responsibility and gives the reader useful scale.",
+      "readerMessage": "This sentence gives the reader a credible reason to believe the applicant’s claim.",
+      "guidance": "Retain the evidence and state how it supports readiness for the degree.",
+      "signals": {
+        "quantified": true,
+        "action": true,
+        "outcome": false,
+        "fit": false,
+        "goal": false,
+        "rationale": false,
+        "insight": false,
+        "problem": false,
+        "contribution": false,
+        "generic": false,
+        "wordCount": 30,
+        "linkedOutcome": true
+      }
+    },
+    {
+      "index": 9,
+      "text": "These responsibilities strengthened my ability to lead under pressure, but they also exposed gaps in my preparation.",
+      "score": 85,
+      "status": "Keep",
+      "cls": "keep",
+      "tags": [
+        "Outcome",
+        "Reflection",
+        "Evidence chain"
+      ],
+      "whatWorks": "It interprets the experience and shows how the applicant’s judgment changed.",
+      "readerMessage": "The result is plausible, but the reader cannot judge its scale or importance.",
+      "guidance": "Add a number, timeframe, comparison, or affected population when accurate.",
+      "signals": {
+        "quantified": false,
+        "action": false,
+        "outcome": true,
+        "fit": false,
+        "goal": false,
+        "rationale": false,
+        "insight": true,
+        "problem": false,
+        "contribution": false,
+        "generic": false,
+        "wordCount": 17,
+        "linkedOutcome": true
+      }
+    }
+  ],
+  "executive": {
+    "headline": "Highly developed",
+    "summary": "This draft scores 94/100 against the Statement Studio v1.9 criterion standard. Its strongest dimension is prompt alignment at 100/100. The single biggest constraint is voice, grounding, and originality at 60/100. Add the actual role, setting, method, decision, population, or result behind each major claim. The draft meets most criterion anchors at a high level. Final work should focus on precision, economy, and any remaining prompt gaps.",
+    "strongestLabel": "Prompt alignment ? Exemplary ? 100/100",
+    "strongestCopy": "?The combined degree is not a collection of two credentials.?",
+    "priorityLabel": "Voice, grounding, and originality ? Developing ? 60/100",
+    "priorityCopy": "Add the actual role, setting, method, decision, population, or result behind each major claim."
+  },
+  "widgets": {
+    "revisionOpportunityWidth": 30,
+    "revisionOpportunityCopy": "Low revision opportunity. The recommended path is refine. This describes the amount and type of writing work identified, not a predicted future score or admission outcome.",
+    "sentenceMix": {
+      "keep": 32.142857142857146,
+      "refine": 67.85714285714286,
+      "rebuild": 0
+    }
+  },
+  "evidenceCards": [
+    {
+      "cls": "supported",
+      "type": "Supported",
+      "title": "Visible action and outcome",
+      "quote": "Within eight weeks, the district reduced missed settlements by 38 percent, restored regular outreach across all twelve communities, and vaccinated more than 18,000 children.",
+      "status": "Retain this evidence and make the relevance to the degree explicit."
+    },
+    {
+      "cls": "partial",
+      "type": "Partially supported",
+      "title": "Credible claim, incomplete proof",
+      "quote": "I could assess the health problem and recommend interventions, yet I lacked formal training in organizational strategy, managerial finance, and operations at scale.",
+      "status": "Add the decision, method, scale, result, or responsibility that proves readiness."
+    },
+    {
+      "cls": "gap",
+      "type": "Evidence gap",
+      "title": "Claim currently exceeds the proof",
+      "quote": "My career goal is to lead health delivery organizations that can allocate resources, manage multidisciplinary teams, build sustainable partnerships, and make disciplined decisions under uncertainty.",
+      "status": "Replace general language with a concrete example or remove the claim."
+    }
+  ],
+  "paragraphs": [
+    {
+      "index": 1,
+      "text": "During a vaccine delivery project in northern Ghana, I watched a technically sound public health plan fail because operational decisions were fragmented. Twelve rural communities had missed scheduled outreach for two consecutive weeks. As a health delivery adviser, I led a six person district team to analyze weekly coverage data, map delayed routes, and review cold chain and transport constraints. We redesigned the dispatch schedule, assigned clear decision rights, and introduced a weekly operations review. Within eight weeks, the district reduced missed settlements by 38 percent, restored regular outreach across all twelve communities, and vaccinated more than 18,000 children.",
+      "wordCount": 100,
+      "score": 90,
+      "role": "Opening and motivation",
+      "quantified": 3,
+      "action": 2,
+      "outcome": 1,
+      "fit": 0,
+      "generic": 0,
+      "status": {
+        "label": "Highly developed",
+        "cls": "highly"
+      },
+      "excerpt": "During a vaccine delivery project in northern Ghana, I watched a technically sound public health plan…",
+      "notes": [
+        "Good: the opening includes concrete detail. Make sure it points clearly to your motivation for this degree.",
+        "Trim filler words to tighten this paragraph.",
+        "Good: shows action and ownership. Quantify the impact if you can."
+      ]
+    },
+    {
+      "index": 2,
+      "text": "The project changed how I understood health leadership. Epidemiologic evidence could define who was being missed, but delivery depended on financing, supply chain management, team performance, negotiation, and accountability. I later managed a broader implementation portfolio with a budget of approximately $250,000, coordinated district health teams and nonprofit partners, and trained 42 frontline health workers on performance review. These responsibilities strengthened my ability to lead under pressure, but they also exposed gaps in my preparation. I could assess the health problem and recommend interventions, yet I lacked formal training in organizational strategy, managerial finance, and operations at scale.",
+      "wordCount": 99,
+      "score": 78,
+      "role": "Leadership and impact",
+      "quantified": 1,
+      "action": 1,
+      "outcome": 1,
+      "fit": 0,
+      "generic": 0,
+      "status": {
+        "label": "Strong",
+        "cls": "strong"
+      },
+      "excerpt": "The project changed how I understood health leadership. Epidemiologic evidence could define who was…",
+      "notes": [
+        "Good: shows action and ownership. Quantify the impact if you can."
+      ]
+    },
+    {
+      "index": 3,
+      "text": "My public health training has prepared me to evaluate disease burden, interpret quantitative evidence, and design programs for population impact. I have conducted statistical analysis using R, supported survey design, and used implementation data to compare performance across districts. This preparation allows me to ask which populations are being missed, why delivery differs across settings, and whether an intervention is producing equitable results. The MPH will deepen my training in health systems, program evaluation, and policy analysis so that I can design strategies that are technically credible and responsive to population needs.",
+      "wordCount": 92,
+      "score": 65,
+      "role": "Program fit",
+      "quantified": 0,
+      "action": 1,
+      "outcome": 0,
+      "fit": 0,
+      "generic": 0,
+      "status": {
+        "label": "Developing",
+        "cls": "developing"
+      },
+      "excerpt": "My public health training has prepared me to evaluate disease burden, interpret quantitative evidence,…",
+      "notes": [
+        "Reads cleanly. Check that it advances your central argument for fit."
+      ]
+    },
+    {
+      "index": 4,
+      "text": "The MBA is equally necessary. My career goal is to lead health delivery organizations that can allocate resources, manage multidisciplinary teams, build sustainable partnerships, and make disciplined decisions under uncertainty. The MBA will give me the finance, operations, and organizational leadership skills I still lack. The combined degree is not a collection of two credentials. It is the training required to connect population evidence with institutional execution. The MPH will help me determine what should be done and how impact should be measured. The MBA will prepare me to build the organization, financing model, and operating system required to deliver it.",
+      "wordCount": 101,
+      "score": 76,
+      "role": "Career direction",
+      "quantified": 1,
+      "action": 0,
+      "outcome": 0,
+      "fit": 1,
+      "generic": 0,
+      "status": {
+        "label": "Strong",
+        "cls": "strong"
+      },
+      "excerpt": "The MBA is equally necessary. My career goal is to lead health delivery organizations that can allocate…",
+      "notes": [
+        "Adds little concrete evidence. Name an outcome, a number, a method, or a specific result."
+      ]
+    },
+    {
+      "index": 5,
+      "text": "I am drawn to this program because the curriculum combines courses in health systems, operations, finance, and strategy with an applied practicum. I am also interested in faculty and research centers whose work on health financing, implementation, and organizational performance aligns with my goal of improving delivery in low resource settings. The opportunity to learn with public health practitioners and business leaders would help me test solutions from both perspectives. I would contribute experience from clinical practice, outbreak response, policy advising, quantitative analysis, and implementation across government and nonprofit settings.",
+      "wordCount": 90,
+      "score": 70,
+      "role": "Program fit",
+      "quantified": 0,
+      "action": 0,
+      "outcome": 0,
+      "fit": 2,
+      "generic": 0,
+      "status": {
+        "label": "Strong",
+        "cls": "strong"
+      },
+      "excerpt": "I am drawn to this program because the curriculum combines courses in health systems, operations,…",
+      "notes": [
+        "Reads cleanly. Check that it advances your central argument for fit."
+      ]
+    },
+    {
+      "index": 6,
+      "text": "After completing the degree, I plan to lead regional health delivery initiatives and scale operating models that improve emergency preparedness, vaccination, and essential health services. In the long term, my objective is to build an organization that helps governments translate policy into reliable delivery systems. I want to leave the program able to connect evidence with execution, public purpose with financial discipline, and health goals with accountable management.",
+      "wordCount": 68,
+      "score": 74,
+      "role": "Program fit",
+      "quantified": 0,
+      "action": 0,
+      "outcome": 0,
+      "fit": 2,
+      "generic": 0,
+      "status": {
+        "label": "Strong",
+        "cls": "strong"
+      },
+      "excerpt": "After completing the degree, I plan to lead regional health delivery initiatives and scale operating…",
+      "notes": [
+        "Adds little concrete evidence. Name an outcome, a number, a method, or a specific result.",
+        "Trim filler words to tighten this paragraph."
+      ]
+    }
+  ],
+  "lists": {
+    "compelling": [
+      "You reference concrete program or faculty fit.",
+      "You use specific numbers or measurable outcomes.",
+      "You name specific methods or analyses.",
+      "You ground your work in a specific population, problem, and setting.",
+      "You show ownership through strong action and implementation."
+    ],
+    "generic": [
+      "No common cliche phrases detected. Keep the voice specific and personal."
+    ],
+    "unsupported": [
+      "Your experience needs outcomes. Add what changed and by how much."
+    ],
+    "cut": [
+      "Filler words: very.",
+      "Overused terms you repeat often: delivery, health."
+    ],
+    "expand": [
+      "Connect business strategy to health systems. Show implementation, management scope, and how the two disciplines combine in your goals.",
+      "Benchmark guidance for MPH/MBA: strong statements reward leadership, strategy, health systems thinking. Watch for two separate goals not integrated, management language without health grounding."
+    ]
+  }
+}

@@ -4,9 +4,9 @@ import { Link, useLocation } from 'react-router'
 
 const navigationItems = [
   { label: 'Pathways', to: '/#pathways', description: 'Choose the right review track' },
-  { label: 'How it works', to: '/#methodology', description: 'See how each finding is supported' },
-  { label: 'Sample report', to: '/#sample-report', description: 'Explore a sample assessment extract' },
-  { label: 'Pricing', to: '/#pricing', description: 'Compare one-draft and cycle access' },
+  { label: 'How it works', to: '/methodology', description: 'See how each finding is supported' },
+  { label: 'Sample report', to: '/sample-report', description: 'Explore a complete assessment example' },
+  { label: 'Pricing', to: '/pricing', description: 'Compare one-draft and cycle access' },
 ] as const
 
 const focusClasses = 'focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-accent'
@@ -72,10 +72,12 @@ export default function SiteHeader() {
   }, [closeMenu, menuOpen])
 
   const currentSection = `${location.pathname}${location.hash}`
+  const isCurrentSection = (to: string) => currentSection === to ||
+    (to === '/sample-report' && location.pathname.startsWith('/sample-report/'))
 
   return (
     <>
-      <header className="sticky top-0 z-100 grid min-h-[74px] grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-navy/7 bg-canvas/90 px-[clamp(15px,2.7vw,42px)] font-sans shadow-header backdrop-blur-[24px] backdrop-saturate-[145%] min-[1081px]:grid-cols-[auto_1fr_auto] min-[1081px]:gap-[34px]">
+      <header className="sticky top-0 z-100 grid min-h-[74px] grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-navy/7 bg-canvas/90 px-[clamp(15px,2.7vw,42px)] font-sans shadow-header backdrop-blur-[24px] backdrop-saturate-[145%] max-[721px]:min-h-[68px] min-[1081px]:grid-cols-[auto_1fr_auto] min-[1081px]:gap-[34px]">
         <Link
           className={`inline-flex w-fit items-center gap-[11px] text-left no-underline ${focusClasses}`}
           to="/"
@@ -100,18 +102,18 @@ export default function SiteHeader() {
 
         <nav className="hidden items-center gap-[clamp(18px,2vw,32px)] justify-self-center min-[1081px]:flex" aria-label="Primary navigation">
           {navigationItems.map((item) => (
-            <Link key={item.to} className={desktopLinkClasses} to={item.to} aria-current={currentSection === item.to ? 'location' : undefined}>
+            <Link key={item.to} className={desktopLinkClasses} to={item.to} aria-current={isCurrentSection(item.to) ? 'location' : undefined}>
               {item.label}
             </Link>
           ))}
-          <Link className={desktopLinkClasses} to="/?panel=account">Sign in</Link>
+          <Link className={desktopLinkClasses} to="/account" aria-current={isCurrentSection('/account') ? 'location' : undefined}>Sign in</Link>
         </nav>
 
         <div className="flex items-center justify-end gap-3">
           <span className="hidden rounded-full border border-positive/25 bg-positive/6 px-2.5 py-[7px] text-[.65rem] font-bold tracking-[.17em] whitespace-nowrap text-positive uppercase min-[1280px]:inline-flex">Private first read</span>
           <Link
             className={`hidden min-h-11 items-center justify-center rounded-control bg-accent px-[18px] text-[.9rem] font-bold tracking-[-.01em] whitespace-nowrap text-white no-underline shadow-action transition duration-200 hover:-translate-y-0.5 hover:bg-accent-dark hover:shadow-action-hover motion-reduce:transform-none motion-reduce:transition-none min-[761px]:inline-flex ${focusClasses}`}
-            to="/?panel=assessment"
+            to="/assessment"
             onClick={() => closeMenu(false)}
           >
             Review my draft free
@@ -151,7 +153,7 @@ export default function SiteHeader() {
                 key={item.to}
                 className={`grid min-h-16 grid-cols-[34px_minmax(0,1fr)_auto] items-center gap-[11px] rounded-2xl border border-navy/8 bg-white/70 px-[13px] py-2.5 text-left text-ink no-underline shadow-[0_7px_20px_rgba(17,19,27,.035)] transition duration-150 hover:translate-x-0.5 hover:border-accent/25 hover:bg-white aria-[current=location]:border-accent/25 aria-[current=location]:bg-white motion-reduce:transform-none motion-reduce:transition-none max-[420px]:min-h-[60px] ${focusClasses}`}
                 to={item.to}
-                aria-current={currentSection === item.to ? 'location' : undefined}
+                aria-current={isCurrentSection(item.to) ? 'location' : undefined}
                 onClick={() => closeMenu()}
               >
                 <span className="text-[.72rem] font-extrabold tracking-[.08em] text-accent-dark">{String(index + 1).padStart(2, '0')}</span>
@@ -161,10 +163,10 @@ export default function SiteHeader() {
             ))}
           </div>
           <div className="grid grid-cols-2 gap-2">
-            <Link className={utilityLinkClasses} to="/#pricing" onClick={() => closeMenu()}>Expert review</Link>
-            <Link className={utilityLinkClasses} to="/?panel=account" onClick={() => closeMenu()}>Sign in</Link>
+            <Link className={utilityLinkClasses} to="/pricing" onClick={() => closeMenu()}>Expert review</Link>
+            <Link className={utilityLinkClasses} to="/account" aria-current={isCurrentSection('/account') ? 'location' : undefined} onClick={() => closeMenu()}>Sign in</Link>
           </div>
-          <Link className={`flex min-h-[54px] items-center justify-between rounded-2xl bg-accent px-[18px] text-[.88rem] font-bold text-white no-underline shadow-action transition-colors hover:bg-accent-dark ${focusClasses}`} to="/?panel=assessment" onClick={() => closeMenu()}>
+          <Link className={`flex min-h-[54px] items-center justify-between rounded-2xl bg-accent px-[18px] text-[.88rem] font-bold text-white no-underline shadow-action transition-colors hover:bg-accent-dark ${focusClasses}`} to="/assessment" onClick={() => closeMenu()}>
             <span>Review my draft free</span><i className="text-base not-italic" aria-hidden="true">↗</i>
           </Link>
           <p className="m-0 flex items-center justify-center gap-[7px] text-[.72rem] font-semibold text-slate"><span className="size-[7px] rounded-full bg-positive shadow-[0_0_0_4px_rgba(25,115,96,.1)]" aria-hidden="true" /> Private first read · no account required</p>
