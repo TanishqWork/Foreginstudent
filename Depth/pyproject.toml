@@ -17,6 +17,7 @@ dependencies = [
     "pwdlib[argon2]>=0.3.0,<1",
     "sqlalchemy>=2.0.0,<3",
     "uvicorn[standard]>=0.40.0,<1",
+    "openai>=2,<3",
 ]
 
 [project.optional-dependencies]

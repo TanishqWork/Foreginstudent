@@ -33,6 +33,8 @@ src/depth/
   schemas/
     auth.py               Login request and public account/session responses
     health.py             Health response contracts
+  integrations/
+    llm.py                Async text generation through OpenAI's Responses API
   security/
     passwords.py          Argon2id password hashing and verification
     tokens.py             JWT signing and signature/claim validation
@@ -41,7 +43,7 @@ src/depth/
   controllers/            HTTP input/output, cookies, public response serialization
   routes/                 Endpoint declarations delegating to controllers
 migrations/               Versioned database schema changes
-tests/                    Tests use a separate PostgreSQL database
+tests/                    Mocked LLM unit tests and isolated PostgreSQL tests
 compose.yaml              Backend/PostgreSQL/pgAdmin service definitions
 Dockerfile                Backend image
 .env                      Ignored local secrets
@@ -104,6 +106,30 @@ can sign in; neither flow is implemented here.
 The earlier email-link design note is archived under `docs/proposals/`. It is inactive,
 and adding that authentication method later requires an explicit instruction.
 
+## Reusable LLM component
+
+Set `OPENAI_API_KEY` in the backend's ignored `Depth/.env`. Call `generate_text`
+from an async backend service; it returns the response as a plain string.
+
+```python
+from depth.integrations.llm import generate_text
+
+
+async def review_text(statement: str, prompt: str) -> str:
+    text = await generate_text(
+        input_prompt=statement,
+        system_prompt=prompt,
+        model="YOUR_MODEL_ID",
+        reasoning_effort="medium",
+        max_output_tokens=8192,
+    )
+    return text
+```
+
+Optional settings are `reasoning_effort`, `verbosity`, `max_output_tokens`, and
+`temperature`; support depends on the selected model. No assessment endpoint or
+frontend flow calls this function yet.
+
 ## Run Python outside Docker
 
 Run from `Depth`:
@@ -137,9 +163,16 @@ periodically by a scheduled maintenance task.
 
 ## Tests
 
-Tests require a separate PostgreSQL database ending in `_test`; they never target the
-application database. From `Depth`, create it once and run migrations/tests without
-printing the database URL:
+The LLM unit tests use mocked provider responses and need no API key, network call,
+or database. From `Depth`, run:
+
+```powershell
+uv run --extra dev pytest tests/test_llm.py -q
+```
+
+Database tests require a separate PostgreSQL database ending in `_test`; they never
+target the application database. From `Depth`, create it once and run migrations/tests
+without printing the database URL:
 
 ```powershell
 docker compose exec -T postgres createdb -U statement_studio statement_studio_test

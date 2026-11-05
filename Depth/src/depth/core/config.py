@@ -1,7 +1,7 @@
 from functools import lru_cache
 from urllib.parse import urlsplit
 
-from pydantic import Field, field_validator
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 JWT_TTL_SECONDS = 86_400
@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     frontend_url: str = "http://localhost:5173"
     api_url: str = "http://localhost:8000"
     cookie_secure: bool = False
+    openai_api_key: SecretStr | None = Field(default=None, repr=False)
 
     @field_validator("frontend_url", "api_url")
     @classmethod

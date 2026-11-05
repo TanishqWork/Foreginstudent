@@ -5,12 +5,18 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
 
-from depth.core.exceptions import AuthenticationError, RateLimitError
+from depth.core.exceptions import AuthenticationError, LLMError, RateLimitError
 
 logger = logging.getLogger(__name__)
 
 
 def register_exception_handlers(app: FastAPI) -> None:
+    @app.exception_handler(LLMError)
+    async def llm_error(request: Request, error: LLMError):
+        return JSONResponse(
+            status_code=502, content={"detail": "AI generation did not return a complete response."},
+        )
+
     @app.exception_handler(AuthenticationError)
     async def authentication_error(request: Request, error: AuthenticationError):
         return JSONResponse(status_code=401, content={"detail": "Invalid email, password, or session."})
