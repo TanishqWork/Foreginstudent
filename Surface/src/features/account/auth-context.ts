@@ -1,13 +1,14 @@
 import { createContext, useContext } from 'react'
-import type { AccountSession } from './auth'
+import type { AccountSession, LoginOutcome } from './auth'
 
 interface AuthContextValue {
   session: AccountSession | null
   loading: boolean
   error: string
   refresh: () => Promise<void>
-  login: (email: string, password: string) => Promise<void>
+  login: (email: string, password: string) => Promise<LoginOutcome>
   logout: () => Promise<void>
+  clearSession: () => void
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null)

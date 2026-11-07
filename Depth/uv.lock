@@ -243,9 +243,9 @@ dependencies = [
     { name = "alembic" },
     { name = "email-validator" },
     { name = "fastapi" },
+    { name = "httpx" },
     { name = "openai" },
     { name = "psycopg", extra = ["binary"] },
-    { name = "pwdlib", extra = ["argon2"] },
     { name = "pydantic-settings" },
     { name = "pyjwt" },
     { name = "sqlalchemy" },
@@ -254,7 +254,7 @@ dependencies = [
 
 [package.optional-dependencies]
 dev = [
-    { name = "httpx" },
+    { name = "pwdlib", extra = ["argon2"] },
     { name = "pytest" },
 ]
 
@@ -263,10 +263,10 @@ requires-dist = [
     { name = "alembic", specifier = ">=1.18.0,<2" },
     { name = "email-validator", specifier = ">=2.3.0,<3" },
     { name = "fastapi", specifier = ">=0.128.0,<1" },
-    { name = "httpx", marker = "extra == 'dev'", specifier = ">=0.28.0,<1" },
+    { name = "httpx", specifier = ">=0.28.0,<1" },
     { name = "openai", specifier = ">=2,<3" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.2.0,<4" },
-    { name = "pwdlib", extras = ["argon2"], specifier = ">=0.3.0,<1" },
+    { name = "pwdlib", extras = ["argon2"], marker = "extra == 'dev'", specifier = ">=0.3.0,<1" },
     { name = "pydantic-settings", specifier = ">=2.12.0,<3" },
     { name = "pyjwt", specifier = ">=2.10.0,<3" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0.0,<10" },

@@ -5,12 +5,23 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
 
-from depth.core.exceptions import AssessmentError, AuthenticationError, LLMError, RateLimitError
+from depth.core.exceptions import (
+    AssessmentError, AuthenticationError, AuthInputError, AuthProviderUnavailableError,
+    LLMError, RateLimitError,
+)
 
 logger = logging.getLogger(__name__)
 
 
 def register_exception_handlers(app: FastAPI) -> None:
+    @app.exception_handler(AuthProviderUnavailableError)
+    async def auth_provider_unavailable(request: Request, error: AuthProviderUnavailableError):
+        return JSONResponse(status_code=503, content={"detail": "Authentication is unavailable. Please try again later."})
+
+    @app.exception_handler(AuthInputError)
+    async def auth_input_error(request: Request, error: AuthInputError):
+        return JSONResponse(status_code=422, content={"detail": str(error)})
+
     @app.exception_handler(AssessmentError)
     async def assessment_error(request: Request, error: AssessmentError):
         errors = {

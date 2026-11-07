@@ -5,6 +5,7 @@ import MethodologyPage from './features/methodology/MethodologyPage'
 import SampleReportPage from './features/sample-report/SampleReportPage'
 import PricingPage from './features/pricing/PricingPage'
 import AccountPage from './features/account/AccountPage'
+import { ForgotPasswordPage, ResetPasswordPage } from './features/account/PasswordRecoveryPage'
 import AssessmentPage from './features/assessment/AssessmentPage'
 import { ui } from './features/landing-page/ui'
 
@@ -39,6 +40,8 @@ export default function App() {
       <Route path="/sample-report" element={<SampleReportPage />} />
       <Route path="/pricing" element={<PricingPage />} />
       <Route path="/account" element={<AccountPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/assessment" element={<AssessmentPage />} />
       <Route path="/sample-report/full" element={
         <Suspense fallback={

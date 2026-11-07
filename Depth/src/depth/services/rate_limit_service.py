@@ -13,14 +13,19 @@ class RateLimitService:
         self.db = db
         self.repository = repository
 
-    def check_login(self, email: str, ip: str) -> None:
+    def _check(self, flow: str, email: str, ip: str, email_limit: int) -> None:
         now = datetime.now(timezone.utc)
         window = floor(now.timestamp() / 900)
         expires_at = datetime.fromtimestamp((window + 1) * 900, timezone.utc)
-        for scope, identity, limit in (("login-ip", ip, 20), ("login-email", email, 5)):
+        for scope, identity, limit in ((flow + "-ip", ip, 20), (flow + "-email", email, email_limit)):
             key = sha256(f"{scope}:{identity}:{window}".encode()).hexdigest()
             if not self.repository.increment(key, expires_at, limit):
                 self.db.commit()
                 raise RateLimitError(max(1, ceil((expires_at - now).total_seconds())))
-        # Persist failed-attempt counters independently of the login transaction.
         self.db.commit()
+
+    def check_login(self, email: str, ip: str) -> None:
+        self._check("login", email, ip, 5)
+
+    def check_recovery(self, email: str, ip: str) -> None:
+        self._check("recovery", email, ip, 3)

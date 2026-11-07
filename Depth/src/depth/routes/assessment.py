@@ -3,8 +3,7 @@ from time import perf_counter
 
 from fastapi import APIRouter, Depends, Request, Response
 
-from depth.controllers import assessment_controller, complete_report_controller
-from depth.core.config import SESSION_COOKIE
+from depth.controllers import assessment_controller, auth_controller, complete_report_controller
 from depth.dependencies import get_assessment_store, get_auth_service
 from depth.models.auth_session import AuthSession
 from depth.schemas.assessment import AssessmentRequest
@@ -16,8 +15,8 @@ from depth.services.auth_service import AuthService
 router = APIRouter(prefix="/api/assessments", tags=["assessments"])
 
 
-def require_session(request: Request, service: Annotated[AuthService, Depends(get_auth_service)]) -> AuthSession:
-    return service.current_session(request.cookies.get(SESSION_COOKIE))
+def require_session(request: Request, response: Response, service: Annotated[AuthService, Depends(get_auth_service)]) -> AuthSession:
+    return auth_controller.require_session(request, response, service)
 
 
 CurrentSession = Annotated[AuthSession, Depends(require_session)]

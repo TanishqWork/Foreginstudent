@@ -9,7 +9,8 @@ from depth.core.config import BACKEND_ROOT, Settings
 def settings_for(database_url: str) -> Settings:
     return Settings(
         database_url=database_url,
-        jwt_secret="test-only-signing-key-with-at-least-32-characters",
+        supabase_url="https://auth.example.test",
+        supabase_publishable_key="test-publishable-key",
         _env_file=None,
     )
 

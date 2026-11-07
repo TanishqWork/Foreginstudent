@@ -16,7 +16,6 @@ class User(Base):
 
     id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
     email: Mapped[str] = mapped_column(String(320), nullable=False)
-    # Nullable only for preserved accounts created before password authentication.
-    # Login explicitly denies these accounts; entering an email cannot claim them.
-    password_hash: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    # Preserves the local account ID and ownership of existing application data.
+    supabase_user_id: Mapped[UUID | None] = mapped_column(Uuid, unique=True, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)

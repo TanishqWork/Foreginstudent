@@ -11,17 +11,17 @@ dependencies = [
     "alembic>=1.18.0,<2",
     "email-validator>=2.3.0,<3",
     "fastapi>=0.128.0,<1",
+    "httpx>=0.28.0,<1",
     "psycopg[binary]>=3.2.0,<4",
     "pydantic-settings>=2.12.0,<3",
     "pyjwt>=2.10.0,<3",
-    "pwdlib[argon2]>=0.3.0,<1",
     "sqlalchemy>=2.0.0,<3",
     "uvicorn[standard]>=0.40.0,<1",
     "openai>=2,<3",
 ]
 
 [project.optional-dependencies]
-dev = ["httpx>=0.28.0,<1", "pytest>=8.0.0,<10"]
+dev = ["pwdlib[argon2]>=0.3.0,<1", "pytest>=8.0.0,<10"]
 
 [project.scripts]
 depth = "depth:main"

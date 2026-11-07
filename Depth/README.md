@@ -1,12 +1,16 @@
 # Depth: Statement Studio API
 
-FastAPI + SQLAlchemy + Supabase-hosted PostgreSQL, with email and password authentication.
-`Surface` is the React frontend; `Depth` owns authentication and persistence.
+FastAPI + SQLAlchemy + Supabase-hosted PostgreSQL and Supabase Auth.
+`Surface` is the React frontend; `Depth` owns the server-side authentication gateway,
+application authorization, cookies, and persistence. Supabase Auth manages passwords,
+provider identities, and token issuance.
 
 Run FastAPI directly from this `Depth` directory using Python 3.11 or newer and `uv`.
 See the root README for service URLs, Supabase setup, and frontend startup.
 For a fresh checkout, copy `.env.example` to the ignored `.env` file and replace its
-database URL and JWT-secret placeholders. Keep the optional OpenAI API key here too.
+database URL, `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, and server-only
+`SUPABASE_SECRET_KEY` placeholders. Keep the optional OpenAI API key here too.
+The old application `JWT_SECRET` is not used after the Supabase Auth cutover.
 `start.ps1` applies Alembic migrations before starting the API from its existing
 virtual environment; the explicit commands are shown below.
 
@@ -33,15 +37,16 @@ src/depth/
     health.py             Health response contracts
   integrations/
     llm.py                Async text generation through OpenAI's Responses API
+    supabase_auth.py      Server-side Supabase Auth API integration
   security/
-    passwords.py          Argon2id password hashing and verification
-    tokens.py             JWT signing and signature/claim validation
+    tokens.py             Provider-token and session security helpers
   repositories/           Database queries only: users, sessions, counters, readiness
   services/               Account/session rules, transaction boundaries, rate limits
   controllers/            HTTP input/output, cookies, public response serialization
   routes/                 Endpoint declarations delegating to controllers
 migrations/               Versioned database schema changes
 tests/                    Mocked LLM unit tests and isolated PostgreSQL tests
+scripts/migrate_auth_users.py  Legacy-account import through Supabase Admin API
 start.ps1                 Migration and FastAPI startup script
 .env                      Ignored local secrets
 .env.example              Environment template
@@ -58,54 +63,130 @@ Models, request/response schemas, settings, and database setup live in separate 
 | --- | --- | --- |
 | GET | `/api/health` | API liveness; independent of database availability |
 | GET | `/api/health/ready` | Database readiness; returns 503 when unavailable |
-| POST | `/api/auth/login` | JSON `{ "email": "you@example.com", "password": "your-password" }`; creates a missing account or validates the existing password |
+| POST | `/api/auth/login` | Email/password signup or login through Supabase Auth; returns a session or `confirmation_required` |
 | GET | `/api/auth/me` | Returns `{ "user": { "id", "email", "created_at" }, "expires_at" }`, or 401 |
 | POST | `/api/auth/logout` | Revokes the current session and clears its cookie; returns 204 |
+| POST | `/api/auth/forgot-password` | Requests a provider recovery email and returns a generic message |
+| GET | `/api/auth/confirmation/callback` | Exchanges a signup PKCE code, creates the cookie session, and redirects to the dashboard |
+| GET | `/api/auth/recovery/callback` | Exchanges the PKCE recovery code, sets a restricted cookie, and redirects to `/reset-password` |
+| GET | `/api/auth/recovery` | Checks whether the browser has a valid restricted recovery session |
+| POST | `/api/auth/reset-password` | Accepts `password` and `password_confirmation`; updates through Supabase and revokes sessions |
 
 Interactive route documentation is at `http://localhost:8000/docs`. Browser auth POST
 requests allow the configured `FRONTEND_URL` and `API_URL`, so both the frontend and
 Swagger can sign in. Other origins remain blocked; CLI requests may omit Origin.
-There is no email-link endpoint, verification-email dependency, or separate signup flow.
+The React application uses these same-origin FastAPI endpoints. No Supabase SDK,
+API key, or access/refresh token is exposed to its JavaScript. Signup confirmation
+remains enabled in the current Supabase configuration; a confirmation-required
+response is not an authenticated session.
 
 ## Authentication behavior
 
 Emails are trimmed and lowercased, with unique and normalization constraints enforced
-by PostgreSQL. If an email is new, the supplied password creates its account. If it
-already exists, the stored password must match. Concurrent account creation cannot
-replace another request's password or issue a session without checking that password.
+by PostgreSQL. A new email signs up through Supabase Auth; an existing account must
+authenticate with its existing password. A provider identity is linked explicitly
+to the stable application user ID. An unverified email alone never authorizes
+claiming an existing application record.
 
-Passwords accept 8–128 characters, including Unicode. Their exact characters are
-preserved; they are never trimmed or lowercased. `security/passwords.py` stores only
-salted Argon2id hashes, using `pwdlib`. Passwords are not reversibly encrypted and
-there is no password decryption function. Validation errors and public response
-schemas do not expose passwords or password hashes.
+Existing-password login accepts 8-128 characters, with whitespace and case preserved.
+New and reset passwords additionally have a 72-byte UTF-8 limit; the provider
+enforces configured password-strength rules. Password-strength rejections return
+422 with safe, actionable guidance instead of the raw provider response. A rejected
+password does not consume the current recovery session; users can correct it and
+retry before that session expires. Reusing the current password is also reported
+as a validation error, rather than an expired recovery session. Supabase Auth owns password
+storage, hashing, verification, and JWT issuance. FastAPI does not mint its own
+tokens, maintain a second runtime password database, or return secrets in responses.
+Each request has its own provider authentication context rather than sharing a
+mutable user's SDK session across requests.
 
-`security/tokens.py` signs and validates JWTs with explicit HS256, issuer, and audience
-checks. JWTs expire exactly **86,400 seconds (one day)** after issuance. The
-`depth_session` cookie is HttpOnly, SameSite=Lax, and scoped to `/api`; no JWT is
-returned for storage in JavaScript. Sessions are also checked in PostgreSQL, so
-logout immediately rejects reuse of the same cookie.
+Configure the Supabase project's JWT expiry to **86,400 seconds (one day)** and use
+a 24-hour provider time-box where available. The `depth_session`, `depth_refresh`,
+and independent `depth_session_proof` cookies are HttpOnly, SameSite=Lax, and scoped
+to `/api`. FastAPI independently enforces an absolute one-day login limit, including
+after refresh, and verifies the provider identity, session proof, and active
+server-side session. Logout revokes the provider and application session
+and clears the cookie, so replaying it fails immediately even if its JWT has not
+expired. Tokens are not returned for storage in browser JavaScript.
 
-Use HTTPS, `COOKIE_SECURE=true`, matching public `FRONTEND_URL`/`API_URL`, and a strong
-private `JWT_SECRET` for deployment. The frontend should proxy `/api` to the API on
-the same site. CLI requests without an Origin header remain supported.
+Use HTTPS, `COOKIE_SECURE=true`, and matching public `FRONTEND_URL`/`API_URL` for
+deployment. The frontend should proxy `/api` to the API on the same site. CLI
+requests without an Origin header remain supported. Privileged Supabase secret
+keys are only for backend administrative work, including legacy-user import.
+
+Signup email confirmation uses `/api/auth/confirmation/callback`. Its PKCE verifier
+is stored in a separate HttpOnly `depth_signup_verifier` cookie, scoped to that
+callback, and is independent of the recovery verifier. Open the confirmation link
+in the same browser that submitted signup. A valid code creates the authenticated
+cookie session and redirects to the dashboard; invalid or missing browser state
+returns to the account page without a session.
+
+## Forgot and reset password
+
+The frontend's forgot-password page submits an email to `/api/auth/forgot-password`.
+The API returns the same message whether the email exists. Supabase sends eligible
+addresses a recovery email, and the backend stores the PKCE verifier in an HttpOnly
+cookie. The recovery link must be opened in the same browser that requested it.
+
+The `/api/auth/recovery/callback` endpoint exchanges a valid one-time code and grants
+only restricted password-recovery access. The `/reset-password` page collects a new
+password and matching confirmation. `/api/auth/reset-password` changes the password
+through Supabase, revokes existing sessions, clears recovery state, and returns the
+user to sign in. Normal application sessions cannot bypass the recovery check, and
+recovery cookies do not grant access to assessments, reports, or the dashboard.
+Expired, reused, invalid, or missing-browser-state links require a new recovery
+request. Recovery codes, passwords, and tokens must not be logged.
+
+In Supabase Auth configuration, enable the Email provider and set minimum password
+length to at least 8. Secure email change, secure password change, and require-current-
+password protection can remain enabled: a freshly verified provider recovery session
+is exempt from presenting the forgotten password. Email OTP/link expiry of 3600
+seconds controls recovery-link validity, not the one-day application session.
+
+For local development, set Site URL to `http://localhost:5173` and allow both exact
+callbacks: `http://localhost:5173/api/auth/recovery/callback` and
+`http://localhost:5173/api/auth/confirmation/callback`. Set matching HTTPS URLs when
+deploying. Signup email confirmation is enabled in the current project setup.
+
+Without custom SMTP, the hosted Supabase email service only delivers to addresses
+belonging to the organization's team and is limited to **2 emails per hour** across
+the project. This is sufficient for restricted development tests. Configure custom
+SMTP in Supabase Auth before offering recovery to arbitrary public users; the
+application does not need SMTP credentials in its frontend. See
+[Supabase's email-delivery guide](https://supabase.com/docs/guides/auth/auth-smtp).
 
 ## Existing database migration
 
-Migration `0002_password_auth` adds `users.password_hash`, revokes previous sessions,
-and removes the retired email-link table. Existing user identities and their other
-records are preserved. Previous passwordless accounts have no password hash and
-**cannot be claimed by entering their email with a new password**. Such accounts
-need a deliberate password-enrollment or account-recovery procedure before they
-can sign in; neither flow is implemented here.
+Keep the applied migrations intact. `0002_password_auth` added legacy Argon2id
+hashes and retired email-link sign-in. `0003_backend_rls` enabled row-level security
+on the application account, session, and rate-limit tables. Application table
+access remains behind FastAPI; keep the Supabase Data API disabled for these tables.
 
-Applying migration `0003_backend_rls` enables row-level security on `public.users`,
-`public.auth_sessions`, and `public.auth_rate_limits` without adding Data API access
-policies. FastAPI retains access through the database owner's PostgreSQL connection.
-Keep the Supabase Data API disabled for this backend-only setup as described below.
+For an existing database, stop the old API before importing accounts. From `Depth`:
 
-The earlier email-link design note is archived under `docs/proposals/`. It is inactive,
-and adding that authentication method later requires an explicit instruction.
+```powershell
+uv run alembic upgrade 0004_supabase_auth
+uv run python scripts/migrate_auth_users.py
+uv run python scripts/migrate_auth_users.py --apply
+uv run alembic upgrade head
+```
+
+The script is a dry run without `--apply`. It checks existing provider accounts and
+email collisions before importing compatible Argon2id hashes via the Supabase Admin
+API. Application user IDs and data ownership are preserved. It never assigns a new
+password to an existing account or changes an unverified address into a verified one.
+Review reported collisions or accounts needing explicit recovery/enrollment rather
+than silently overwriting them. A migrated unverified account may need provider
+email verification or verified recovery before sign-in under the project's policy.
+
+`0004_supabase_auth` adds the provider identity mapping and token fingerprints,
+and revokes the old custom sessions. The subsequent cleanup migration is guarded:
+legacy password storage is removed only after account migration succeeds. A fresh
+database with no users can migrate directly to `head`. The startup script runs
+`upgrade head`, so complete this cutover before using it on an existing database.
+
+The archived proposal under `docs/proposals/` describes retired email-link sign-in;
+it is not the current password-recovery implementation.
 
 ## Reusable LLM component
 
@@ -176,11 +257,15 @@ Set `DATABASE_URL` in `Depth/.env` to the PostgreSQL connection details from you
 Supabase project's **Connect** dialog. Use `postgresql+psycopg://` and include
 `sslmode=require`. URL-encode special characters in the password. Use the direct
 connection on an IPv6-capable network, or the session pooler on port 5432 for IPv4;
-copy the matching host and username from the dialog. Keep the Supabase Data API
-disabled because only FastAPI accesses this database. Existing SQLAlchemy models,
-repositories, and Alembic migrations remain the source of the application's schema.
+copy the matching host and username from the dialog. Set `SUPABASE_URL` and the
+project's publishable key separately for the Auth API. Keep `SUPABASE_SECRET_KEY`
+server-only for legacy-account import and administrative work. These API keys do
+not replace the PostgreSQL connection URL. Keep the Supabase Data API disabled
+for application tables. SQLAlchemy models, repositories, and Alembic migrations
+remain the source of the application's schema; Supabase manages its Auth schema.
 
-Run from `Depth`:
+For a fresh database, run from `Depth`; existing databases must first follow the
+account-cutover sequence above:
 
 ```powershell
 uv sync --extra dev
@@ -197,16 +282,22 @@ changes, and stop the development server with Ctrl+C. Start the frontend separat
 from `Surface`; its existing `/api` proxy targets this local FastAPI server.
 
 Use the Supabase dashboard's **Table Editor** and **SQL Editor** to inspect the
-database. This project uses its own `public.users` and `public.auth_sessions` tables
-and FastAPI authentication; Supabase Auth is not part of the login flow. Never put
-the database connection URL into frontend configuration.
+application database. `public.users` stores stable application IDs linked to the
+Supabase provider identity. `public.auth_sessions` stores application expiry,
+revocation, and session-proof/recovery-token fingerprints. Supabase **Authentication -> Users** displays
+the provider accounts. Never put database credentials or Supabase keys in frontend
+configuration, and do not manually modify the provider-managed Auth schema.
 
 ## Database tables and rate limits
 
-- `users`: unique email, salted password hash, account creation timestamp.
-- `auth_sessions`: JWT session IDs, account references, expiration/revocation timestamps.
+- `users`: unique normalized email, stable application ID, provider identity mapping, creation timestamp.
+- `auth_sessions`: provider session IDs, session-proof/recovery-token fingerprints, account references, expiration/revocation timestamps.
 - `auth_rate_limits`: hashed request/email counters shared across API workers.
 - `alembic_version`: applied database migration revision.
+
+Supabase Auth owns credential hashes and provider sessions. Legacy `password_hash`
+is retained only during the guarded account cutover and removed by its cleanup
+migration. Do not add password columns back to the application model.
 
 Login allows five attempts per email and twenty per client IP per 15-minute window.
 Both successes and failures count. Limited requests return 429 with `Retry-After`.
@@ -223,7 +314,7 @@ or database. From `Depth`, run:
 uv run --extra dev pytest tests/test_llm.py -q
 ```
 
-Database tests require a separate PostgreSQL database ending in `_test`; they never
+Application database tests require a separate PostgreSQL database ending in `_test`; they never
 target the application database. Provision that database separately, then set
 `TEST_DATABASE_URL` in your shell to its connection URL. The normal Supabase
 application database named `postgres` is not a test database. From `Depth`, run:
@@ -245,3 +336,9 @@ try {
 
 The fixture rejects database names without the `_test` suffix and rolls changes
 back between tests. See `tests/conftest.py` for these isolation safeguards.
+
+Supabase Auth calls must be mocked in normal application tests. Changing only
+`TEST_DATABASE_URL` does not isolate the Auth API: real signup, password reset,
+provider-session revocation, and recovery-email checks need a separate Supabase
+test/staging project and its own configuration. Never use production Auth users
+or send recovery emails to arbitrary addresses as a side effect of a test run.

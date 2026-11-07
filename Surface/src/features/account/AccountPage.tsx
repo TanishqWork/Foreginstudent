@@ -18,8 +18,10 @@ export default function AccountPage() {
   const next = requestedNext?.startsWith('/dashboard') && !requestedNext.startsWith('//') ? requestedNext : '/dashboard'
   const { session, loading, error: sessionError, refresh, login, logout } = useAuth()
   const headingRef = useRef<HTMLHeadingElement>(null)
-  const [status, setStatus] = useState('')
-  const [error, setError] = useState('')
+  const [status, setStatus] = useState(() => searchParams.get('confirmation') !== 'invalid' && searchParams.get('password_reset') === 'complete'
+    ? 'Your password has been changed. Sign in with your new password.' : '')
+  const [error, setError] = useState(() => searchParams.get('confirmation') === 'invalid'
+    ? 'This confirmation link is no longer available. It may have expired or been opened in a different browser. Use Forgot your password to recover access.' : '')
   const [pending, setPending] = useState(false)
 
   useEffect(() => {
@@ -37,8 +39,12 @@ export default function AccountPage() {
     setStatus('')
     setError('')
     try {
-      await login(email, password)
+      const outcome = await login(email, password)
       form.reset()
+      if (outcome === 'confirmation_required') {
+        setStatus('Check your email to finish creating your account, then return here to sign in.')
+        return
+      }
       navigate(next, { replace: true })
     } catch (cause) {
       setError(authErrorMessage(cause))
@@ -150,8 +156,9 @@ export default function AccountPage() {
                     required
                     aria-describedby="account-password-help account-login-status"
                   />
-                  <p className="m-0 text-[.7rem] text-muted" id="account-password-help">Use 8 to 128 characters. New emails create an account automatically.</p>
+                  <p className="m-0 text-[.7rem] text-muted" id="account-password-help">Use at least 8 characters. New emails create an account; you may be asked to confirm your email.</p>
                   <button className={`${ui.button} ${ui.primary} min-h-[52px] w-full cursor-pointer px-6 font-[750] tracking-[-.01em] disabled:cursor-wait disabled:opacity-60`} type="submit" disabled={pending}>{pending ? 'Signing in…' : 'Sign in or create account'}</button>
+                  <Link className={`${ui.focus} mt-1 inline-flex min-h-11 items-center justify-center rounded-md text-sm font-semibold text-accent underline underline-offset-4`} to="/forgot-password">Forgot your password?</Link>
                 </form>
               )}
               {error && <p className="m-0 text-[.8rem] text-red-700" role="alert">{error}</p>}
