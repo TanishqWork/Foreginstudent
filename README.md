@@ -1,6 +1,6 @@
 ﻿# Statement Studio
 
-`Surface` is the React + TypeScript frontend. `Depth` is the FastAPI backend using PostgreSQL. Authentication uses email and password. A new email creates an account; an existing email requires its existing password. Trimmed, lowercase email is the unique account key.
+`Surface` is the React + TypeScript frontend. `Depth` is the FastAPI backend, run directly with Python and connected to Supabase-hosted PostgreSQL. Authentication uses email and password. A new email creates an account; an existing email requires its existing password. Trimmed, lowercase email is the unique account key.
 
 ## Project structure
 
@@ -19,25 +19,31 @@ Depth/src/depth/
   main.py                     Application factory and lifecycle
 Depth/migrations/             Versioned Alembic migrations
 Depth/tests/                  Tests isolated from application data
-Depth/compose.yaml            Backend, PostgreSQL, and pgAdmin services
-Depth/Dockerfile              Backend image
+Depth/start.ps1               Apply migrations and start FastAPI from its virtual environment
 Depth/.env                    Ignored local backend secrets
 Depth/.env.example            Backend environment template
-Depth/docker/pgadmin/         Local database viewer configuration
 ```
 
 Requests follow routes -> controllers -> services -> repositories. Security utilities are reusable independently of HTTP. See `Depth/README.md` for module responsibilities and extension rules.
 
 ## Local development
 
-A gitignored `Depth/.env` contains independent database, JWT, and pgAdmin secrets for this workspace. For a fresh checkout, copy `Depth/.env.example` to `Depth/.env` and replace the three placeholder secrets. Use URL-safe characters for the database password because Compose includes it in `DATABASE_URL`. All backend infrastructure belongs under `Depth`.
+A gitignored `Depth/.env` contains the Supabase database connection URL, JWT secret, and optional OpenAI API key. For a fresh checkout, copy `Depth/.env.example` to `Depth/.env` and replace the placeholders. All backend configuration belongs under `Depth`.
 
-Start the backend stack from the repository root:
+Copy the PostgreSQL connection details from your Supabase project's **Connect** dialog. Use its direct connection when your machine supports IPv6, or its **session pooler** on port 5432 when you need IPv4. Use the exact host and username supplied for that connection. The backend URL uses the `postgresql+psycopg://` scheme and `sslmode=require`; URL-encode special characters in the database password. Disable the Supabase Data API for this backend-only setup. The React app calls FastAPI, which connects to PostgreSQL through SQLAlchemy; Supabase Auth is not used.
+
+Applying migration `0003_backend_rls` enables row-level security on the application account, session, and rate-limit tables without adding Data API access policies. FastAPI uses the database owner's PostgreSQL connection, which retains access to these tables.
+
+Install Python 3.11 or newer and `uv`, then start the backend from the repository root:
 
 ```powershell
 cd Depth
-docker compose up -d --build --remove-orphans
+uv sync --extra dev
+uv run alembic upgrade head
+uv run uvicorn depth.main:app --host 127.0.0.1 --port 8000 --reload
 ```
+
+After dependencies are installed, `Depth/start.ps1` can apply migrations and start the API using the existing virtual environment. Run `.\start.ps1 -Reload` from `Depth` for automatic development reloads. The optional `-Port` argument defaults to 8000; for example, `.\start.ps1 -Reload -Port 8000`. Stop the API with Ctrl+C.
 
 In a separate terminal, start the frontend from the repository root:
 
@@ -47,15 +53,15 @@ npm.cmd install
 npm.cmd run dev -- --host 127.0.0.1
 ```
 
-The API applies Alembic migrations before starting. Run Docker Compose commands from `Depth`. PostgreSQL data is stored in a named Docker volume and survives `docker compose down`; moving the configuration preserves the `statement-studio` project name and existing volumes.
+Run the Alembic upgrade command before starting FastAPI after pulling database changes. The startup script performs that step automatically. Application data is stored in the hosted Supabase database.
 
 | Service | Address | Purpose |
 | --- | --- | --- |
 | Frontend | http://localhost:5173/account | Email/password sign-in and account creation |
 | API documentation | http://localhost:8000/docs | Health and authentication route documentation |
 | Readiness | http://localhost:8000/api/health/ready | Check the database connection |
-| pgAdmin | http://localhost:8081 | Browse tables, rows, and SQL queries |
-| PostgreSQL | `localhost:5433` | Connect from a desktop database client |
+| Supabase dashboard | Your Supabase project | Browse tables and run SQL queries |
+| PostgreSQL | Host from the Supabase Connect dialog | Backend and desktop database-client connections |
 
 Use **localhost** consistently in the browser. `FRONTEND_URL` defaults to `http://localhost:5173`, and Vite fixes this port. `API_URL` defaults to `http://localhost:8000` so Swagger can send authentication requests from the API's own origin. Vite proxies `/api` to the backend so cookies use the frontend origin. Email delivery is not part of authentication.
 
@@ -69,9 +75,9 @@ Migration `0002_password_auth` adds password hashes, removes the previous email-
 
 ## Browse the database
 
-Log into pgAdmin using `PGADMIN_EMAIL` and `PGADMIN_PASSWORD` from `Depth/.env`. Expand **Development -> Statement Studio (local)**, supply `POSTGRES_PASSWORD`, then open **Databases -> statement_studio -> Schemas -> public -> Tables**. Right-click a table and choose **View/Edit Data -> All Rows**.
+Open the Supabase project's **Table Editor** to browse application tables in the `public` schema, or **SQL Editor** to run queries. Accounts and sessions live in the application's `users` and `auth_sessions` tables; they are managed by FastAPI.
 
-Desktop clients can connect to `localhost:5433`, database/user `statement_studio`, using `POSTGRES_PASSWORD` from `Depth/.env`. pgAdmin connects internally to `postgres:5432`. Its server definition in `Depth/docker/pgadmin/servers.json` imports on first startup; update an existing connection through pgAdmin if you later change the database/user names.
+Desktop database clients can use the project's PostgreSQL connection details with SSL. Keep database credentials in `Depth/.env` and out of frontend environment variables.
 
 ## Routes
 
@@ -82,6 +88,7 @@ Desktop clients can connect to `localhost:5433`, database/user `statement_studio
 | POST | `/api/auth/login` | Accept `{ "email": "student@example.com", "password": "..." }`, create or authenticate the account, and set the session cookie |
 | GET | `/api/auth/me` | Return the current user and session expiry, or 401 |
 | POST | `/api/auth/logout` | Revoke the session and clear the cookie |
+| POST | `/api/assessments/free` | Assess the signed-in user's submitted draft and return the validated `free-diagnostic.v1` JSON report |
 
 Sign-in works from the frontend or Swagger's **Try it out**. Browser authentication requests must come from the configured `FRONTEND_URL` or `API_URL`; other origins are rejected. Command-line requests without an `Origin` header are also supported.
 
@@ -93,13 +100,23 @@ npm.cmd run lint
 npm.cmd run build
 ```
 
-Backend tests require a separate PostgreSQL database ending in `_test`. From `Depth`, create it once, migrate it, then run the suite without displaying database secrets:
+Backend tests require a separate PostgreSQL database ending in `_test`. Provision that database independently and set `TEST_DATABASE_URL` in the current shell to its `postgresql+psycopg://` connection URL. Do not use the application's Supabase `/postgres` database for tests. From `Depth`, migrate the test database and run the suite:
 
 ```powershell
-docker compose exec -T postgres createdb -U statement_studio statement_studio_test
-docker compose run --rm --no-deps api sh -c 'export DATABASE_URL="${DATABASE_URL%/*}/statement_studio_test"; alembic upgrade head && TEST_DATABASE_URL="$DATABASE_URL" pytest tests -q -p no:cacheprovider'
+if ($env:TEST_DATABASE_URL -notmatch '^postgresql\+psycopg://.+/[^/?#]+_test(?:\?[^#]*)?$') {
+    throw 'Set TEST_DATABASE_URL to a dedicated PostgreSQL database ending in _test.'
+}
+$previousDatabaseUrl = $env:DATABASE_URL
+try {
+    $env:DATABASE_URL = $env:TEST_DATABASE_URL
+    uv run alembic upgrade head
+    if ($LASTEXITCODE -ne 0) { throw 'Test database migration failed.' }
+    uv run --extra dev pytest tests -q -p no:cacheprovider
+} finally {
+    $env:DATABASE_URL = $previousDatabaseUrl
+}
 ```
 
-From `Depth`, inspect services with `docker compose ps` and logs with `docker compose logs api`. Stop services with `docker compose down`; database data persists. Do not add `--volumes` unless you intend to erase it.
+Tests roll changes back between cases and reject a database name that does not end in `_test`. Provider-mocked assessment tests can run without a database; see `Depth/README.md`.
 
-For deployment, configure the public HTTPS `FRONTEND_URL` and `API_URL`, set `COOKIE_SECURE=true`, and proxy `/api` to the API on the same site. The Compose ports and pgAdmin are configured for local development. Assessment scoring, payments, report persistence, and account-recovery flows are separate work.
+For deployment, configure the public HTTPS `FRONTEND_URL` and `API_URL`, set `COOKIE_SECURE=true`, and proxy `/api` to the API on the same site. Run FastAPI through your hosting provider's process manager and retain SSL for the Supabase connection. Free AI assessments return versioned JSON and use one React diagnostic renderer; see [the implementation and debug guide](docs/free-assessment-response-structure.md). The [structured complete-report prototype](docs/complete-report-structure.md) adds a simulated checkout and a detailed report with reusable components and measured durations. Real payments, permanent report persistence, and account-recovery flows remain separate work.

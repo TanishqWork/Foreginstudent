@@ -4,6 +4,7 @@ import { Link, useLocation } from 'react-router'
 import { useAuth } from '../../account/auth-context'
 
 const navigationItems = [
+  { label: 'Workspace', to: '/workspace', description: 'Explore your student writing space' },
   { label: 'Pathways', to: '/#pathways', description: 'Choose the right review track' },
   { label: 'How it works', to: '/methodology', description: 'See how each finding is supported' },
   { label: 'Sample report', to: '/sample-report', description: 'Explore a complete assessment example' },

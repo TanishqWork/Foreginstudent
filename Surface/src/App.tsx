@@ -9,6 +9,7 @@ import AssessmentPage from './features/assessment/AssessmentPage'
 import { ui } from './features/landing-page/ui'
 
 const FullSampleReportPage = lazy(() => import('./features/sample-report/FullSampleReportPage'))
+const StudentWorkspace = lazy(() => import('./features/student/StudentWorkspace'))
 
 function NotFoundPage() {
   return (
@@ -31,6 +32,8 @@ export default function App() {
 
   return (
     <Routes>
+      <Route path="/workspace/*" element={<Suspense fallback={<main className="grid min-h-svh place-content-center text-slate">Opening your writing space…</main>}><StudentWorkspace demo /></Suspense>} />
+      <Route path="/dashboard/*" element={<Suspense fallback={<main className="grid min-h-svh place-content-center text-slate">Opening your writing space…</main>}><StudentWorkspace /></Suspense>} />
       <Route path="/" element={<HomePage />} />
       <Route path="/methodology" element={<MethodologyPage />} />
       <Route path="/sample-report" element={<SampleReportPage />} />

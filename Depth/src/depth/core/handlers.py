@@ -5,12 +5,25 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
 
-from depth.core.exceptions import AuthenticationError, LLMError, RateLimitError
+from depth.core.exceptions import AssessmentError, AuthenticationError, LLMError, RateLimitError
 
 logger = logging.getLogger(__name__)
 
 
 def register_exception_handlers(app: FastAPI) -> None:
+    @app.exception_handler(AssessmentError)
+    async def assessment_error(request: Request, error: AssessmentError):
+        errors = {
+            "not_found": (404, "This temporary assessment is unavailable. Run a new free assessment."),
+            "locked": (403, "Use the mock unlock before generating this report."),
+            "generating": (409, "This report is already generating. Wait for it to finish."),
+            "needs_input": (422, "Complete the free assessment inputs before unlocking a report."),
+            "capacity": (503, "All temporary report slots are busy. Try again after a report finishes."),
+            "duplicate": (409, "This assessment is already cached."),
+        }
+        code, detail = errors[error.code]
+        return JSONResponse(status_code=code, content={"detail": detail}, headers={"Cache-Control": "no-store"})
+
     @app.exception_handler(LLMError)
     async def llm_error(request: Request, error: LLMError):
         return JSONResponse(

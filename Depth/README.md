@@ -1,16 +1,14 @@
 # Depth: Statement Studio API
 
-FastAPI + SQLAlchemy + PostgreSQL, with email and password authentication.
+FastAPI + SQLAlchemy + Supabase-hosted PostgreSQL, with email and password authentication.
 `Surface` is the React frontend; `Depth` owns authentication and persistence.
 
-From this `Depth` directory, start the local stack with `docker compose up -d --build`.
-See the root README for service URLs, database browsing, local credentials, and frontend startup.
-Docker applies Alembic migrations before starting the API.
-
-The backend's `compose.yaml`, `Dockerfile`, `.env`, `.env.example`, and `docker/pgadmin/`
-configuration all live here. Run Docker Compose commands from `Depth`; the explicit
-`statement-studio` project name preserves the existing PostgreSQL and pgAdmin volumes.
-For a fresh checkout, copy `.env.example` to `.env` and replace its secret placeholders.
+Run FastAPI directly from this `Depth` directory using Python 3.11 or newer and `uv`.
+See the root README for service URLs, Supabase setup, and frontend startup.
+For a fresh checkout, copy `.env.example` to the ignored `.env` file and replace its
+database URL and JWT-secret placeholders. Keep the optional OpenAI API key here too.
+`start.ps1` applies Alembic migrations before starting the API from its existing
+virtual environment; the explicit commands are shown below.
 
 ## Structure and responsibilities
 
@@ -44,11 +42,9 @@ src/depth/
   routes/                 Endpoint declarations delegating to controllers
 migrations/               Versioned database schema changes
 tests/                    Mocked LLM unit tests and isolated PostgreSQL tests
-compose.yaml              Backend/PostgreSQL/pgAdmin service definitions
-Dockerfile                Backend image
+start.ps1                 Migration and FastAPI startup script
 .env                      Ignored local secrets
 .env.example              Environment template
-docker/pgadmin/            Local database viewer configuration
 ```
 
 The request path is **route → controller → service → repository**. Security helpers
@@ -103,6 +99,11 @@ records are preserved. Previous passwordless accounts have no password hash and
 need a deliberate password-enrollment or account-recovery procedure before they
 can sign in; neither flow is implemented here.
 
+Applying migration `0003_backend_rls` enables row-level security on `public.users`,
+`public.auth_sessions`, and `public.auth_rate_limits` without adding Data API access
+policies. FastAPI retains access through the database owner's PostgreSQL connection.
+Keep the Supabase Data API disabled for this backend-only setup as described below.
+
 The earlier email-link design note is archived under `docs/proposals/`. It is inactive,
 and adding that authentication method later requires an explicit instruction.
 
@@ -126,27 +127,79 @@ async def review_text(statement: str, prompt: str) -> str:
     return text
 ```
 
-Optional settings are `reasoning_effort`, `verbosity`, `max_output_tokens`, and
-`temperature`; support depends on the selected model. No assessment endpoint or
-frontend flow calls this function yet.
+Optional settings are `reasoning_effort`, `verbosity`, `max_output_tokens`,
+`temperature`, `output_model`, and the SDK-only `timeout_seconds`; support for
+generation settings depends on the selected model. The helper's default timeout
+is 90 seconds; the free and complete assessments explicitly allow 180 seconds.
+`output_model` supplies a strict JSON Schema while the helper continues returning
+text for service-level validation.
 
-## Run Python outside Docker
+## Free diagnostic assessment
+
+Authenticated `POST /api/assessments/free` returns the `free-diagnostic.v1` JSON
+envelope: `context`, the canonical `report`, and supplemental `diagnostic` fields.
+The assessment function selects `model="gpt-5"` directly in
+`services/assessment_service.py`. Set `OPENAI_API_KEY` in the ignored backend
+environment file; model selection does not use an environment variable.
+
+`schemas/assessment_report.py` owns the report contract. The assessment service
+requests schema-constrained JSON, checks exact source references, recalculates
+scores through `services/assessment_scoring.py`, and retries invalid reports once.
+The response is private (`Cache-Control: no-store`) and is not saved to the database.
+Successful assessments are temporarily cached for the complete-report prototype.
+Validation logs include only field paths/reason codes. Provider credentials and
+applicant prose are not logged or included in errors.
+
+See [the implementation and debug guide](../docs/free-assessment-response-structure.md).
+Focused provider-mocked tests need no database:
+
+```powershell
+.venv\Scripts\python.exe -m pytest tests/test_assessment.py tests/test_llm.py -q -p no:cacheprovider
+```
+
+## Complete report prototype
+
+The authenticated complete-report endpoints reuse a temporary, owner-bound free
+assessment. Mock unlock charges no money. Generation uses GPT-5 and the adapted
+`src/depth/prompts/complete-report-structured.md` prompt. GET, unlock, and generation
+return one JSON state with the canonical free assessment and a typed report.
+All eleven analytical groups use reusable rows without fixed finding counts.
+Validation checks baseline consistency, exact source references, and completeness.
+Responses include measured free and complete generation durations. No report
+database tables or migrations were added. The one-process memory cache lasts up
+to one hour and is lost on restart.
+See [the complete-report implementation and debug guide](../docs/complete-report-structure.md).
+
+## Run FastAPI with Supabase
+
+Set `DATABASE_URL` in `Depth/.env` to the PostgreSQL connection details from your
+Supabase project's **Connect** dialog. Use `postgresql+psycopg://` and include
+`sslmode=require`. URL-encode special characters in the password. Use the direct
+connection on an IPv6-capable network, or the session pooler on port 5432 for IPv4;
+copy the matching host and username from the dialog. Keep the Supabase Data API
+disabled because only FastAPI accesses this database. Existing SQLAlchemy models,
+repositories, and Alembic migrations remain the source of the application's schema.
 
 Run from `Depth`:
 
 ```powershell
 uv sync --extra dev
-$localSettings = Get-Content -Raw .env | ConvertFrom-StringData
-$env:DATABASE_URL = 'postgresql+psycopg://{0}:{1}@127.0.0.1:{2}/{3}' -f $localSettings.POSTGRES_USER, $localSettings.POSTGRES_PASSWORD, $localSettings.POSTGRES_PORT, $localSettings.POSTGRES_DB
 uv run alembic upgrade head
 uv run uvicorn depth.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
 Settings read only the local `Depth/.env`; process environment variables override it.
-Compose constructs the container database URL from this file's credentials. The host
-startup commands above construct `DATABASE_URL` with the published local PostgreSQL
-port without printing credentials. Do not start a second API on port 8000 while the
-Docker API is running; stop that service first with `docker compose stop api`.
+After installing dependencies, `.\start.ps1` applies migrations and starts the API
+using `.venv\Scripts\python.exe`. Add `-Reload` for automatic development reloads.
+The optional `-Port` argument defaults to 8000; for example,
+`.\start.ps1 -Reload -Port 8000`. Run migrations before starting after database
+changes, and stop the development server with Ctrl+C. Start the frontend separately
+from `Surface`; its existing `/api` proxy targets this local FastAPI server.
+
+Use the Supabase dashboard's **Table Editor** and **SQL Editor** to inspect the
+database. This project uses its own `public.users` and `public.auth_sessions` tables
+and FastAPI authentication; Supabase Auth is not part of the login flow. Never put
+the database connection URL into frontend configuration.
 
 ## Database tables and rate limits
 
@@ -171,14 +224,24 @@ uv run --extra dev pytest tests/test_llm.py -q
 ```
 
 Database tests require a separate PostgreSQL database ending in `_test`; they never
-target the application database. From `Depth`, create it once and run migrations/tests
-without printing the database URL:
+target the application database. Provision that database separately, then set
+`TEST_DATABASE_URL` in your shell to its connection URL. The normal Supabase
+application database named `postgres` is not a test database. From `Depth`, run:
 
 ```powershell
-docker compose exec -T postgres createdb -U statement_studio statement_studio_test
-docker compose run --rm --no-deps api sh -c 'export DATABASE_URL="${DATABASE_URL%/*}/statement_studio_test"; alembic upgrade head && TEST_DATABASE_URL="$DATABASE_URL" pytest tests -q -p no:cacheprovider'
+if ($env:TEST_DATABASE_URL -notmatch '^postgresql\+psycopg://.+/[^/?#]+_test(?:\?[^#]*)?$') {
+    throw 'Set TEST_DATABASE_URL to a dedicated PostgreSQL database ending in _test.'
+}
+$previousDatabaseUrl = $env:DATABASE_URL
+try {
+    $env:DATABASE_URL = $env:TEST_DATABASE_URL
+    uv run alembic upgrade head
+    if ($LASTEXITCODE -ne 0) { throw 'Test database migration failed.' }
+    uv run --extra dev pytest tests -q -p no:cacheprovider
+} finally {
+    $env:DATABASE_URL = $previousDatabaseUrl
+}
 ```
 
-For host execution, set `TEST_DATABASE_URL` to the dedicated test database before
-running `uv run --extra dev pytest`. See `tests/conftest.py` for the database guard
-and transaction rollback isolation.
+The fixture rejects database names without the `_test` suffix and rolls changes
+back between tests. See `tests/conftest.py` for these isolation safeguards.

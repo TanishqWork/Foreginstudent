@@ -1,0 +1,2084 @@
+{
+  "assessment_id": "assessment-a",
+  "status": "ready",
+  "assessment": {
+    "schema_version": "free-diagnostic.v1",
+    "context": {
+      "pathway": "health",
+      "degree": "MPH",
+      "field": "Public health",
+      "target_institution": "Fictional University",
+      "target_program": "MPH",
+      "statement_type": "statement_of_purpose"
+    },
+    "report": {
+      "assessment_id": "assessment-a",
+      "rubric_version": "ss-free-ai-draft-1.0",
+      "status": "complete",
+      "input_issues": [],
+      "statement_type": "statement_of_purpose",
+      "measurements": {
+        "word_count": 70,
+        "character_count": 453,
+        "paragraph_count": 2,
+        "counting_method": "ss-unicode-v1"
+      },
+      "limit_compliance": {
+        "status": "within_limit",
+        "max_words": 500,
+        "max_characters": null,
+        "largest_overrun_percent": 0.0,
+        "prose_deduction": 0,
+        "reason": "The draft is within the supplied maximum."
+      },
+      "overall_score": 75,
+      "overall_unrounded": 75.0,
+      "assessment_band": "Credible draft",
+      "scored_weight": 100,
+      "renormalized": false,
+      "excluded_dimension_ids": [],
+      "confidence": {
+        "level": "moderate",
+        "reason": "Fictional implementation fixture; ratings illustrate the contract only."
+      },
+      "dimensions": [
+        {
+          "id": "promptAlignment",
+          "label": "Prompt alignment",
+          "weight": 12,
+          "status": "scored",
+          "checkpoints": [
+            {
+              "index": 1,
+              "status": "scored",
+              "rating": 3,
+              "sentence_ids": [
+                "s2"
+              ],
+              "reason": "Synthetic contract fixture; this is not a calibrated assessment."
+            },
+            {
+              "index": 2,
+              "status": "scored",
+              "rating": 3,
+              "sentence_ids": [
+                "s2"
+              ],
+              "reason": "Synthetic contract fixture; this is not a calibrated assessment."
+            },
+            {
+              "index": 3,
+              "status": "scored",
+              "rating": 3,
+              "sentence_ids": [
+                "s2"
+              ],
+              "reason": "Synthetic contract fixture; this is not a calibrated assessment."
+            },
+            {
+              "index": 4,
+              "status": "scored",
+              "rating": 3,
+              "sentence_ids": [
+                "s2"
+              ],
+              "reason": "Synthetic contract fixture; this is not a calibrated assessment."
+            }
+          ],
+          "base_score": 75,
+          "score": 75,
+          "level": 3,
+          "level_label": "Strong",
+          "weighted_points": 9.0,
+          "reason": "Relevant material is present; connect it more directly to the central argument.",
+          "next_action": "Explain how this experience establishes the next step in your argument.",
+          "sentence_ids": [
+            "s2"
+          ]
+        },
+        {
+          "id": "throughlineStructure",
+          "label": "Throughline and structure",
+          "weight": 14,
+          "status": "scored",
+          "checkpoints": [
+            {
+              "index": 1,
+              "status": "scored",
+              "rating": 3,
+              "sentence_ids": [
+                "s2"
+              ],
+              "reason": "Synthetic contract fixture; this is not a calibrated assessment."
+            },
+            {
+              "index": 2,
+              "status": "scored",
+              "rating": 3,
+              "sentence_ids": [
+                "s2"
+              ],
+              "reason": "Synthetic contract fixture; this is not a calibrated assessment."
+            },
+            {
+              "index": 3,
+              "status": "scored",
+              "rating": 3,
+              "sentence_ids": [
+                "s2"
+              ],
+              "reason": "Synthetic contract fixture; this is not a calibrated assessment."
+            },
+            {
+              "index": 4,
+              "status": "scored",
+              "rating": 3,
+              "sentence_ids": [
+                "s2"
+              ],
+              "reason": "Synthetic contract fixture; this is not a calibrated assessment."
+            }
+          ],
+          "base_score": 75,
+          "score": 75,
+          "level": 3,
+          "level_label": "Strong",
+          "weighted_points": 10.5,
+          "reason": "Relevant material is present; connect it more directly to the central argument.",
+          "next_action": "Explain how this experience establishes the next step in your argument.",
+          "sentence_ids": [
+            "s2"
+          ]
+        },
+        {
+          "id": "evidenceSpecificity",
+          "label": "Evidence and specificity",
+          "weight": 18,
+          "status": "scored",
+          "checkpoints": [
+            {
+              "index": 1,
+              "status": "scored",
+              "rating": 3,
+              "sentence_ids": [
+                "s2"
+              ],
+              "reason": "Synthetic contract fixture; this is not a calibrated assessment."
+            },
+            {
+              "index": 2,
+              "status": "scored",
+              "rating": 3,
+              "sentence_ids": [
+                "s2"
+              ],
+              "reason": "Synthetic contract fixture; this is not a calibrated assessment."
+            },
+            {
+              "index": 3,
+              "status": "scored",
+              "rating": 3,
+              "sentence_ids": [
+                "s2"
+              ],
+              "reason": "Synthetic contract fixture; this is not a calibrated assessment."
+            },
+            {
+              "index": 4,
+              "status": "scored",
+              "rating": 3,
+              "sentence_ids": [
+                "s2"
+              ],
+              "reason": "Synthetic contract fixture; this is not a calibrated assessment."
+            }
+          ],
+          "base_score": 75,
+          "score": 75,
+          "level": 3,
+          "level_label": "Strong",
+          "weighted_points": 13.5,
+          "reason": "Relevant material is present; connect it more directly to the central argument.",
+          "next_action": "Explain how this experience establishes the next step in your argument.",
+          "sentence_ids": [
+            "s2"
+          ]
+        },
+        {
+          "id": "proseControl",
+          "label": "Prose control",
+          "weight": 10,
+          "status": "scored",
+          "checkpoints": [
+            {
+              "index": 1,
+              "status": "scored",
+              "rating": 3,
+              "sentence_ids": [
+                "s2"
+              ],
+              "reason": "Synthetic contract fixture; this is not a calibrated assessment."
+            },
+            {
+              "index": 2,
+              "status": "scored",
+              "rating": 3,
+              "sentence_ids": [
+                "s2"
+              ],
+              "reason": "Synthetic contract fixture; this is not a calibrated assessment."
+            },
+            {
+              "index": 3,
+              "status": "scored",
+              "rating": 3,
+              "sentence_ids": [
+                "s2"
+              ],
+              "reason": "Synthetic contract fixture; this is not a calibrated assessment."
+            },
+            {
+              "index": 4,
+              "status": "scored",
+              "rating": 3,
+              "sentence_ids": [
+                "s2"
+              ],
+              "reason": "Synthetic contract fixture; this is not a calibrated assessment."
+            }
+          ],
+          "base_score": 75,
+          "score": 75,
+          "level": 3,
+          "level_label": "Strong",
+          "weighted_points": 7.5,
+          "reason": "Relevant material is present; connect it more directly to the central argument.",
+          "next_action": "Explain how this experience establishes the next step in your argument.",
+          "sentence_ids": [
+            "s2"
+          ]
+        },
+        {
+          "id": "voiceAuthenticity",
+          "label": "Voice, grounding, and originality",
+          "weight": 8,
+          "status": "scored",
+          "checkpoints": [
+            {
+              "index": 1,
+              "status": "scored",
+              "rating": 3,
+              "sentence_ids": [
+                "s2"
+              ],
+              "reason": "Synthetic contract fixture; this is not a calibrated assessment."
+            },
+            {
+              "index": 2,
+              "status": "scored",
+              "rating": 3,
+              "sentence_ids": [
+                "s2"
+              ],
+              "reason": "Synthetic contract fixture; this is not a calibrated assessment."
+            },
+            {
+              "index": 3,
+              "status": "scored",
+              "rating": 3,
+              "sentence_ids": [
+                "s2"
+              ],
+              "reason": "Synthetic contract fixture; this is not a calibrated assessment."
+            },
+            {
+              "index": 4,
+              "status": "scored",
+              "rating": 3,
+              "sentence_ids": [
+                "s2"
+              ],
+              "reason": "Synthetic contract fixture; this is not a calibrated assessment."
+            }
+          ],
+          "base_score": 75,
+          "score": 75,
+          "level": 3,
+          "level_label": "Strong",
+          "weighted_points": 6.0,
+          "reason": "Relevant material is present; connect it more directly to the central argument.",
+          "next_action": "Explain how this experience establishes the next step in your argument.",
+          "sentence_ids": [
+            "s2"
+          ]
+        },
+        {
+          "id": "goalsDirection",
+          "label": "Goals and direction",
+          "weight": 8,
+          "status": "scored",
+          "checkpoints": [
+            {
+              "index": 1,
+              "status": "scored",
+              "rating": 3,
+              "sentence_ids": [
+                "s2"
+              ],
+              "reason": "Synthetic contract fixture; this is not a calibrated assessment."
+            },
+            {
+              "index": 2,
+              "status": "scored",
+              "rating": 3,
+              "sentence_ids": [
+                "s2"
+              ],
+              "reason": "Synthetic contract fixture; this is not a calibrated assessment."
+            },
+            {
+              "index": 3,
+              "status": "scored",
+              "rating": 3,
+              "sentence_ids": [
+                "s2"
+              ],
+              "reason": "Synthetic contract fixture; this is not a calibrated assessment."
+            },
+            {
+              "index": 4,
+              "status": "scored",
+              "rating": 3,
+              "sentence_ids": [
+                "s2"
+              ],
+              "reason": "Synthetic contract fixture; this is not a calibrated assessment."
+            }
+          ],
+          "base_score": 75,
+          "score": 75,
+          "level": 3,
+          "level_label": "Strong",
+          "weighted_points": 6.0,
+          "reason": "Relevant material is present; connect it more directly to the central argument.",
+          "next_action": "Explain how this experience establishes the next step in your argument.",
+          "sentence_ids": [
+            "s2"
+          ]
+        },
+        {
+          "id": "preparation",
+          "label": "Academic and professional preparation",
+          "weight": 10,
+          "status": "scored",
+          "checkpoints": [
+            {
+              "index": 1,
+              "status": "scored",
+              "rating": 3,
+              "sentence_ids": [
+                "s2"
+              ],
+              "reason": "Synthetic contract fixture; this is not a calibrated assessment."
+            },
+            {
+              "index": 2,
+              "status": "scored",
+              "rating": 3,
+              "sentence_ids": [
+                "s2"
+              ],
+              "reason": "Synthetic contract fixture; this is not a calibrated assessment."
+            },
+            {
+              "index": 3,
+              "status": "scored",
+              "rating": 3,
+              "sentence_ids": [
+                "s2"
+              ],
+              "reason": "Synthetic contract fixture; this is not a calibrated assessment."
+            },
+            {
+              "index": 4,
+              "status": "scored",
+              "rating": 3,
+              "sentence_ids": [
+                "s2"
+              ],
+              "reason": "Synthetic contract fixture; this is not a calibrated assessment."
+            }
+          ],
+          "base_score": 75,
+          "score": 75,
+          "level": 3,
+          "level_label": "Strong",
+          "weighted_points": 7.5,
+          "reason": "Relevant material is present; connect it more directly to the central argument.",
+          "next_action": "Explain how this experience establishes the next step in your argument.",
+          "sentence_ids": [
+            "s2"
+          ]
+        },
+        {
+          "id": "intellectualDirection",
+          "label": "Intellectual direction",
+          "weight": 8,
+          "status": "scored",
+          "checkpoints": [
+            {
+              "index": 1,
+              "status": "scored",
+              "rating": 3,
+              "sentence_ids": [
+                "s2"
+              ],
+              "reason": "Synthetic contract fixture; this is not a calibrated assessment."
+            },
+            {
+              "index": 2,
+              "status": "scored",
+              "rating": 3,
+              "sentence_ids": [
+                "s2"
+              ],
+              "reason": "Synthetic contract fixture; this is not a calibrated assessment."
+            },
+            {
+              "index": 3,
+              "status": "scored",
+              "rating": 3,
+              "sentence_ids": [
+                "s2"
+              ],
+              "reason": "Synthetic contract fixture; this is not a calibrated assessment."
+            },
+            {
+              "index": 4,
+              "status": "scored",
+              "rating": 3,
+              "sentence_ids": [
+                "s2"
+              ],
+              "reason": "Synthetic contract fixture; this is not a calibrated assessment."
+            }
+          ],
+          "base_score": 75,
+          "score": 75,
+          "level": 3,
+          "level_label": "Strong",
+          "weighted_points": 6.0,
+          "reason": "Relevant material is present; connect it more directly to the central argument.",
+          "next_action": "Explain how this experience establishes the next step in your argument.",
+          "sentence_ids": [
+            "s2"
+          ]
+        },
+        {
+          "id": "programFit",
+          "label": "Program and faculty fit",
+          "weight": 12,
+          "status": "scored",
+          "checkpoints": [
+            {
+              "index": 1,
+              "status": "scored",
+              "rating": 3,
+              "sentence_ids": [
+                "s2"
+              ],
+              "reason": "Synthetic contract fixture; this is not a calibrated assessment."
+            },
+            {
+              "index": 2,
+              "status": "scored",
+              "rating": 3,
+              "sentence_ids": [
+                "s2"
+              ],
+              "reason": "Synthetic contract fixture; this is not a calibrated assessment."
+            },
+            {
+              "index": 3,
+              "status": "scored",
+              "rating": 3,
+              "sentence_ids": [
+                "s2"
+              ],
+              "reason": "Synthetic contract fixture; this is not a calibrated assessment."
+            },
+            {
+              "index": 4,
+              "status": "scored",
+              "rating": 3,
+              "sentence_ids": [
+                "s2"
+              ],
+              "reason": "Synthetic contract fixture; this is not a calibrated assessment."
+            }
+          ],
+          "base_score": 75,
+          "score": 75,
+          "level": 3,
+          "level_label": "Strong",
+          "weighted_points": 9.0,
+          "reason": "Relevant material is present; connect it more directly to the central argument.",
+          "next_action": "Explain how this experience establishes the next step in your argument.",
+          "sentence_ids": [
+            "s2"
+          ]
+        }
+      ],
+      "adjustments": [],
+      "strongest_categories": [
+        {
+          "dimension_id": "promptAlignment",
+          "label": "Prompt alignment",
+          "score": 75,
+          "reason": "Relevant material is present; connect it more directly to the central argument."
+        },
+        {
+          "dimension_id": "throughlineStructure",
+          "label": "Throughline and structure",
+          "score": 75,
+          "reason": "Relevant material is present; connect it more directly to the central argument."
+        }
+      ],
+      "weakest_categories": [
+        {
+          "dimension_id": "evidenceSpecificity",
+          "label": "Evidence and specificity",
+          "score": 75,
+          "reason": "Relevant material is present; connect it more directly to the central argument."
+        },
+        {
+          "dimension_id": "proseControl",
+          "label": "Prose control",
+          "score": 75,
+          "reason": "Relevant material is present; connect it more directly to the central argument."
+        }
+      ],
+      "ranking_note": "",
+      "strongest_sentence": {
+        "sentence_id": "s2",
+        "paragraph": 1,
+        "quote": "I compared referral logs and interviewed the outreach team to locate missed handoffs.",
+        "explanation": "The sentence makes the applicant's action concrete.",
+        "supporting_sentence_ids": [
+          "s3"
+        ]
+      },
+      "riskiest_sentence": {
+        "sentence_id": null,
+        "paragraph": null,
+        "quote": null,
+        "explanation": "No sentence-specific concern was identified in this fictional fixture.",
+        "supporting_sentence_ids": []
+      },
+      "prompt_requirements_status": "evaluated",
+      "prompt_requirements": [
+        {
+          "id": "r1",
+          "prompt_quote": "Describe your preparation",
+          "requirement": "Describe relevant preparation",
+          "priority": "required",
+          "status": "covered",
+          "sentence_ids": [
+            "s2",
+            "s3"
+          ],
+          "reason": "The draft explains an investigation and a practical trial.",
+          "next_action": "Connect this preparation to the skills you need next."
+        }
+      ],
+      "missing_prompt_requirements": [],
+      "uncertain_prompt_requirements": [],
+      "missing_context": [],
+      "verification_limits": [
+        "Program details and applicant claims have not been independently verified."
+      ],
+      "integrity_flags": [],
+      "main_concern": {
+        "title": "Develop the link between experience and training",
+        "explanation": "The next revision should explain what the experience revealed about the applicant's learning needs.",
+        "dimension_ids": [
+          "programFit"
+        ],
+        "sentence_ids": [
+          "s4",
+          "s5"
+        ],
+        "first_action": "Identify one learning gap and connect it to the program's evaluation training."
+      },
+      "recommendation": {
+        "path": "Refine",
+        "provisional": false,
+        "triggered_rules": [],
+        "reason": "The overall score is at least 55 and no scored foundational dimension is below 45. Refine the existing argument.",
+        "next_action": "Identify one learning gap and connect it to the program's evaluation training."
+      },
+      "priority_actions": [
+        "Connect the referral experience to a specific learning gap.",
+        "Explain how evaluation training addresses that gap."
+      ],
+      "defaults_applied": [
+        "D1",
+        "D2",
+        "D3",
+        "D4",
+        "D5"
+      ],
+      "score_meaning": "Writing quality and revision readiness against Statement Studio\u2019s rubric; not admission probability, verified truth, or AI-authorship detection."
+    },
+    "diagnostic": {
+      "revision_opportunity": "Moderate",
+      "pathway_observation": "Connect practical experience and population problems to the training you need next.",
+      "evidence_gap": {
+        "summary": "Explain what the contact-schedule trial taught you and what remains unresolved.",
+        "quote": "With the coordinator, I tested a contact schedule and reviewed which follow-ups still failed.",
+        "sentence_ids": [
+          "s3"
+        ]
+      },
+      "evidence_examples": [
+        {
+          "id": "e1",
+          "sentence_ids": [
+            "s2",
+            "s3"
+          ],
+          "summary": "The applicant investigated stalled referrals and trialed a contact schedule."
+        }
+      ]
+    }
+  },
+  "report": {
+    "report_version": "complete-report.v1",
+    "report_status": "ready",
+    "input_issues": [],
+    "discrepancies": [],
+    "executive_summary": {
+      "overall_score": 75,
+      "assessment_band": "Credible draft",
+      "assessment_status": "complete",
+      "recommendation_path": "Refine",
+      "main_concern_title": "Develop the link between experience and training",
+      "argument_summary": "Synthetic fixture illustrating a complete report contract.",
+      "strengths_to_preserve": [
+        "Preserve the applicant's specific experience."
+      ],
+      "main_concern_explanation": "The next revision should explain what the experience revealed about the applicant's learning needs.",
+      "recommendation_explanation": "The overall score is at least 55 and no scored foundational dimension is below 45. Refine the existing argument.",
+      "first_action": "Identify one learning gap and connect it to the program's evaluation training.",
+      "limitations": [
+        "Synthetic fixture, not calibrated advice."
+      ]
+    },
+    "criterion_details": [
+      {
+        "finding_id": "criterion:promptAlignment",
+        "dimension_id": "promptAlignment",
+        "label": "Prompt alignment",
+        "baseline": {
+          "status": "scored",
+          "weight": 12,
+          "base_score": 75,
+          "score": 75,
+          "level": 3,
+          "level_label": "Strong",
+          "weighted_points": 9.0
+        },
+        "explanation_status": "aligned",
+        "explanation": "Relevant material is present; connect it more directly to the central argument.",
+        "checkpoints": [
+          {
+            "index": 1,
+            "status": "scored",
+            "rating": 3,
+            "explanation": "Synthetic contract fixture; this is not a calibrated assessment.",
+            "evidence": [
+              {
+                "sentence_id": "s1",
+                "paragraph": 1,
+                "quote": "At our local clinic, referrals often stalled after the first visit.",
+                "use": "context"
+              }
+            ]
+          },
+          {
+            "index": 2,
+            "status": "scored",
+            "rating": 3,
+            "explanation": "Synthetic contract fixture; this is not a calibrated assessment.",
+            "evidence": [
+              {
+                "sentence_id": "s1",
+                "paragraph": 1,
+                "quote": "At our local clinic, referrals often stalled after the first visit.",
+                "use": "context"
+              }
+            ]
+          },
+          {
+            "index": 3,
+            "status": "scored",
+            "rating": 3,
+            "explanation": "Synthetic contract fixture; this is not a calibrated assessment.",
+            "evidence": [
+              {
+                "sentence_id": "s1",
+                "paragraph": 1,
+                "quote": "At our local clinic, referrals often stalled after the first visit.",
+                "use": "context"
+              }
+            ]
+          },
+          {
+            "index": 4,
+            "status": "scored",
+            "rating": 3,
+            "explanation": "Synthetic contract fixture; this is not a calibrated assessment.",
+            "evidence": [
+              {
+                "sentence_id": "s1",
+                "paragraph": 1,
+                "quote": "At our local clinic, referrals often stalled after the first visit.",
+                "use": "context"
+              }
+            ]
+          }
+        ],
+        "supporting_excerpts": [
+          {
+            "sentence_id": "s1",
+            "paragraph": 1,
+            "quote": "At our local clinic, referrals often stalled after the first visit.",
+            "use": "context"
+          }
+        ],
+        "limiting_factors": [],
+        "recorded_adjustment_explanation": "Recorded adjustments remain unchanged.",
+        "revision_direction": "Explain how this experience establishes the next step in your argument.",
+        "completion_check": "Check the relationship against the source."
+      },
+      {
+        "finding_id": "criterion:throughlineStructure",
+        "dimension_id": "throughlineStructure",
+        "label": "Throughline and structure",
+        "baseline": {
+          "status": "scored",
+          "weight": 14,
+          "base_score": 75,
+          "score": 75,
+          "level": 3,
+          "level_label": "Strong",
+          "weighted_points": 10.5
+        },
+        "explanation_status": "aligned",
+        "explanation": "Relevant material is present; connect it more directly to the central argument.",
+        "checkpoints": [
+          {
+            "index": 1,
+            "status": "scored",
+            "rating": 3,
+            "explanation": "Synthetic contract fixture; this is not a calibrated assessment.",
+            "evidence": [
+              {
+                "sentence_id": "s1",
+                "paragraph": 1,
+                "quote": "At our local clinic, referrals often stalled after the first visit.",
+                "use": "context"
+              }
+            ]
+          },
+          {
+            "index": 2,
+            "status": "scored",
+            "rating": 3,
+            "explanation": "Synthetic contract fixture; this is not a calibrated assessment.",
+            "evidence": [
+              {
+                "sentence_id": "s1",
+                "paragraph": 1,
+                "quote": "At our local clinic, referrals often stalled after the first visit.",
+                "use": "context"
+              }
+            ]
+          },
+          {
+            "index": 3,
+            "status": "scored",
+            "rating": 3,
+            "explanation": "Synthetic contract fixture; this is not a calibrated assessment.",
+            "evidence": [
+              {
+                "sentence_id": "s1",
+                "paragraph": 1,
+                "quote": "At our local clinic, referrals often stalled after the first visit.",
+                "use": "context"
+              }
+            ]
+          },
+          {
+            "index": 4,
+            "status": "scored",
+            "rating": 3,
+            "explanation": "Synthetic contract fixture; this is not a calibrated assessment.",
+            "evidence": [
+              {
+                "sentence_id": "s1",
+                "paragraph": 1,
+                "quote": "At our local clinic, referrals often stalled after the first visit.",
+                "use": "context"
+              }
+            ]
+          }
+        ],
+        "supporting_excerpts": [
+          {
+            "sentence_id": "s1",
+            "paragraph": 1,
+            "quote": "At our local clinic, referrals often stalled after the first visit.",
+            "use": "context"
+          }
+        ],
+        "limiting_factors": [],
+        "recorded_adjustment_explanation": "Recorded adjustments remain unchanged.",
+        "revision_direction": "Explain how this experience establishes the next step in your argument.",
+        "completion_check": "Check the relationship against the source."
+      },
+      {
+        "finding_id": "criterion:evidenceSpecificity",
+        "dimension_id": "evidenceSpecificity",
+        "label": "Evidence and specificity",
+        "baseline": {
+          "status": "scored",
+          "weight": 18,
+          "base_score": 75,
+          "score": 75,
+          "level": 3,
+          "level_label": "Strong",
+          "weighted_points": 13.5
+        },
+        "explanation_status": "aligned",
+        "explanation": "Relevant material is present; connect it more directly to the central argument.",
+        "checkpoints": [
+          {
+            "index": 1,
+            "status": "scored",
+            "rating": 3,
+            "explanation": "Synthetic contract fixture; this is not a calibrated assessment.",
+            "evidence": [
+              {
+                "sentence_id": "s1",
+                "paragraph": 1,
+                "quote": "At our local clinic, referrals often stalled after the first visit.",
+                "use": "context"
+              }
+            ]
+          },
+          {
+            "index": 2,
+            "status": "scored",
+            "rating": 3,
+            "explanation": "Synthetic contract fixture; this is not a calibrated assessment.",
+            "evidence": [
+              {
+                "sentence_id": "s1",
+                "paragraph": 1,
+                "quote": "At our local clinic, referrals often stalled after the first visit.",
+                "use": "context"
+              }
+            ]
+          },
+          {
+            "index": 3,
+            "status": "scored",
+            "rating": 3,
+            "explanation": "Synthetic contract fixture; this is not a calibrated assessment.",
+            "evidence": [
+              {
+                "sentence_id": "s1",
+                "paragraph": 1,
+                "quote": "At our local clinic, referrals often stalled after the first visit.",
+                "use": "context"
+              }
+            ]
+          },
+          {
+            "index": 4,
+            "status": "scored",
+            "rating": 3,
+            "explanation": "Synthetic contract fixture; this is not a calibrated assessment.",
+            "evidence": [
+              {
+                "sentence_id": "s1",
+                "paragraph": 1,
+                "quote": "At our local clinic, referrals often stalled after the first visit.",
+                "use": "context"
+              }
+            ]
+          }
+        ],
+        "supporting_excerpts": [
+          {
+            "sentence_id": "s1",
+            "paragraph": 1,
+            "quote": "At our local clinic, referrals often stalled after the first visit.",
+            "use": "context"
+          }
+        ],
+        "limiting_factors": [],
+        "recorded_adjustment_explanation": "Recorded adjustments remain unchanged.",
+        "revision_direction": "Explain how this experience establishes the next step in your argument.",
+        "completion_check": "Check the relationship against the source."
+      },
+      {
+        "finding_id": "criterion:proseControl",
+        "dimension_id": "proseControl",
+        "label": "Prose control",
+        "baseline": {
+          "status": "scored",
+          "weight": 10,
+          "base_score": 75,
+          "score": 75,
+          "level": 3,
+          "level_label": "Strong",
+          "weighted_points": 7.5
+        },
+        "explanation_status": "aligned",
+        "explanation": "Relevant material is present; connect it more directly to the central argument.",
+        "checkpoints": [
+          {
+            "index": 1,
+            "status": "scored",
+            "rating": 3,
+            "explanation": "Synthetic contract fixture; this is not a calibrated assessment.",
+            "evidence": [
+              {
+                "sentence_id": "s1",
+                "paragraph": 1,
+                "quote": "At our local clinic, referrals often stalled after the first visit.",
+                "use": "context"
+              }
+            ]
+          },
+          {
+            "index": 2,
+            "status": "scored",
+            "rating": 3,
+            "explanation": "Synthetic contract fixture; this is not a calibrated assessment.",
+            "evidence": [
+              {
+                "sentence_id": "s1",
+                "paragraph": 1,
+                "quote": "At our local clinic, referrals often stalled after the first visit.",
+                "use": "context"
+              }
+            ]
+          },
+          {
+            "index": 3,
+            "status": "scored",
+            "rating": 3,
+            "explanation": "Synthetic contract fixture; this is not a calibrated assessment.",
+            "evidence": [
+              {
+                "sentence_id": "s1",
+                "paragraph": 1,
+                "quote": "At our local clinic, referrals often stalled after the first visit.",
+                "use": "context"
+              }
+            ]
+          },
+          {
+            "index": 4,
+            "status": "scored",
+            "rating": 3,
+            "explanation": "Synthetic contract fixture; this is not a calibrated assessment.",
+            "evidence": [
+              {
+                "sentence_id": "s1",
+                "paragraph": 1,
+                "quote": "At our local clinic, referrals often stalled after the first visit.",
+                "use": "context"
+              }
+            ]
+          }
+        ],
+        "supporting_excerpts": [
+          {
+            "sentence_id": "s1",
+            "paragraph": 1,
+            "quote": "At our local clinic, referrals often stalled after the first visit.",
+            "use": "context"
+          }
+        ],
+        "limiting_factors": [],
+        "recorded_adjustment_explanation": "Recorded adjustments remain unchanged.",
+        "revision_direction": "Explain how this experience establishes the next step in your argument.",
+        "completion_check": "Check the relationship against the source."
+      },
+      {
+        "finding_id": "criterion:voiceAuthenticity",
+        "dimension_id": "voiceAuthenticity",
+        "label": "Voice, grounding, and originality",
+        "baseline": {
+          "status": "scored",
+          "weight": 8,
+          "base_score": 75,
+          "score": 75,
+          "level": 3,
+          "level_label": "Strong",
+          "weighted_points": 6.0
+        },
+        "explanation_status": "aligned",
+        "explanation": "Relevant material is present; connect it more directly to the central argument.",
+        "checkpoints": [
+          {
+            "index": 1,
+            "status": "scored",
+            "rating": 3,
+            "explanation": "Synthetic contract fixture; this is not a calibrated assessment.",
+            "evidence": [
+              {
+                "sentence_id": "s1",
+                "paragraph": 1,
+                "quote": "At our local clinic, referrals often stalled after the first visit.",
+                "use": "context"
+              }
+            ]
+          },
+          {
+            "index": 2,
+            "status": "scored",
+            "rating": 3,
+            "explanation": "Synthetic contract fixture; this is not a calibrated assessment.",
+            "evidence": [
+              {
+                "sentence_id": "s1",
+                "paragraph": 1,
+                "quote": "At our local clinic, referrals often stalled after the first visit.",
+                "use": "context"
+              }
+            ]
+          },
+          {
+            "index": 3,
+            "status": "scored",
+            "rating": 3,
+            "explanation": "Synthetic contract fixture; this is not a calibrated assessment.",
+            "evidence": [
+              {
+                "sentence_id": "s1",
+                "paragraph": 1,
+                "quote": "At our local clinic, referrals often stalled after the first visit.",
+                "use": "context"
+              }
+            ]
+          },
+          {
+            "index": 4,
+            "status": "scored",
+            "rating": 3,
+            "explanation": "Synthetic contract fixture; this is not a calibrated assessment.",
+            "evidence": [
+              {
+                "sentence_id": "s1",
+                "paragraph": 1,
+                "quote": "At our local clinic, referrals often stalled after the first visit.",
+                "use": "context"
+              }
+            ]
+          }
+        ],
+        "supporting_excerpts": [
+          {
+            "sentence_id": "s1",
+            "paragraph": 1,
+            "quote": "At our local clinic, referrals often stalled after the first visit.",
+            "use": "context"
+          }
+        ],
+        "limiting_factors": [],
+        "recorded_adjustment_explanation": "Recorded adjustments remain unchanged.",
+        "revision_direction": "Explain how this experience establishes the next step in your argument.",
+        "completion_check": "Check the relationship against the source."
+      },
+      {
+        "finding_id": "criterion:goalsDirection",
+        "dimension_id": "goalsDirection",
+        "label": "Goals and direction",
+        "baseline": {
+          "status": "scored",
+          "weight": 8,
+          "base_score": 75,
+          "score": 75,
+          "level": 3,
+          "level_label": "Strong",
+          "weighted_points": 6.0
+        },
+        "explanation_status": "aligned",
+        "explanation": "Relevant material is present; connect it more directly to the central argument.",
+        "checkpoints": [
+          {
+            "index": 1,
+            "status": "scored",
+            "rating": 3,
+            "explanation": "Synthetic contract fixture; this is not a calibrated assessment.",
+            "evidence": [
+              {
+                "sentence_id": "s1",
+                "paragraph": 1,
+                "quote": "At our local clinic, referrals often stalled after the first visit.",
+                "use": "context"
+              }
+            ]
+          },
+          {
+            "index": 2,
+            "status": "scored",
+            "rating": 3,
+            "explanation": "Synthetic contract fixture; this is not a calibrated assessment.",
+            "evidence": [
+              {
+                "sentence_id": "s1",
+                "paragraph": 1,
+                "quote": "At our local clinic, referrals often stalled after the first visit.",
+                "use": "context"
+              }
+            ]
+          },
+          {
+            "index": 3,
+            "status": "scored",
+            "rating": 3,
+            "explanation": "Synthetic contract fixture; this is not a calibrated assessment.",
+            "evidence": [
+              {
+                "sentence_id": "s1",
+                "paragraph": 1,
+                "quote": "At our local clinic, referrals often stalled after the first visit.",
+                "use": "context"
+              }
+            ]
+          },
+          {
+            "index": 4,
+            "status": "scored",
+            "rating": 3,
+            "explanation": "Synthetic contract fixture; this is not a calibrated assessment.",
+            "evidence": [
+              {
+                "sentence_id": "s1",
+                "paragraph": 1,
+                "quote": "At our local clinic, referrals often stalled after the first visit.",
+                "use": "context"
+              }
+            ]
+          }
+        ],
+        "supporting_excerpts": [
+          {
+            "sentence_id": "s1",
+            "paragraph": 1,
+            "quote": "At our local clinic, referrals often stalled after the first visit.",
+            "use": "context"
+          }
+        ],
+        "limiting_factors": [],
+        "recorded_adjustment_explanation": "Recorded adjustments remain unchanged.",
+        "revision_direction": "Explain how this experience establishes the next step in your argument.",
+        "completion_check": "Check the relationship against the source."
+      },
+      {
+        "finding_id": "criterion:preparation",
+        "dimension_id": "preparation",
+        "label": "Academic and professional preparation",
+        "baseline": {
+          "status": "scored",
+          "weight": 10,
+          "base_score": 75,
+          "score": 75,
+          "level": 3,
+          "level_label": "Strong",
+          "weighted_points": 7.5
+        },
+        "explanation_status": "aligned",
+        "explanation": "Relevant material is present; connect it more directly to the central argument.",
+        "checkpoints": [
+          {
+            "index": 1,
+            "status": "scored",
+            "rating": 3,
+            "explanation": "Synthetic contract fixture; this is not a calibrated assessment.",
+            "evidence": [
+              {
+                "sentence_id": "s1",
+                "paragraph": 1,
+                "quote": "At our local clinic, referrals often stalled after the first visit.",
+                "use": "context"
+              }
+            ]
+          },
+          {
+            "index": 2,
+            "status": "scored",
+            "rating": 3,
+            "explanation": "Synthetic contract fixture; this is not a calibrated assessment.",
+            "evidence": [
+              {
+                "sentence_id": "s1",
+                "paragraph": 1,
+                "quote": "At our local clinic, referrals often stalled after the first visit.",
+                "use": "context"
+              }
+            ]
+          },
+          {
+            "index": 3,
+            "status": "scored",
+            "rating": 3,
+            "explanation": "Synthetic contract fixture; this is not a calibrated assessment.",
+            "evidence": [
+              {
+                "sentence_id": "s1",
+                "paragraph": 1,
+                "quote": "At our local clinic, referrals often stalled after the first visit.",
+                "use": "context"
+              }
+            ]
+          },
+          {
+            "index": 4,
+            "status": "scored",
+            "rating": 3,
+            "explanation": "Synthetic contract fixture; this is not a calibrated assessment.",
+            "evidence": [
+              {
+                "sentence_id": "s1",
+                "paragraph": 1,
+                "quote": "At our local clinic, referrals often stalled after the first visit.",
+                "use": "context"
+              }
+            ]
+          }
+        ],
+        "supporting_excerpts": [
+          {
+            "sentence_id": "s1",
+            "paragraph": 1,
+            "quote": "At our local clinic, referrals often stalled after the first visit.",
+            "use": "context"
+          }
+        ],
+        "limiting_factors": [],
+        "recorded_adjustment_explanation": "Recorded adjustments remain unchanged.",
+        "revision_direction": "Explain how this experience establishes the next step in your argument.",
+        "completion_check": "Check the relationship against the source."
+      },
+      {
+        "finding_id": "criterion:intellectualDirection",
+        "dimension_id": "intellectualDirection",
+        "label": "Intellectual direction",
+        "baseline": {
+          "status": "scored",
+          "weight": 8,
+          "base_score": 75,
+          "score": 75,
+          "level": 3,
+          "level_label": "Strong",
+          "weighted_points": 6.0
+        },
+        "explanation_status": "aligned",
+        "explanation": "Relevant material is present; connect it more directly to the central argument.",
+        "checkpoints": [
+          {
+            "index": 1,
+            "status": "scored",
+            "rating": 3,
+            "explanation": "Synthetic contract fixture; this is not a calibrated assessment.",
+            "evidence": [
+              {
+                "sentence_id": "s1",
+                "paragraph": 1,
+                "quote": "At our local clinic, referrals often stalled after the first visit.",
+                "use": "context"
+              }
+            ]
+          },
+          {
+            "index": 2,
+            "status": "scored",
+            "rating": 3,
+            "explanation": "Synthetic contract fixture; this is not a calibrated assessment.",
+            "evidence": [
+              {
+                "sentence_id": "s1",
+                "paragraph": 1,
+                "quote": "At our local clinic, referrals often stalled after the first visit.",
+                "use": "context"
+              }
+            ]
+          },
+          {
+            "index": 3,
+            "status": "scored",
+            "rating": 3,
+            "explanation": "Synthetic contract fixture; this is not a calibrated assessment.",
+            "evidence": [
+              {
+                "sentence_id": "s1",
+                "paragraph": 1,
+                "quote": "At our local clinic, referrals often stalled after the first visit.",
+                "use": "context"
+              }
+            ]
+          },
+          {
+            "index": 4,
+            "status": "scored",
+            "rating": 3,
+            "explanation": "Synthetic contract fixture; this is not a calibrated assessment.",
+            "evidence": [
+              {
+                "sentence_id": "s1",
+                "paragraph": 1,
+                "quote": "At our local clinic, referrals often stalled after the first visit.",
+                "use": "context"
+              }
+            ]
+          }
+        ],
+        "supporting_excerpts": [
+          {
+            "sentence_id": "s1",
+            "paragraph": 1,
+            "quote": "At our local clinic, referrals often stalled after the first visit.",
+            "use": "context"
+          }
+        ],
+        "limiting_factors": [],
+        "recorded_adjustment_explanation": "Recorded adjustments remain unchanged.",
+        "revision_direction": "Explain how this experience establishes the next step in your argument.",
+        "completion_check": "Check the relationship against the source."
+      },
+      {
+        "finding_id": "criterion:programFit",
+        "dimension_id": "programFit",
+        "label": "Program and faculty fit",
+        "baseline": {
+          "status": "scored",
+          "weight": 12,
+          "base_score": 75,
+          "score": 75,
+          "level": 3,
+          "level_label": "Strong",
+          "weighted_points": 9.0
+        },
+        "explanation_status": "aligned",
+        "explanation": "Relevant material is present; connect it more directly to the central argument.",
+        "checkpoints": [
+          {
+            "index": 1,
+            "status": "scored",
+            "rating": 3,
+            "explanation": "Synthetic contract fixture; this is not a calibrated assessment.",
+            "evidence": [
+              {
+                "sentence_id": "s1",
+                "paragraph": 1,
+                "quote": "At our local clinic, referrals often stalled after the first visit.",
+                "use": "context"
+              }
+            ]
+          },
+          {
+            "index": 2,
+            "status": "scored",
+            "rating": 3,
+            "explanation": "Synthetic contract fixture; this is not a calibrated assessment.",
+            "evidence": [
+              {
+                "sentence_id": "s1",
+                "paragraph": 1,
+                "quote": "At our local clinic, referrals often stalled after the first visit.",
+                "use": "context"
+              }
+            ]
+          },
+          {
+            "index": 3,
+            "status": "scored",
+            "rating": 3,
+            "explanation": "Synthetic contract fixture; this is not a calibrated assessment.",
+            "evidence": [
+              {
+                "sentence_id": "s1",
+                "paragraph": 1,
+                "quote": "At our local clinic, referrals often stalled after the first visit.",
+                "use": "context"
+              }
+            ]
+          },
+          {
+            "index": 4,
+            "status": "scored",
+            "rating": 3,
+            "explanation": "Synthetic contract fixture; this is not a calibrated assessment.",
+            "evidence": [
+              {
+                "sentence_id": "s1",
+                "paragraph": 1,
+                "quote": "At our local clinic, referrals often stalled after the first visit.",
+                "use": "context"
+              }
+            ]
+          }
+        ],
+        "supporting_excerpts": [
+          {
+            "sentence_id": "s1",
+            "paragraph": 1,
+            "quote": "At our local clinic, referrals often stalled after the first visit.",
+            "use": "context"
+          }
+        ],
+        "limiting_factors": [],
+        "recorded_adjustment_explanation": "Recorded adjustments remain unchanged.",
+        "revision_direction": "Explain how this experience establishes the next step in your argument.",
+        "completion_check": "Check the relationship against the source."
+      }
+    ],
+    "prompt_coverage": {
+      "assessment_status": "evaluated",
+      "limit_compliance": {
+        "status": "within_limit",
+        "max_words": 500,
+        "max_characters": null,
+        "largest_overrun_percent": 0.0,
+        "prose_deduction": 0,
+        "reason": "The draft is within the supplied maximum."
+      },
+      "requirements": [
+        {
+          "finding_id": "requirement:r1",
+          "requirement_id": "r1",
+          "prompt_quote": "Describe your preparation",
+          "requirement": "Describe relevant preparation",
+          "priority": "required",
+          "status": "covered",
+          "evidence": [
+            {
+              "sentence_id": "s1",
+              "paragraph": 1,
+              "quote": "At our local clinic, referrals often stalled after the first visit.",
+              "use": "context"
+            }
+          ],
+          "explanation": "The draft explains an investigation and a practical trial.",
+          "next_action": "Connect this preparation to the skills you need next."
+        }
+      ],
+      "missing_or_partial_required_ids": [],
+      "uncertain_requirement_ids": [],
+      "limitations": []
+    },
+    "sentence_reviews": [
+      {
+        "finding_id": "sentence:s1",
+        "sentence_id": "s1",
+        "paragraph": 1,
+        "text": "At our local clinic, referrals often stalled after the first visit.",
+        "function": "Develop the applicant's argument.",
+        "disposition": "Refine",
+        "action": "connect",
+        "what_works": "The sentence contributes relevant material.",
+        "concern": "Clarify the connection.",
+        "explanation": "Read this sentence in the context of its paragraph.",
+        "revision_direction": "Clarify the connection.",
+        "criterion_ids": [
+          "promptAlignment"
+        ],
+        "context_sentence_ids": [],
+        "uncertainty": null
+      },
+      {
+        "finding_id": "sentence:s2",
+        "sentence_id": "s2",
+        "paragraph": 1,
+        "text": "I compared referral logs and interviewed the outreach team to locate missed handoffs.",
+        "function": "Develop the applicant's argument.",
+        "disposition": "Keep",
+        "action": "preserve",
+        "what_works": "The sentence contributes relevant material.",
+        "concern": null,
+        "explanation": "Read this sentence in the context of its paragraph.",
+        "revision_direction": "Preserve the supported material.",
+        "criterion_ids": [
+          "promptAlignment"
+        ],
+        "context_sentence_ids": [],
+        "uncertainty": null
+      },
+      {
+        "finding_id": "sentence:s3",
+        "sentence_id": "s3",
+        "paragraph": 1,
+        "text": "With the coordinator, I tested a contact schedule and reviewed which follow-ups still failed.",
+        "function": "Develop the applicant's argument.",
+        "disposition": "Keep",
+        "action": "preserve",
+        "what_works": "The sentence contributes relevant material.",
+        "concern": null,
+        "explanation": "Read this sentence in the context of its paragraph.",
+        "revision_direction": "Preserve the supported material.",
+        "criterion_ids": [
+          "promptAlignment"
+        ],
+        "context_sentence_ids": [],
+        "uncertainty": null
+      },
+      {
+        "finding_id": "sentence:s4",
+        "sentence_id": "s4",
+        "paragraph": 2,
+        "text": "I want to study public health evaluation so I can improve the design of community referral services.",
+        "function": "Develop the applicant's argument.",
+        "disposition": "Keep",
+        "action": "preserve",
+        "what_works": "The sentence contributes relevant material.",
+        "concern": null,
+        "explanation": "Read this sentence in the context of its paragraph.",
+        "revision_direction": "Preserve the supported material.",
+        "criterion_ids": [
+          "promptAlignment"
+        ],
+        "context_sentence_ids": [],
+        "uncertainty": null
+      },
+      {
+        "finding_id": "sentence:s5",
+        "sentence_id": "s5",
+        "paragraph": 2,
+        "text": "The program's evaluation module would help me assess which changes actually improve continuity of care.",
+        "function": "Develop the applicant's argument.",
+        "disposition": "Keep",
+        "action": "preserve",
+        "what_works": "The sentence contributes relevant material.",
+        "concern": null,
+        "explanation": "Read this sentence in the context of its paragraph.",
+        "revision_direction": "Preserve the supported material.",
+        "criterion_ids": [
+          "promptAlignment"
+        ],
+        "context_sentence_ids": [],
+        "uncertainty": null
+      }
+    ],
+    "paragraph_reviews": [
+      {
+        "finding_id": "paragraph:p1",
+        "paragraph_id": "p1",
+        "number": 1,
+        "text": "At our local clinic, referrals often stalled after the first visit. I compared referral logs and interviewed the outreach team to locate missed handoffs. With the coordinator, I tested a contact schedule and reviewed which follow-ups still failed.",
+        "sentence_ids": [
+          "s1",
+          "s2",
+          "s3"
+        ],
+        "intended_function": "Introduce relevant preparation.",
+        "actual_contribution": "Connects experience to a learning need.",
+        "disposition": "Refine",
+        "action": "connect",
+        "quality": {
+          "purpose": {
+            "rating": "adequate",
+            "reason": "A useful function is recognizable in this fixture."
+          },
+          "coherence": {
+            "rating": "adequate",
+            "reason": "A useful function is recognizable in this fixture."
+          },
+          "progression": {
+            "rating": "adequate",
+            "reason": "A useful function is recognizable in this fixture."
+          },
+          "evidence_use": {
+            "rating": "adequate",
+            "reason": "A useful function is recognizable in this fixture."
+          }
+        },
+        "explanation": "The paragraph is assessed holistically.",
+        "revision_direction": "Clarify the connection while preserving evidence.",
+        "criterion_ids": [
+          "promptAlignment"
+        ],
+        "uncertainty": null
+      },
+      {
+        "finding_id": "paragraph:p2",
+        "paragraph_id": "p2",
+        "number": 2,
+        "text": "I want to study public health evaluation so I can improve the design of community referral services. The program's evaluation module would help me assess which changes actually improve continuity of care.",
+        "sentence_ids": [
+          "s4",
+          "s5"
+        ],
+        "intended_function": "Introduce relevant preparation.",
+        "actual_contribution": "Connects experience to a learning need.",
+        "disposition": "Keep",
+        "action": "preserve",
+        "quality": {
+          "purpose": {
+            "rating": "adequate",
+            "reason": "A useful function is recognizable in this fixture."
+          },
+          "coherence": {
+            "rating": "adequate",
+            "reason": "A useful function is recognizable in this fixture."
+          },
+          "progression": {
+            "rating": "adequate",
+            "reason": "A useful function is recognizable in this fixture."
+          },
+          "evidence_use": {
+            "rating": "adequate",
+            "reason": "A useful function is recognizable in this fixture."
+          }
+        },
+        "explanation": "The paragraph is assessed holistically.",
+        "revision_direction": "Clarify the connection while preserving evidence.",
+        "criterion_ids": [
+          "promptAlignment"
+        ],
+        "uncertainty": null
+      }
+    ],
+    "evidence_gaps": [
+      {
+        "finding_id": "gap:1",
+        "severity": "material",
+        "criterion_ids": [
+          "promptAlignment"
+        ],
+        "evidence_status": "partial",
+        "gap_type": "outcome",
+        "sentence_ids": [
+          "s1"
+        ],
+        "paragraph_ids": [
+          "p1"
+        ],
+        "evidence": [
+          {
+            "sentence_id": "s1",
+            "paragraph": 1,
+            "quote": "At our local clinic, referrals often stalled after the first visit.",
+            "use": "context"
+          }
+        ],
+        "claim_or_function": "Synthetic evidence finding 1.",
+        "existing_support": "The source supplies an activity.",
+        "missing_link": "The outcome relationship needs clarification.",
+        "applicant_action": "Add only true, relevant outcome detail.",
+        "uncertainty": null
+      },
+      {
+        "finding_id": "gap:2",
+        "severity": "material",
+        "criterion_ids": [
+          "promptAlignment"
+        ],
+        "evidence_status": "partial",
+        "gap_type": "outcome",
+        "sentence_ids": [
+          "s1"
+        ],
+        "paragraph_ids": [
+          "p1"
+        ],
+        "evidence": [
+          {
+            "sentence_id": "s1",
+            "paragraph": 1,
+            "quote": "At our local clinic, referrals often stalled after the first visit.",
+            "use": "context"
+          }
+        ],
+        "claim_or_function": "Synthetic evidence finding 2.",
+        "existing_support": "The source supplies an activity.",
+        "missing_link": "The outcome relationship needs clarification.",
+        "applicant_action": "Add only true, relevant outcome detail.",
+        "uncertainty": null
+      },
+      {
+        "finding_id": "gap:3",
+        "severity": "material",
+        "criterion_ids": [
+          "promptAlignment"
+        ],
+        "evidence_status": "partial",
+        "gap_type": "outcome",
+        "sentence_ids": [
+          "s1"
+        ],
+        "paragraph_ids": [
+          "p1"
+        ],
+        "evidence": [
+          {
+            "sentence_id": "s1",
+            "paragraph": 1,
+            "quote": "At our local clinic, referrals often stalled after the first visit.",
+            "use": "context"
+          }
+        ],
+        "claim_or_function": "Synthetic evidence finding 3.",
+        "existing_support": "The source supplies an activity.",
+        "missing_link": "The outcome relationship needs clarification.",
+        "applicant_action": "Add only true, relevant outcome detail.",
+        "uncertainty": null
+      },
+      {
+        "finding_id": "gap:4",
+        "severity": "material",
+        "criterion_ids": [
+          "promptAlignment"
+        ],
+        "evidence_status": "partial",
+        "gap_type": "outcome",
+        "sentence_ids": [
+          "s1"
+        ],
+        "paragraph_ids": [
+          "p1"
+        ],
+        "evidence": [
+          {
+            "sentence_id": "s1",
+            "paragraph": 1,
+            "quote": "At our local clinic, referrals often stalled after the first visit.",
+            "use": "context"
+          }
+        ],
+        "claim_or_function": "Synthetic evidence finding 4.",
+        "existing_support": "The source supplies an activity.",
+        "missing_link": "The outcome relationship needs clarification.",
+        "applicant_action": "Add only true, relevant outcome detail.",
+        "uncertainty": null
+      },
+      {
+        "finding_id": "gap:5",
+        "severity": "material",
+        "criterion_ids": [
+          "promptAlignment"
+        ],
+        "evidence_status": "partial",
+        "gap_type": "outcome",
+        "sentence_ids": [
+          "s1"
+        ],
+        "paragraph_ids": [
+          "p1"
+        ],
+        "evidence": [
+          {
+            "sentence_id": "s1",
+            "paragraph": 1,
+            "quote": "At our local clinic, referrals often stalled after the first visit.",
+            "use": "context"
+          }
+        ],
+        "claim_or_function": "Synthetic evidence finding 5.",
+        "existing_support": "The source supplies an activity.",
+        "missing_link": "The outcome relationship needs clarification.",
+        "applicant_action": "Add only true, relevant outcome detail.",
+        "uncertainty": null
+      },
+      {
+        "finding_id": "gap:6",
+        "severity": "material",
+        "criterion_ids": [
+          "promptAlignment"
+        ],
+        "evidence_status": "partial",
+        "gap_type": "outcome",
+        "sentence_ids": [
+          "s1"
+        ],
+        "paragraph_ids": [
+          "p1"
+        ],
+        "evidence": [
+          {
+            "sentence_id": "s1",
+            "paragraph": 1,
+            "quote": "At our local clinic, referrals often stalled after the first visit.",
+            "use": "context"
+          }
+        ],
+        "claim_or_function": "Synthetic evidence finding 6.",
+        "existing_support": "The source supplies an activity.",
+        "missing_link": "The outcome relationship needs clarification.",
+        "applicant_action": "Add only true, relevant outcome detail.",
+        "uncertainty": null
+      },
+      {
+        "finding_id": "gap:7",
+        "severity": "material",
+        "criterion_ids": [
+          "promptAlignment"
+        ],
+        "evidence_status": "partial",
+        "gap_type": "outcome",
+        "sentence_ids": [
+          "s1"
+        ],
+        "paragraph_ids": [
+          "p1"
+        ],
+        "evidence": [
+          {
+            "sentence_id": "s1",
+            "paragraph": 1,
+            "quote": "At our local clinic, referrals often stalled after the first visit.",
+            "use": "context"
+          }
+        ],
+        "claim_or_function": "Synthetic evidence finding 7.",
+        "existing_support": "The source supplies an activity.",
+        "missing_link": "The outcome relationship needs clarification.",
+        "applicant_action": "Add only true, relevant outcome detail.",
+        "uncertainty": null
+      },
+      {
+        "finding_id": "gap:8",
+        "severity": "material",
+        "criterion_ids": [
+          "promptAlignment"
+        ],
+        "evidence_status": "partial",
+        "gap_type": "outcome",
+        "sentence_ids": [
+          "s1"
+        ],
+        "paragraph_ids": [
+          "p1"
+        ],
+        "evidence": [
+          {
+            "sentence_id": "s1",
+            "paragraph": 1,
+            "quote": "At our local clinic, referrals often stalled after the first visit.",
+            "use": "context"
+          }
+        ],
+        "claim_or_function": "Synthetic evidence finding 8.",
+        "existing_support": "The source supplies an activity.",
+        "missing_link": "The outcome relationship needs clarification.",
+        "applicant_action": "Add only true, relevant outcome detail.",
+        "uncertainty": null
+      },
+      {
+        "finding_id": "gap:9",
+        "severity": "material",
+        "criterion_ids": [
+          "promptAlignment"
+        ],
+        "evidence_status": "partial",
+        "gap_type": "outcome",
+        "sentence_ids": [
+          "s1"
+        ],
+        "paragraph_ids": [
+          "p1"
+        ],
+        "evidence": [
+          {
+            "sentence_id": "s1",
+            "paragraph": 1,
+            "quote": "At our local clinic, referrals often stalled after the first visit.",
+            "use": "context"
+          }
+        ],
+        "claim_or_function": "Synthetic evidence finding 9.",
+        "existing_support": "The source supplies an activity.",
+        "missing_link": "The outcome relationship needs clarification.",
+        "applicant_action": "Add only true, relevant outcome detail.",
+        "uncertainty": null
+      },
+      {
+        "finding_id": "gap:10",
+        "severity": "material",
+        "criterion_ids": [
+          "promptAlignment"
+        ],
+        "evidence_status": "partial",
+        "gap_type": "outcome",
+        "sentence_ids": [
+          "s1"
+        ],
+        "paragraph_ids": [
+          "p1"
+        ],
+        "evidence": [
+          {
+            "sentence_id": "s1",
+            "paragraph": 1,
+            "quote": "At our local clinic, referrals often stalled after the first visit.",
+            "use": "context"
+          }
+        ],
+        "claim_or_function": "Synthetic evidence finding 10.",
+        "existing_support": "The source supplies an activity.",
+        "missing_link": "The outcome relationship needs clarification.",
+        "applicant_action": "Add only true, relevant outcome detail.",
+        "uncertainty": null
+      },
+      {
+        "finding_id": "gap:11",
+        "severity": "material",
+        "criterion_ids": [
+          "promptAlignment"
+        ],
+        "evidence_status": "partial",
+        "gap_type": "outcome",
+        "sentence_ids": [
+          "s1"
+        ],
+        "paragraph_ids": [
+          "p1"
+        ],
+        "evidence": [
+          {
+            "sentence_id": "s1",
+            "paragraph": 1,
+            "quote": "At our local clinic, referrals often stalled after the first visit.",
+            "use": "context"
+          }
+        ],
+        "claim_or_function": "Synthetic evidence finding 11.",
+        "existing_support": "The source supplies an activity.",
+        "missing_link": "The outcome relationship needs clarification.",
+        "applicant_action": "Add only true, relevant outcome detail.",
+        "uncertainty": null
+      },
+      {
+        "finding_id": "gap:12",
+        "severity": "material",
+        "criterion_ids": [
+          "promptAlignment"
+        ],
+        "evidence_status": "partial",
+        "gap_type": "outcome",
+        "sentence_ids": [
+          "s1"
+        ],
+        "paragraph_ids": [
+          "p1"
+        ],
+        "evidence": [
+          {
+            "sentence_id": "s1",
+            "paragraph": 1,
+            "quote": "At our local clinic, referrals often stalled after the first visit.",
+            "use": "context"
+          }
+        ],
+        "claim_or_function": "Synthetic evidence finding 12.",
+        "existing_support": "The source supplies an activity.",
+        "missing_link": "The outcome relationship needs clarification.",
+        "applicant_action": "Add only true, relevant outcome detail.",
+        "uncertainty": null
+      }
+    ],
+    "program_fit": {
+      "applicability": "applicable",
+      "baseline_dimension_ids": [],
+      "summary": "The fixture provides limited external program context.",
+      "findings": [],
+      "limitations": [
+        "No external program verification was performed."
+      ]
+    },
+    "voice_and_originality": {
+      "baseline_dimension_id": "voiceAuthenticity",
+      "classification": "Natural and grounded",
+      "summary": "The fixture contains applicant-specific experiences.",
+      "findings": [],
+      "limitations": [
+        "No authorship or plagiarism determination."
+      ]
+    },
+    "unsupported_claims": [],
+    "cut_or_expand": [
+      {
+        "finding_id": "edit:1",
+        "operation": "expand",
+        "severity": "material",
+        "sentence_ids": [
+          "s1"
+        ],
+        "paragraph_ids": [
+          "p1"
+        ],
+        "evidence": [
+          {
+            "sentence_id": "s1",
+            "paragraph": 1,
+            "quote": "At our local clinic, referrals often stalled after the first visit.",
+            "use": "context"
+          }
+        ],
+        "related_finding_ids": [
+          "sentence:s1"
+        ],
+        "rationale": "Clarify the first sentence's relationship.",
+        "instruction": "Supply a true supporting detail.",
+        "preserve": "The original applicant experience.",
+        "placement": "After the first sentence.",
+        "length_tradeoff": "Reallocate repetition if the supplied word limit requires it."
+      }
+    ],
+    "revision_plan": [
+      {
+        "finding_id": "step:1",
+        "priority": 1,
+        "phase": "develop_evidence",
+        "title": "Clarify the evidence connection",
+        "related_finding_ids": [
+          "edit:1"
+        ],
+        "sentence_ids": [
+          "s1"
+        ],
+        "paragraph_ids": [
+          "p1"
+        ],
+        "depends_on": [],
+        "action": "Check and clarify the actual relationship.",
+        "why_now": "Substance precedes polishing.",
+        "preserve": "The supported experience.",
+        "completion_check": "Explain the relationship using true material."
+      }
+    ],
+    "limitations": [
+      "Synthetic test fixture."
+    ],
+    "coverage": {
+      "expected_criteria": 9,
+      "reviewed_criteria": 9,
+      "expected_sentences": 5,
+      "reviewed_sentences": 5,
+      "expected_paragraphs": 2,
+      "reviewed_paragraphs": 2,
+      "unreviewed_dimension_ids": [],
+      "unreviewed_sentence_ids": [],
+      "unreviewed_paragraph_ids": []
+    }
+  },
+  "generation_seconds": 42.125,
+  "free_generation_seconds": 21.75,
+  "error": null
+}

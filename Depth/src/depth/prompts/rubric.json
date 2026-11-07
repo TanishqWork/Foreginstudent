@@ -1,0 +1,456 @@
+{
+  "version": "ss-free-ai-draft-1.0",
+  "universal": [
+    {
+      "id": "promptAlignment",
+      "label": "Prompt alignment",
+      "weight": 12
+    },
+    {
+      "id": "throughlineStructure",
+      "label": "Throughline and structure",
+      "weight": 14
+    },
+    {
+      "id": "evidenceSpecificity",
+      "label": "Evidence and specificity",
+      "weight": 18
+    },
+    {
+      "id": "proseControl",
+      "label": "Prose control",
+      "weight": 10
+    },
+    {
+      "id": "voiceAuthenticity",
+      "label": "Voice, grounding, and originality",
+      "weight": 8
+    },
+    {
+      "id": "goalsDirection",
+      "label": "Goals and direction",
+      "weight": 8
+    }
+  ],
+  "profiles": {
+    "statement_of_purpose": {
+      "label": "Statement of purpose",
+      "dimensions": [
+        {
+          "id": "preparation",
+          "label": "Academic and professional preparation",
+          "weight": 10
+        },
+        {
+          "id": "intellectualDirection",
+          "label": "Intellectual direction",
+          "weight": 8
+        },
+        {
+          "id": "programFit",
+          "label": "Program and faculty fit",
+          "weight": 12
+        }
+      ]
+    },
+    "personal_statement": {
+      "label": "Personal statement",
+      "dimensions": [
+        {
+          "id": "motivationFormative",
+          "label": "Motivation and formative experience",
+          "weight": 10
+        },
+        {
+          "id": "reflectionGrowth",
+          "label": "Reflection and growth",
+          "weight": 10
+        },
+        {
+          "id": "perspectiveContribution",
+          "label": "Perspective and contribution",
+          "weight": 10
+        }
+      ]
+    },
+    "personal_history": {
+      "label": "Personal history or diversity statement",
+      "dimensions": [
+        {
+          "id": "livedContext",
+          "label": "Lived context",
+          "weight": 10
+        },
+        {
+          "id": "reflectionGrowth",
+          "label": "Reflection and growth",
+          "weight": 10
+        },
+        {
+          "id": "perspectiveContribution",
+          "label": "Perspective and contribution",
+          "weight": 10
+        }
+      ]
+    },
+    "research_statement": {
+      "label": "Research statement",
+      "dimensions": [
+        {
+          "id": "researchAgenda",
+          "label": "Research question and agenda",
+          "weight": 10
+        },
+        {
+          "id": "methodsAwareness",
+          "label": "Methods awareness",
+          "weight": 8
+        },
+        {
+          "id": "feasibilityContribution",
+          "label": "Feasibility and contribution",
+          "weight": 6
+        },
+        {
+          "id": "facultyDisciplinaryFit",
+          "label": "Faculty or disciplinary fit",
+          "weight": 6
+        }
+      ]
+    },
+    "scholarship_essay": {
+      "label": "Scholarship or fellowship essay",
+      "dimensions": [
+        {
+          "id": "missionAlignment",
+          "label": "Mission alignment",
+          "weight": 10
+        },
+        {
+          "id": "leadershipImpact",
+          "label": "Leadership and demonstrated impact",
+          "weight": 10
+        },
+        {
+          "id": "futureContribution",
+          "label": "Future contribution",
+          "weight": 10
+        }
+      ]
+    },
+    "leadership_essay": {
+      "label": "Leadership essay",
+      "dimensions": [
+        {
+          "id": "challengeDecision",
+          "label": "Challenge and decision quality",
+          "weight": 10
+        },
+        {
+          "id": "leadershipImpact",
+          "label": "Leadership and demonstrated impact",
+          "weight": 10
+        },
+        {
+          "id": "reflectionGrowth",
+          "label": "Reflection and growth",
+          "weight": 10
+        }
+      ]
+    },
+    "career_goals": {
+      "label": "Career goals essay",
+      "dimensions": [
+        {
+          "id": "careerSpecificity",
+          "label": "Career goal specificity",
+          "weight": 12
+        },
+        {
+          "id": "whyNowLogic",
+          "label": "Why now and degree logic",
+          "weight": 10
+        },
+        {
+          "id": "preparationAlignment",
+          "label": "Preparation and goal alignment",
+          "weight": 8
+        }
+      ]
+    },
+    "combined_degree": {
+      "label": "Combined degree statement",
+      "dimensions": [
+        {
+          "id": "degreeIntegration",
+          "label": "Integration of both degrees",
+          "weight": 12
+        },
+        {
+          "id": "leadershipImpact",
+          "label": "Leadership and demonstrated impact",
+          "weight": 8
+        },
+        {
+          "id": "careerLogicWhyNow",
+          "label": "Career logic and why now",
+          "weight": 10
+        }
+      ]
+    },
+    "motivation_letter": {
+      "label": "Motivation letter",
+      "dimensions": [
+        {
+          "id": "motivationPreparation",
+          "label": "Motivation and preparation",
+          "weight": 10
+        },
+        {
+          "id": "fitContribution",
+          "label": "Fit and intended contribution",
+          "weight": 10
+        },
+        {
+          "id": "careerSpecificity",
+          "label": "Future direction",
+          "weight": 10
+        }
+      ]
+    },
+    "supplemental_essay": {
+      "label": "Supplemental essay",
+      "dimensions": [
+        {
+          "id": "directPromptResponse",
+          "label": "Direct response to the prompt",
+          "weight": 12
+        },
+        {
+          "id": "singleCentralPoint",
+          "label": "Single central point",
+          "weight": 10
+        },
+        {
+          "id": "addsBeyondMain",
+          "label": "Distinct contribution beyond the main statement",
+          "weight": 8
+        }
+      ]
+    },
+    "other": {
+      "label": "Application statement",
+      "dimensions": [
+        {
+          "id": "documentPurpose",
+          "label": "Document purpose",
+          "weight": 10
+        },
+        {
+          "id": "fitContribution",
+          "label": "Fit and contribution",
+          "weight": 10
+        },
+        {
+          "id": "careerSpecificity",
+          "label": "Future direction",
+          "weight": 10
+        }
+      ]
+    }
+  },
+  "checkpoints": {
+    "promptAlignment": [
+      "Answers the central task and every explicit content requirement",
+      "Gives each requested element enough depth and proportion",
+      "Uses the requested document purpose and audience",
+      "Connects the response to the stated application context without importing irrelevant requirements"
+    ],
+    "throughlineStructure": [
+      "Opens with a specific, earned moment, question, or idea",
+      "Sustains one organizing argument across the draft",
+      "Sequences purposeful paragraphs so experiences develop the argument",
+      "Closes with a direction earned by the preceding material"
+    ],
+    "evidenceSpecificity": [
+      "Makes the applicant\u2019s own role and action clear",
+      "Provides enough setting, method, decision, or constraint to understand the experience",
+      "Shows a credible result, consequence, or learning connected to the action",
+      "Develops relevant experiences in depth and supports the major claims"
+    ],
+    "proseControl": [
+      "Communicates meaning clearly at sentence level",
+      "Uses precise wording with mechanics that support comprehension",
+      "Gives paragraphs clear functions and readable transitions",
+      "Uses space purposefully without repetition, padding, or unnecessary detail"
+    ],
+    "voiceAuthenticity": [
+      "Grounds the writing in applicant-specific experience and reasoning",
+      "Makes perspective and interpretation particular rather than interchangeable",
+      "Keeps claims proportionate and explainable from the information in the draft",
+      "Uses a natural, controlled voice without formulaic language obscuring meaning"
+    ],
+    "goalsDirection": [
+      "States an understandable next direction appropriate to the prompt",
+      "Connects that direction to prior experience or motivation",
+      "Explains the capability gap or next developmental step",
+      "Keeps the ambition plausible and proportionate to the evidence"
+    ],
+    "preparation": [
+      "Selects relevant academic or professional preparation",
+      "Shows what the applicant actually did or learned",
+      "Demonstrates readiness through specific evidence",
+      "Connects preparation to the demands of the proposed training"
+    ],
+    "intellectualDirection": [
+      "Defines a focused topic, problem, or question",
+      "Explains why it merits investigation or training",
+      "Connects the interest to preparation",
+      "Sets a credible next learning or research direction"
+    ],
+    "programFit": [
+      "Identifies relevant program features appropriate to this degree",
+      "Explains how those features meet a specific learning or research need",
+      "Connects preparation and goals to those opportunities",
+      "Makes a coherent two-way case for participation or contribution"
+    ],
+    "motivationFormative": [
+      "Identifies a meaningful formative experience",
+      "Shows concrete circumstances and the applicant\u2019s response",
+      "Explains how the experience shaped motivation",
+      "Connects that motivation to this application"
+    ],
+    "reflectionGrowth": [
+      "Interprets an experience rather than merely recounting it",
+      "Explains a change in understanding or judgment",
+      "Shows how that change affected later action or direction",
+      "Acknowledges complexity or limits without a generic moral"
+    ],
+    "perspectiveContribution": [
+      "Shows a particular perspective grounded in experience",
+      "Explains how it shapes engagement with others or the field",
+      "Supports a credible contribution with past action or preparation",
+      "Connects that contribution to the requested community or context"
+    ],
+    "livedContext": [
+      "Provides relevant context on the applicant\u2019s path",
+      "Shows how circumstances shaped choices or opportunities",
+      "Makes agency and response visible without demanding hardship disclosure",
+      "Connects that context to the purpose of the statement"
+    ],
+    "researchAgenda": [
+      "Defines a researchable question or connected agenda",
+      "Explains its significance or unresolved problem",
+      "Connects it to prior work or preparation",
+      "Bounds its scope at the appropriate career stage"
+    ],
+    "methodsAwareness": [
+      "Selects an approach relevant to the question",
+      "Explains how the approach would address it",
+      "Shows appropriate technical preparation or a realistic learning plan",
+      "Recognizes relevant data, design, inference, or ethical limitations"
+    ],
+    "feasibilityContribution": [
+      "Identifies a manageable scope",
+      "Addresses needed data, access, resources, or conditions",
+      "Recognizes major constraints and a plausible response",
+      "Explains the contribution without overstating novelty or certainty"
+    ],
+    "facultyDisciplinaryFit": [
+      "Identifies a relevant intellectual or disciplinary setting",
+      "Explains the connection between the proposed work and that setting",
+      "Links a real training or collaboration need to a supplied resource",
+      "Gives substantive reasons for fit rather than name lists or reputation"
+    ],
+    "missionAlignment": [
+      "Identifies the scholarship\u2019s supplied aims or selection criteria",
+      "Connects those aims to the applicant\u2019s experience",
+      "Shows alignment through choices or action",
+      "Explains what the award would enable in that context"
+    ],
+    "leadershipImpact": [
+      "Defines the applicant\u2019s responsibility and scope",
+      "Shows a consequential decision or coordinated action",
+      "Explains an outcome with appropriate attribution to others",
+      "Connects the experience to a credible lesson or later leadership"
+    ],
+    "futureContribution": [
+      "States a specific intended contribution",
+      "Connects it to prior preparation or action",
+      "Explains a plausible route to delivering it",
+      "Aligns its scope with the award, field, or community"
+    ],
+    "challengeDecision": [
+      "Defines a concrete challenge and stakes",
+      "Explains the applicant\u2019s responsibility",
+      "Shows judgment among options or constraints",
+      "Connects the decision to consequences and reflection"
+    ],
+    "careerSpecificity": [
+      "Identifies a plausible next role, problem, or field",
+      "Makes the intended setting or beneficiaries understandable",
+      "Connects immediate and longer-term direction",
+      "Explains why that direction follows from the applicant\u2019s preparation"
+    ],
+    "whyNowLogic": [
+      "Identifies the transition or capability gap",
+      "Shows why the current preparation is insufficient for the next step",
+      "Explains why this degree addresses that gap",
+      "Explains why the timing is credible"
+    ],
+    "preparationAlignment": [
+      "Selects preparation relevant to the stated goal",
+      "Shows capability with concrete examples",
+      "Explains what transfers to the proposed path",
+      "Recognizes remaining development needs"
+    ],
+    "degreeIntegration": [
+      "Defines a problem that requires both disciplines",
+      "Explains the distinct contribution of each degree",
+      "Shows how those capabilities will work together",
+      "Makes the combined route more coherent than two unrelated ambitions"
+    ],
+    "careerLogicWhyNow": [
+      "States a credible next direction",
+      "Connects it to demonstrated preparation",
+      "Identifies the current capability gap",
+      "Explains why the combined training is needed now"
+    ],
+    "motivationPreparation": [
+      "Explains a specific motivation for applying",
+      "Grounds it in experience",
+      "Shows relevant preparation through action or learning",
+      "Connects motivation and preparation to the next step"
+    ],
+    "fitContribution": [
+      "Identifies relevant features of the supplied target",
+      "Explains why those features fit an actual need",
+      "Shows what the applicant brings through evidence",
+      "Connects intended contribution to that target"
+    ],
+    "directPromptResponse": [
+      "Takes a clear position or directly answers the central question",
+      "Uses evidence relevant to that answer",
+      "Develops the answer to the requested depth",
+      "Keeps the response focused on this task"
+    ],
+    "singleCentralPoint": [
+      "Establishes one clear main point",
+      "Selects material that advances it",
+      "Maintains coherence within the available space",
+      "Ends with a conclusion that follows from that point"
+    ],
+    "addsBeyondMain": [
+      "Contributes information or perspective beyond the supplied main statement",
+      "Avoids unnecessary duplication of its examples and argument",
+      "Connects the additional material to this prompt",
+      "Adds useful depth to the application as a whole"
+    ],
+    "documentPurpose": [
+      "Makes the purpose of the document clear",
+      "Selects content suited to the stated audience",
+      "Supports the central case with relevant material",
+      "Answers the supplied task in an appropriate form"
+    ]
+  }
+}

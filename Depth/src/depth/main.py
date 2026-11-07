@@ -8,6 +8,7 @@ from depth.core.handlers import register_exception_handlers
 from depth.core.middleware import AuthMiddleware
 from depth.database.session import create_database
 from depth.routes import router
+from depth.services.assessment_store import AssessmentStore
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -25,6 +26,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.settings = settings
     app.state.engine = engine
     app.state.session_factory = session_factory
+    app.state.assessment_store = AssessmentStore()
     allowed_origins = list({settings.frontend_url, settings.api_url})
     app.add_middleware(
         CORSMiddleware, allow_origins=allowed_origins, allow_credentials=True,

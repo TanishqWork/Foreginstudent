@@ -7,6 +7,12 @@ import { ui } from '../landing-page/ui'
 import { assessmentPathways, assessmentSamples, statementTypes } from './data'
 import type { AssessmentSample, PathwayId } from './data'
 import styles from './AssessmentPage.module.css'
+import { useAuth } from '../account/auth-context'
+import { readAssessmentDraft, saveAssessmentDraft } from './draft'
+import DiagnosticResult from './diagnostic/DiagnosticResult'
+import { DiagnosticResponseError, parseDiagnosticResponse } from './diagnostic/response'
+import type { DiagnosticResponse } from './diagnostic/types'
+import { rememberAssessmentId } from '../complete-report/session'
 
 const preflightSteps = [
   ['Copy from Word or Google Docs', 'This gives the most reliable paragraph structure.'],
@@ -22,12 +28,22 @@ const pasteGuide = [
   ['Review the document check', 'Resolve any warning before running the assessment.'],
 ] as const
 
-function AssessmentScreen({ initialPathway }: { initialPathway: PathwayId }) {
+function AssessmentScreen({ initialPathway, embedded = false }: { initialPathway: PathwayId; embedded?: boolean }) {
   const navigate = useNavigate()
+  const { session } = useAuth()
+  const [searchParams] = useSearchParams()
   const headingRef = useRef<HTMLHeadingElement>(null)
   const statementRef = useRef<HTMLTextAreaElement>(null)
+  const confirmationRef = useRef<HTMLDivElement>(null)
+  const [savedDraft] = useState(readAssessmentDraft)
+  const [pending, setPending] = useState(false)
+  const [elapsedSeconds, setElapsedSeconds] = useState(0)
+  const [generationSeconds, setGenerationSeconds] = useState<number | null>(null)
+  const requestStartedRef = useRef(0)
+  const [error, setError] = useState('')
+  const [result, setResult] = useState<DiagnosticResponse | null>(null)
   const initialProfile = assessmentPathways.find((item) => item.id === initialPathway)!
-  const [context, setContext] = useState({
+  const [context, setContext] = useState(savedDraft?.context ?? {
     pathway: initialPathway,
     degree: initialProfile.degrees[0],
     statementType: 'statement_of_purpose',
@@ -38,8 +54,8 @@ function AssessmentScreen({ initialPathway }: { initialPathway: PathwayId }) {
     wordLimit: '',
     reviewGoal: initialProfile.goals[0].value,
   })
-  const [prompt, setPrompt] = useState('')
-  const [statement, setStatement] = useState('')
+  const [prompt, setPrompt] = useState(savedDraft?.prompt ?? '')
+  const [statement, setStatement] = useState(savedDraft?.statement ?? '')
   const profile = assessmentPathways.find((item) => item.id === context.pathway)!
   const statementType = statementTypes.find((item) => item.value === context.statementType)!
   const wordCount = statement.trim() ? statement.trim().split(/\s+/u).length : 0
@@ -48,6 +64,21 @@ function AssessmentScreen({ initialPathway }: { initialPathway: PathwayId }) {
   useEffect(() => {
     headingRef.current?.focus({ preventScroll: true })
   }, [])
+
+  useEffect(() => {
+    if (!pending) return
+    const timer = window.setInterval(() => setElapsedSeconds(Math.floor((performance.now() - requestStartedRef.current) / 1000)), 1000)
+    return () => window.clearInterval(timer)
+  }, [pending])
+
+  useEffect(() => {
+    if (!embedded || searchParams.get('resume') !== '1') return
+    const frame = requestAnimationFrame(() => {
+      confirmationRef.current?.scrollIntoView({ block: 'center', behavior: 'instant' })
+      confirmationRef.current?.querySelector('button')?.focus({ preventScroll: true })
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [embedded, searchParams])
 
   function updateContext(name: Exclude<keyof typeof context, 'pathway'>, value: string) {
     setContext((current) => ({ ...current, [name]: value }))
@@ -79,16 +110,73 @@ function AssessmentScreen({ initialPathway }: { initialPathway: PathwayId }) {
     setStatement(sample.statement)
   }
 
-  function runAssessment(event: SubmitEvent<HTMLFormElement>) {
+  async function runAssessment(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
-    navigate('/account')
+    if (pending || !event.currentTarget.reportValidity()) return
+    setError('')
+    try { saveAssessmentDraft({ context, prompt, statement }) }
+    catch { setError('Your browser cannot preserve this draft during sign-in. Keep a copy of your statement before continuing.'); return }
+    if (!embedded || !session) {
+      navigate(session ? '/dashboard/assessment?resume=1' : '/account?next=%2Fdashboard%2Fassessment%3Fresume%3D1')
+      return
+    }
+    requestStartedRef.current = performance.now()
+    setElapsedSeconds(0)
+    setGenerationSeconds(null)
+    setPending(true)
+    setResult(null)
+    try {
+      const response = await fetch('/api/assessments/free', {
+        method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(240_000),
+        body: JSON.stringify({ statement_text: statement, statement_type: context.statementType, degree: context.degree, field: context.field, pathway: context.pathway, applicant_type: context.applicantType, target_institution: context.institution || null, target_program: context.program || null, application_prompt: prompt || null, word_limit: context.wordLimit ? Number(context.wordLimit) : null, review_goal: context.reviewGoal }),
+      })
+      if (response.status === 401) { navigate('/account?next=%2Fdashboard%2Fassessment%3Fresume%3D1'); return }
+      if (!response.ok) throw new Error('The assessment could not finish. Check your connection and try again. Your draft is still here.')
+      if (!response.headers.get('Content-Type')?.includes('application/json')) {
+        throw new Error('The assessment service returned an unsupported response format. Please try again. Your draft is still here.')
+      }
+      const payload: unknown = await response.json()
+      const assessment = parseDiagnosticResponse(payload)
+      const timingHeader = response.headers.get('X-Generation-Seconds')
+      const timing = timingHeader?.trim() ? Number(timingHeader) : NaN
+      setGenerationSeconds(Number.isFinite(timing) && timing >= 0 ? timing : (performance.now() - requestStartedRef.current) / 1000)
+      rememberAssessmentId(session.user.id, assessment.report.assessment_id)
+      setResult(assessment)
+    } catch (cause) {
+      if (cause instanceof DiagnosticResponseError) {
+        console.warn('Diagnostic response rejected at field:', cause.field)
+      }
+      setError(cause instanceof SyntaxError
+        ? 'The assessment service returned invalid JSON. Please try again. Your draft is still here.'
+        : cause instanceof Error && cause.name !== 'TimeoutError'
+          ? cause.message
+          : 'The review took longer than expected. Your draft is still here; please try again.')
+    }
+    finally { setPending(false) }
+  }
+
+  if (result) {
+    return (
+      <div className={styles.page}>
+        <title>Diagnostic findings | Statement Studio</title>
+        {!embedded && <SiteHeader />}
+        <main className={styles.shell} id="main" aria-labelledby="diagnostic-heading">
+          <DiagnosticResult response={result} generationSeconds={generationSeconds} onStartAnother={() => {
+            setResult(null)
+            requestAnimationFrame(() => headingRef.current?.focus({ preventScroll: false }))
+          }} />
+        </main>
+        {!embedded && <SiteFooter />}
+      </div>
+    )
   }
 
   return (
     <div className={styles.page}>
       <title>Free assessment | Statement Studio</title>
       <meta name="description" content="Set your application context and paste your statement, then sign in to continue with Statement Studio." />
-      <SiteHeader />
+      {!embedded && <SiteHeader />}
       <main className={styles.shell} id="main" aria-labelledby="assessment-heading">
         <div className={styles.hero}>
           <div className={styles.intro}>
@@ -112,7 +200,7 @@ function AssessmentScreen({ initialPathway }: { initialPathway: PathwayId }) {
           </aside>
         </div>
 
-        <form className={styles.workspace} id="assessment-form" autoComplete="off" noValidate onSubmit={runAssessment}>
+        <form className={styles.workspace} id="assessment-form" autoComplete="off" noValidate onSubmit={(event) => void runAssessment(event)}>
           <div className={styles.formColumn}>
             <fieldset className={styles.formSection}>
               <legend><span>01</span>Select the specialist pathway</legend>
@@ -179,21 +267,23 @@ function AssessmentScreen({ initialPathway }: { initialPathway: PathwayId }) {
                 </label>
               </div>
               <div className={styles.health}>
-                <div className={styles.healthHead}><div><span>Document check</span><strong>{statement.trim() ? 'Statement added' : 'Waiting for the statement'}</strong></div><em>{statement.trim() ? 'Sign in to continue' : 'Not ready'}</em></div>
+                <div className={styles.healthHead}><div><span>Document check</span><strong>{statement.trim() ? 'Statement added' : 'Waiting for the statement'}</strong></div><em>{statement.trim() ? session ? 'Ready for review' : 'Sign in to continue' : 'Not ready'}</em></div>
                 <div className={styles.checks}>
-                  {['Paragraph structure', 'Header and identity details', 'Draft length'].map((check) => <div key={check}><i aria-hidden="true" /><span>{check}</span><strong>{statement.trim() ? 'Pending sign-in' : 'Waiting'}</strong></div>)}
+                  {['Paragraph structure', 'Header and identity details', 'Draft length'].map((check) => <div key={check}><i aria-hidden="true" /><span>{check}</span><strong>{statement.trim() ? session ? 'Included in review' : 'Pending sign-in' : 'Waiting'}</strong></div>)}
                 </div>
               </div>
             </fieldset>
 
             <div className={styles.privacy}>
               <strong>Privacy and assessment standard</strong>
-              <p>The free assessment runs in this browser and is not uploaded. If you choose a paid report, you will be asked before the draft is saved to your secure account. Remove passport, visa, financial, or other highly sensitive information. The assessment measures writing quality and revision readiness. It does not estimate admission chances.</p>
+              <p>When you confirm, your statement and application context are sent through our server to OpenAI for review. This prototype temporarily keeps your draft and results so you can open the complete report; they are not saved to your account. Your pending draft stays in this browser tab. Keep a copy and remove passport, visa, financial, or other highly sensitive information. The assessment does not estimate admission chances.</p>
             </div>
-            <div className={styles.submit}>
-              <button className={`${ui.button} ${ui.primary} min-h-[52px] cursor-pointer px-6 tracking-[-.01em]`} id="run-assessment" type="submit">Run free assessment</button>
-              <div><strong>{wordCount >= 80 ? 'Your statement is ready to continue.' : 'Paste at least 80 words to begin.'}</strong><small>Sign in to continue with your assessment.</small></div>
+            <div ref={confirmationRef} className={styles.submit}>
+              <button disabled={pending} className={`${ui.button} ${ui.primary} min-h-[52px] cursor-pointer px-6 tracking-[-.01em] disabled:opacity-60`} id="run-assessment" type="submit">{pending ? 'Reviewing your statement…' : embedded && session ? 'Confirm and run assessment' : 'Run free assessment'}</button>
+              <div><strong>{statement.trim() ? 'Review your information before continuing.' : 'Paste your statement to begin.'}</strong><small>{embedded && session ? 'Confirmation sends this draft and context to OpenAI.' : 'Sign in to continue with your assessment.'}</small></div>
             </div>
+            {error && <p className="mt-4 text-sm text-red-700" role="alert">{error}</p>}
+            {pending && <><p className="mt-5 text-sm text-slate" role="status">Reading your statement against the selected criteria. You can keep this tab open while the review completes.</p><p className="mt-2 text-sm text-slate" role="timer" aria-live="off">{elapsedSeconds}s elapsed</p></>}
           </div>
 
           <aside className={styles.guideColumn}>
@@ -207,13 +297,13 @@ function AssessmentScreen({ initialPathway }: { initialPathway: PathwayId }) {
           </aside>
         </form>
       </main>
-      <SiteFooter />
+      {!embedded && <SiteFooter />}
     </div>
   )
 }
 
-export default function AssessmentPage() {
+export default function AssessmentPage({ embedded = false }: { embedded?: boolean }) {
   const [searchParams] = useSearchParams()
   const initialPathway = assessmentPathways.find((pathway) => pathway.id === searchParams.get('pathway'))?.id ?? 'health'
-  return <AssessmentScreen key={initialPathway} initialPathway={initialPathway} />
+  return <AssessmentScreen key={initialPathway} initialPathway={initialPathway} embedded={embedded} />
 }

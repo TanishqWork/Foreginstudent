@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { SubmitEvent } from 'react'
-import { useLocation } from 'react-router'
+import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router'
 import SiteHeader from '../landing-page/components/SiteHeader'
 import SiteFooter from '../landing-page/components/SiteFooter'
 import { ui } from '../landing-page/ui'
@@ -12,6 +12,10 @@ const labelClasses = 'text-[.68rem] font-bold leading-[1.65] text-navy'
 
 export default function AccountPage() {
   const { key } = useLocation()
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const requestedNext = searchParams.get('next')
+  const next = requestedNext?.startsWith('/dashboard') && !requestedNext.startsWith('//') ? requestedNext : '/dashboard'
   const { session, loading, error: sessionError, refresh, login, logout } = useAuth()
   const headingRef = useRef<HTMLHeadingElement>(null)
   const [status, setStatus] = useState('')
@@ -35,6 +39,7 @@ export default function AccountPage() {
     try {
       await login(email, password)
       form.reset()
+      navigate(next, { replace: true })
     } catch (cause) {
       setError(authErrorMessage(cause))
     } finally {
@@ -56,6 +61,8 @@ export default function AccountPage() {
       setPending(false)
     }
   }
+
+  if (session && !loading) return <Navigate to={next} replace />
 
   return (
     <div className="min-h-svh bg-canvas font-sans leading-[1.65] text-ink selection:bg-accent/20">
@@ -150,6 +157,7 @@ export default function AccountPage() {
               {error && <p className="m-0 text-[.8rem] text-red-700" role="alert">{error}</p>}
               {sessionError && !loading && <p className="m-0 text-[.8rem] text-red-700" role="alert">{sessionError} <button className={`${ui.focus} min-h-11 cursor-pointer font-bold underline underline-offset-4`} type="button" disabled={pending} onClick={() => void refresh()}>Try again</button></p>}
               <p className="m-0 min-h-5 text-[.65rem] leading-[1.7] text-muted" id="account-login-status" role="status" aria-live="polite">{status}</p>
+              <Link className="mt-3 text-center text-sm font-semibold text-accent underline underline-offset-4" to="/workspace">Explore the sample student workspace</Link>
             </div>
           </section>
         </div>

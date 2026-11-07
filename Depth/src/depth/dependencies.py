@@ -9,6 +9,7 @@ from depth.repositories.rate_limits import RateLimitRepository
 from depth.repositories.sessions import SessionRepository
 from depth.repositories.users import UserRepository
 from depth.services.auth_service import AuthService
+from depth.services.assessment_store import AssessmentStore
 from depth.services.health_service import HealthService
 from depth.services.rate_limit_service import RateLimitService
 
@@ -24,3 +25,7 @@ def get_auth_service(request: Request, db: Db) -> AuthService:
 
 def get_health_service(db: Db) -> HealthService:
     return HealthService(HealthRepository(db))
+
+
+def get_assessment_store(request: Request) -> AssessmentStore:
+    return request.app.state.assessment_store

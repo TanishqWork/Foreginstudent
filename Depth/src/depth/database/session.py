@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 
 def create_database(url: str) -> tuple[Engine, sessionmaker[Session]]:
-    engine = create_engine(url, pool_pre_ping=True, connect_args={"connect_timeout": 5})
+    engine = create_engine(url, pool_pre_ping=True, connect_args={"connect_timeout": 10})
     return engine, sessionmaker(bind=engine, expire_on_commit=False)
 
 
