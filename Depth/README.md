@@ -64,6 +64,8 @@ Models, request/response schemas, settings, and database setup live in separate 
 | GET | `/api/health` | API liveness; independent of database availability |
 | GET | `/api/health/ready` | Database readiness; returns 503 when unavailable |
 | POST | `/api/auth/login` | Email/password signup or login through Supabase Auth; returns a session or `confirmation_required` |
+| GET | `/api/auth/google` | Starts Google OAuth through Supabase with a browser-bound PKCE verifier |
+| GET | `/api/auth/google/callback` | Exchanges the Google code server-side and creates the same cookie session |
 | GET | `/api/auth/me` | Returns `{ "user": { "id", "email", "created_at" }, "expires_at" }`, or 401 |
 | POST | `/api/auth/logout` | Revokes the current session and clears its cookie; returns 204 |
 | POST | `/api/auth/forgot-password` | Requests a provider recovery email and returns a generic message |
@@ -87,6 +89,26 @@ by PostgreSQL. A new email signs up through Supabase Auth; an existing account m
 authenticate with its existing password. A provider identity is linked explicitly
 to the stable application user ID. An unverified email alone never authorizes
 claiming an existing application record.
+
+Google sign-in starts at `/api/auth/google` and returns through the fixed
+`/api/auth/google/callback` endpoint. The backend stores a separate 10-minute
+HttpOnly PKCE verifier, exchanges the single-use code, validates the provider
+identity and verified email, and creates the same one-day session as password
+login. Supabase's provider identity mapping preserves existing application IDs;
+different provider IDs are never merged by email alone. Cancellation, expired
+state, account conflicts, provider failures, and throttling return safe messages
+on `/account`. Google starts are limited to 20 per IP per 15-minute window.
+
+Enable Google in Supabase's Auth provider settings and store the Google OAuth
+client ID and secret there. In Google Cloud, use a Web application client with
+your Supabase project's `/auth/v1/callback` URL as the authorized redirect URI.
+For this project it is
+`https://uiygiwweskspqbemboun.supabase.co/auth/v1/callback`.
+Keep Site URL `http://localhost:5173` and add
+`http://localhost:5173/api/auth/google/callback` to the Supabase redirect allowlist,
+alongside the existing confirmation/recovery callbacks. Use exact matching HTTPS
+URLs in production. No Google credentials or Supabase SDK belong in `Surface`;
+Google sign-in does not require SMTP.
 
 Existing-password login accepts 8-128 characters, with whitespace and case preserved.
 New and reset passwords additionally have a 72-byte UTF-8 limit; the provider

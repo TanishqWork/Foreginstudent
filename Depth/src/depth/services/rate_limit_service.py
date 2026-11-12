@@ -27,5 +27,8 @@ class RateLimitService:
     def check_login(self, email: str, ip: str) -> None:
         self._check("login", email, ip, 5)
 
+    def check_google(self, ip: str) -> None:
+        self._check("google", ip, ip, 20)
+
     def check_recovery(self, email: str, ip: str) -> None:
         self._check("recovery", email, ip, 3)

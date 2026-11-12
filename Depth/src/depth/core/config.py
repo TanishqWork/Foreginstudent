@@ -12,6 +12,7 @@ REFRESH_COOKIE = "depth_refresh"
 RECOVERY_COOKIE = "depth_recovery"
 PKCE_COOKIE = "depth_recovery_verifier"
 SIGNUP_PKCE_COOKIE = "depth_signup_verifier"
+GOOGLE_PKCE_COOKIE = "depth_google_verifier"
 RECOVERY_TTL_SECONDS = 900
 COOKIE_PATH = "/api"
 BACKEND_ROOT = Path(__file__).resolve().parents[3]

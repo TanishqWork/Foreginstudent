@@ -2,6 +2,7 @@
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
+from urllib.parse import urlencode
 from uuid import UUID
 
 import httpx
@@ -124,6 +125,13 @@ class SupabaseAuthProvider:
             "POST", "/token", params={"grant_type": "password"},
             body={"email": email, "password": password},
         ))
+
+    def google_authorize_url(self, challenge: str, redirect_to: str) -> str:
+        return self.url + "/authorize?" + urlencode({
+            "provider": "google", "redirect_to": redirect_to,
+            "code_challenge": challenge, "code_challenge_method": "s256",
+            "scopes": "email profile",
+        })
 
     def sign_up(self, email: str, password: str, redirect_to: str, challenge: str | None = None) -> ProviderSession | None:
         data = self._request(

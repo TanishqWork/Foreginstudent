@@ -15,6 +15,16 @@ router = APIRouter(prefix="/api/auth", tags=["authentication"])
 Auth = Annotated[AuthService, Depends(get_auth_service)]
 
 
+@router.get("/google", response_class=RedirectResponse)
+def google_login(request: Request, service: Auth) -> RedirectResponse:
+    return auth_controller.google_login(request, service)
+
+
+@router.get("/google/callback", response_class=RedirectResponse, include_in_schema=False)
+def google_callback(request: Request, service: Auth) -> RedirectResponse:
+    return auth_controller.google_callback(request, service)
+
+
 @router.post("/login", response_model=SessionResponse | ConfirmationResponse)
 def login(body: LoginRequest, request: Request, response: Response, service: Auth) -> SessionResponse | ConfirmationResponse:
     return auth_controller.login(body, request, response, service)

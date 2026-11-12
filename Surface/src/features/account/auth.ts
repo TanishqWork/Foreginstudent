@@ -93,6 +93,18 @@ export function authErrorMessage(error: unknown): string {
   return error instanceof AuthError ? error.message : 'Something went wrong. Please try again.'
 }
 
+export function googleSignInErrorMessage(code: string | null): string {
+  if (code === null) return ''
+  switch (code) {
+    case 'cancelled': return 'Google sign-in was cancelled. Try again or sign in with your email and password.'
+    case 'invalid': return 'Your Google sign-in attempt expired or is missing its login state. Select Continue with Google to start again in this browser.'
+    case 'unavailable': return 'Google sign-in is temporarily unavailable. Please try again, or use your email and password.'
+    case 'conflict': return 'We could not connect this Google account to your existing account. Sign in with your existing email and password.'
+    case 'rate_limited': return 'Too many sign-in attempts. Wait a few minutes, then try again.'
+    default: return 'Google sign-in could not be completed. Please try again.'
+  }
+}
+
 export async function requestPasswordReset(email: string): Promise<void> {
   await authRequest<{ message: string }>('forgot-password', {
     method: 'POST',

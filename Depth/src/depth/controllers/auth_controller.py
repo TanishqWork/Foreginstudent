@@ -5,10 +5,12 @@ from fastapi import Request, Response
 from fastapi.responses import RedirectResponse
 
 from depth.core.config import (
-    COOKIE_PATH, PKCE_COOKIE, RECOVERY_COOKIE, RECOVERY_TTL_SECONDS,
+    COOKIE_PATH, GOOGLE_PKCE_COOKIE, PKCE_COOKIE, RECOVERY_COOKIE, RECOVERY_TTL_SECONDS,
     REFRESH_COOKIE, SESSION_COOKIE, SESSION_PROOF_COOKIE, SIGNUP_PKCE_COOKIE,
 )
-from depth.core.exceptions import AuthenticationError, AuthProviderUnavailableError, RateLimitError
+from depth.core.exceptions import (
+    AuthenticationError, AuthIdentityConflictError, AuthProviderUnavailableError, RateLimitError,
+)
 from depth.integrations.supabase_auth import ProviderTokens
 from depth.models.auth_session import AuthSession
 from depth.schemas.auth import (
@@ -44,6 +46,58 @@ def _clear_auth(response: Response, service: AuthService) -> None:
         _clear_cookie(response, name, service)
     _clear_cookie(response, PKCE_COOKIE, service, path="/api/auth/recovery/callback")
     _clear_cookie(response, SIGNUP_PKCE_COOKIE, service, path="/api/auth/confirmation/callback")
+    _clear_cookie(response, GOOGLE_PKCE_COOKIE, service, path="/api/auth/google/callback")
+
+
+def _google_response(service: AuthService, error: str | None = None) -> RedirectResponse:
+    destination = service.settings.frontend_url + ("/account?google=" + error if error else "/dashboard")
+    return RedirectResponse(destination, status_code=303, headers={
+        "Cache-Control": "no-store", "Referrer-Policy": "no-referrer",
+    })
+
+
+def google_login(request: Request, service: AuthService) -> RedirectResponse:
+    ip = request.client.host if request.client else "unknown"
+    try:
+        url, verifier = service.start_google(ip)
+    except RateLimitError:
+        return _google_response(service, "rate_limited")
+    except AuthProviderUnavailableError:
+        return _google_response(service, "unavailable")
+    response = RedirectResponse(url, status_code=303, headers={
+        "Cache-Control": "no-store", "Referrer-Policy": "no-referrer",
+    })
+    _set_cookie(response, GOOGLE_PKCE_COOKIE, verifier, service, 600, path="/api/auth/google/callback")
+    return response
+
+
+def google_callback(request: Request, service: AuthService) -> RedirectResponse:
+    query = dict(request.query_params)
+    # Remove the one-time code before Uvicorn builds its access log entry.
+    request.scope["query_string"] = b""
+    result = None
+    error = "invalid"
+    if query.get("error"):
+        error = "cancelled" if query["error"] == "access_denied" else "invalid"
+    else:
+        try:
+            result = service.finish_google(query.get("code"), request.cookies.get(GOOGLE_PKCE_COOKIE))
+        except AuthIdentityConflictError:
+            error = "conflict"
+        except AuthProviderUnavailableError:
+            error = "unavailable"
+        except RateLimitError:
+            error = "rate_limited"
+        except AuthenticationError:
+            pass
+    response = _google_response(service, None if result else error)
+    _clear_cookie(response, GOOGLE_PKCE_COOKIE, service, path="/api/auth/google/callback")
+    if result:
+        _clear_cookie(response, RECOVERY_COOKIE, service)
+        _set_tokens(response, result.tokens, result.session, service)
+        remaining = max(0, ceil((result.session.expires_at - datetime.now(timezone.utc)).total_seconds()))
+        _set_cookie(response, SESSION_PROOF_COOKIE, result.proof, service, remaining)
+    return response
 
 
 def login(body: LoginRequest, request: Request, response: Response, service: AuthService) -> SessionResponse | ConfirmationResponse:

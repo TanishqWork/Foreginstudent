@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="24 24 208 208" width="208" height="208" role="img" aria-labelledby="title desc">
+  <title id="title">Statement Studio — Open Margin</title>
+  <desc id="desc">A transparent S-shaped margin runs through two compact editorial blocks.</desc>
+  <path fill="#121418" fill-rule="evenodd" d="M36 24 H220 A12 12 0 0 1 232 36 V220 A12 12 0 0 1 220 232 H36 A12 12 0 0 1 24 220 V36 A12 12 0 0 1 36 24 Z M232 48 H112 C16 48 16 144 112 144 H144 C194 144 194 176 144 176 H24 V208 H144 C240 208 240 112 144 112 H112 C62 112 62 80 112 80 H232 Z"/>
+</svg>

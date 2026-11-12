@@ -4,7 +4,7 @@ import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react
 import SiteHeader from '../landing-page/components/SiteHeader'
 import SiteFooter from '../landing-page/components/SiteFooter'
 import { ui } from '../landing-page/ui'
-import { authErrorMessage } from './auth'
+import { authErrorMessage, googleSignInErrorMessage } from './auth'
 import { useAuth } from './auth-context'
 
 const inputClasses = `${ui.focus} min-h-12 w-full rounded-[10px] border border-[rgba(11,32,52,.16)] bg-white px-[15px] py-3.5 text-[.76rem] leading-[1.65] text-navy placeholder:text-muted max-[850px]:text-base`
@@ -18,15 +18,23 @@ export default function AccountPage() {
   const next = requestedNext?.startsWith('/dashboard') && !requestedNext.startsWith('//') ? requestedNext : '/dashboard'
   const { session, loading, error: sessionError, refresh, login, logout } = useAuth()
   const headingRef = useRef<HTMLHeadingElement>(null)
-  const [status, setStatus] = useState(() => searchParams.get('confirmation') !== 'invalid' && searchParams.get('password_reset') === 'complete'
+  const [status, setStatus] = useState(() => !searchParams.has('google') && searchParams.get('confirmation') !== 'invalid' && searchParams.get('password_reset') === 'complete'
     ? 'Your password has been changed. Sign in with your new password.' : '')
-  const [error, setError] = useState(() => searchParams.get('confirmation') === 'invalid'
-    ? 'This confirmation link is no longer available. It may have expired or been opened in a different browser. Use Forgot your password to recover access.' : '')
+  const [error, setError] = useState(() => googleSignInErrorMessage(searchParams.get('google')) || (searchParams.get('confirmation') === 'invalid'
+    ? 'This confirmation link is no longer available. It may have expired or been opened in a different browser. Use Forgot your password to recover access.' : ''))
   const [pending, setPending] = useState(false)
 
   useEffect(() => {
     headingRef.current?.focus({ preventScroll: true })
   }, [key])
+
+  function handleGoogleSignIn() {
+    if (pending) return
+    setPending(true)
+    setError('')
+    setStatus('Opening Google sign-in…')
+    window.location.assign('/api/auth/google')
+  }
 
   async function handleSignIn(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -73,7 +81,7 @@ export default function AccountPage() {
   return (
     <div className="min-h-svh bg-canvas font-sans leading-[1.65] text-ink selection:bg-accent/20">
       <title>My account | Statement Studio</title>
-      <meta name="description" content="Sign in or create your Statement Studio account with your email and password." />
+      <meta name="description" content="Sign in or create your Statement Studio account with Google or your email and password." />
       <SiteHeader />
       <main
         className="min-h-[82vh] bg-[radial-gradient(circle_at_85%_5%,rgba(87,88,232,.11),transparent_25rem),radial-gradient(circle_at_8%_60%,rgba(25,115,96,.07),transparent_24rem),linear-gradient(180deg,#f8f7f3_0%,#efeff7_100%)]"
@@ -93,13 +101,13 @@ export default function AccountPage() {
                 Your reports, credits, and review orders in one place.
               </h1>
               <p className="mb-4 max-w-[690px] text-[.88rem] leading-[1.75] text-slate">
-                Sign in with your email and password. If you are new, we will create your account using the same details.
+                Sign in with Google or your email and password. If you are new, we will create your account when you sign in.
               </p>
             </div>
             <aside className="rounded-2xl border border-[rgba(11,32,52,.1)] bg-white/70 p-[26px]">
               <span className="text-[.61rem] font-extrabold tracking-[.12em] text-accent uppercase">Private by design</span>
-              <strong className="mt-2.5 mb-2 block text-base font-bold text-navy">Email and password access</strong>
-              <p className="m-0 text-[.7rem] leading-[1.6] text-muted">Use your email and password to access your account. Your sign-in lasts one day.</p>
+              <strong className="mt-2.5 mb-2 block text-base font-bold text-navy">Google or email and password</strong>
+              <p className="m-0 text-[.7rem] leading-[1.6] text-muted">Choose how you sign in. Your sign-in lasts one day.</p>
             </aside>
           </header>
 
@@ -128,6 +136,8 @@ export default function AccountPage() {
                 </>
               ) : (
                 <form className="grid gap-3" id="account-login-form" method="post" onSubmit={(event) => void handleSignIn(event)}>
+                  <button className={`${ui.button} min-h-[52px] w-full cursor-pointer border-navy/20 bg-white px-6 text-navy hover:bg-canvas disabled:cursor-wait disabled:opacity-60`} type="button" disabled={pending} onClick={handleGoogleSignIn}>Continue with Google</button>
+                  <div className="my-1 flex items-center gap-3 text-[.7rem] text-muted"><span className="h-px flex-1 bg-navy/10" /><span>or use your email</span><span className="h-px flex-1 bg-navy/10" /></div>
                   <label className={labelClasses} htmlFor="account-email">Email address</label>
                   <input
                     className={inputClasses}

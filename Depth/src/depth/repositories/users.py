@@ -5,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
-from depth.core.exceptions import AuthenticationError
+from depth.core.exceptions import AuthIdentityConflictError
 from depth.models.user import User
 
 
@@ -33,7 +33,7 @@ class UserRepository:
             if existing.supabase_user_id is not None or not (
                 existing.id == provider_id or verified_recovery
             ):
-                raise AuthenticationError()
+                raise AuthIdentityConflictError()
             existing.supabase_user_id = provider_id
             self.db.flush()
             return existing
@@ -44,5 +44,5 @@ class UserRepository:
         )
         user = self.find_by_provider_id(provider_id)
         if user is None:
-            raise AuthenticationError()
+            raise AuthIdentityConflictError()
         return user

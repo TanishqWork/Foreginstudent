@@ -2,6 +2,10 @@ class AuthenticationError(Exception):
     """The supplied credentials or session cannot authenticate a user."""
 
 
+class AuthIdentityConflictError(AuthenticationError):
+    """A provider identity cannot claim an existing application account."""
+
+
 class AuthProviderUnavailableError(Exception):
     """Supabase Auth is unavailable; provider responses must not be exposed."""
 

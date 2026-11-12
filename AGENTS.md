@@ -2,7 +2,7 @@
 
 - `Surface` owns the React frontend; `Depth` owns the Python backend. Keep authentication changes aligned across both.
 - Keep backend configuration, environment files, migrations, and startup scripts under `Depth`. Run FastAPI directly and use Supabase-hosted PostgreSQL with SSL. Supabase Auth owns credentials and token issuance; FastAPI owns the cookie gateway, application authorization, and revocation checks. Keep the Supabase Data API disabled for application tables.
-- Authentication uses email and password through Supabase Auth, with the explicitly requested forgot-password and new-password flows. Do not add OTP sign-in, magic-link sign-in, social providers, or other account flows unless explicitly requested.
+- Authentication uses email/password and Google through Supabase Auth, with the explicitly requested forgot-password and new-password flows. Do not add OTP sign-in, magic-link sign-in, additional social providers, or other account flows unless explicitly requested.
 - Normalize email by trimming and lowercasing, and enforce uniqueness in PostgreSQL. New emails create accounts; existing emails require the existing password. Preserve application user IDs and link provider identities explicitly; never claim an existing account based only on an unverified email.
 - Preserve the one-day JWT lifetime (86,400 seconds), HttpOnly session cookies, and server-side session revocation unless the user changes these requirements.
 - Keep backend routes, controllers, services, repositories, schemas, models, database infrastructure, and security utilities in their respective packages. One database entity per model file; request/response schemas belong outside models.
@@ -10,6 +10,7 @@
 - Supabase Auth manages password hashing/verification and JWT signing. Keep provider integration and token/session security in reusable backend modules; never mint application JWTs or keep a second runtime password database. Legacy Argon2id hashes may be read only by the account-migration utility until migration cleanup. Never store or log plaintext passwords, recovery codes, API keys, or reversible password encryption.
 - Keep all Supabase Auth calls and API keys on the backend. The frontend collects inputs and displays public account state; it must not contain a Supabase SDK, privileged keys, or access/refresh tokens in JavaScript storage. Use request-scoped provider context to prevent sessions being shared across users.
 - Keep signup confirmation and password recovery as separate PKCE callbacks with independent HttpOnly verifier cookies. A pending signup or restricted recovery cookie must not grant ordinary application access. Token refresh must not extend the original one-day login limit.
+- Google sign-in has its own short-lived HttpOnly PKCE verifier and fixed backend callback. Require a verified provider email, preserve provider-ID account mappings, and never merge accounts by email alone.
 - Centralize configuration, domain errors, HTTP error mapping, and middleware. Do not echo credentials in validation errors or responses.
 - Keep `main.py` limited to application construction, lifecycle, and registration.
 - Evolve existing databases through new Alembic migrations; do not rewrite applied migrations, drop databases, silently claim passwordless accounts, or discard user records.

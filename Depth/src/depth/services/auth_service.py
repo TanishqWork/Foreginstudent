@@ -99,6 +99,21 @@ class AuthService:
             raise AuthenticationError()
         return self._persist_login(self.provider.exchange_code(code, verifier))
 
+    def start_google(self, ip: str) -> tuple[str, str]:
+        self.rate_limits.check_google(ip)
+        verifier = token_urlsafe(48)
+        challenge = urlsafe_b64encode(sha256(verifier.encode("ascii")).digest()).decode("ascii").rstrip("=")
+        redirect = self.settings.frontend_url + "/api/auth/google/callback"
+        return self.provider.google_authorize_url(challenge, redirect), verifier
+
+    def finish_google(self, code: str | None, verifier: str | None) -> LoginResult:
+        if not code or not verifier:
+            raise AuthenticationError()
+        supplied = self.provider.exchange_code(code, verifier)
+        if not supplied.user.email_verified or supplied.identity.recovery:
+            raise AuthenticationError()
+        return self._persist_login(supplied)
+
     def current_session(
         self, token: str | None, refresh_token: str | None = None, proof: str | None = None,
     ) -> AuthenticatedSession:

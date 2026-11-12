@@ -1,6 +1,6 @@
 ﻿# Statement Studio
 
-`Surface` is the React + TypeScript frontend. `Depth` is the FastAPI backend, run directly with Python and connected to Supabase-hosted PostgreSQL. Supabase Auth manages email/password accounts, password verification, and token issuance. FastAPI keeps authentication behind HttpOnly cookies and provides forgot-password and new-password endpoints. A new email creates an account; an existing email requires its existing password. Trimmed, lowercase email is the unique account key.
+`Surface` is the React + TypeScript frontend. `Depth` is the FastAPI backend, run directly with Python and connected to Supabase-hosted PostgreSQL. Supabase Auth manages email/password and Google sign-in, password verification, and token issuance. FastAPI keeps authentication behind HttpOnly cookies and provides forgot-password and new-password endpoints. With email/password, a new email creates an account and an existing email requires its existing password. Trimmed, lowercase email is unique; provider identities map to stable application accounts.
 
 ## Project structure
 
@@ -73,6 +73,18 @@ Use **localhost** consistently in the browser. `FRONTEND_URL` defaults to `http:
 
 ## Authentication
 
+Choose **Continue with Google** at `/account` to sign in through Google and
+Supabase. FastAPI handles the code exchange using a separate short-lived HttpOnly
+PKCE verifier and creates the existing 24-hour cookie session. A verified provider
+email is required; account mapping follows the Supabase user ID, preserving local
+profiles and refusing email-only merges. Cancellation and invalid/expired attempts
+return clear messages on the account page. Google OAuth client credentials belong
+in Supabase's Google provider settings. Add
+`http://localhost:5173/api/auth/google/callback` to the Supabase redirect allowlist;
+the Google Cloud client's authorized redirect is
+`https://uiygiwweskspqbemboun.supabase.co/auth/v1/callback`.
+Use matching HTTPS callbacks in production. No frontend keys or SDK are needed.
+
 Enter an email and password at `/account`. A new email signs up with Supabase Auth; an existing account must authenticate with its existing password. Existing-password login accepts 8-128 characters and preserves whitespace and case. New and reset passwords additionally have a 72-byte UTF-8 limit, and Supabase applies configured password-strength rules. With signup email confirmation enabled, signup shows a check-email message and grants no signed-in session until the provider confirms the account. Open the confirmation email in the browser that started signup: the backend exchanges its one-time PKCE code at `/api/auth/confirmation/callback` using an independent HttpOnly signup verifier, then creates the authenticated cookie session. Missing or expired signup state returns to the account page without signing in. Supabase owns password storage; the frontend and application profile table do not keep password hashes.
 
 FastAPI places the provider-issued access and refresh tokens, plus an independent session proof, in HttpOnly, SameSite=Lax cookies scoped to `/api`, with a maximum login duration of **86,400 seconds (one day)**. Protected requests validate the provider identity, session proof, and an active server-side session. Refreshing a provider token does not extend that original one-day limit. Sign-out revokes the server session and provider session so a replayed cookie is rejected immediately. React stores only public user/expiry metadata in memory; it has no Supabase SDK and never reads or stores access/refresh tokens in local or session storage.
@@ -105,6 +117,8 @@ Desktop database clients can use the project's PostgreSQL connection details wit
 | GET | `/api/health` | Process liveness |
 | GET | `/api/health/ready` | Database readiness |
 | POST | `/api/auth/login` | Accept email/password, create or authenticate through Supabase, and return a cookie session or `confirmation_required` |
+| GET | `/api/auth/google` | Start Google sign-in through Supabase with PKCE |
+| GET | `/api/auth/google/callback` | Validate/exchange the Google code on the backend and create a cookie session |
 | GET | `/api/auth/me` | Return the current user and session expiry, or 401 |
 | POST | `/api/auth/logout` | Revoke the session and clear the cookie |
 | POST | `/api/auth/forgot-password` | Request a recovery email with a generic, account-independent response |
