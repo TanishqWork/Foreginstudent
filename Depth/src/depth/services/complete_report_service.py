@@ -39,8 +39,9 @@ def complete_report_prompt() -> str:
     return files("depth.prompts").joinpath("complete-report-structured.md").read_text(encoding="utf-8").strip()
 
 
-def _load(reports: CompleteReportRecordService, assessment_id: str, owner_id: str) -> LoadedReport:
-    loaded = reports.load(assessment_id, owner_id, COMPLETE_REPORT_STALE_SECONDS)
+def _load(reports: CompleteReportRecordService, assessment_id: str, owner_id: str, include_input: bool = False) -> LoadedReport:
+    """Status reads skip the statement; only starting a generation loads it for the model."""
+    loaded = reports.load(assessment_id, owner_id, COMPLETE_REPORT_STALE_SECONDS, include_input=include_input)
     if loaded is None:  # Missing, another user's, or a free assessment that is not ready.
         raise AssessmentError("not_found")
     return loaded
@@ -86,7 +87,7 @@ async def start_complete_report(
     report_factory: ReportFactory, tasks: set[asyncio.Task],
 ) -> CompleteReportState:
     """Claim the row and return `generating` at once; the model runs in the background and clients poll GET."""
-    loaded = await asyncio.to_thread(_load, reports, assessment_id, owner_id)
+    loaded = await asyncio.to_thread(_load, reports, assessment_id, owner_id, True)
     source, record = loaded.source, loaded.record
     _require_score(source)
     if record is None:

@@ -44,7 +44,8 @@ class MemoryReports:
         self.sources[(source.assessment.report.assessment_id, owner)] = source
         return source
 
-    def load(self, assessment_id, owner_id, stale_after_seconds):
+    def load(self, assessment_id, owner_id, stale_after_seconds, *, include_input=False):
+        self.loaded_input = include_input
         source = self.sources.get((assessment_id, owner_id))
         if source is None:
             return None
@@ -127,6 +128,21 @@ def test_state_unlock_and_ownership():
         for action in [complete_report_service.complete_report_state, complete_report_service.mock_unlock]:
             with pytest.raises(AssessmentError, match="not_found"):
                 action(assessment_id, owner, reports)
+
+
+def test_only_starting_a_report_loads_the_statement(monkeypatch):
+    reports, source = unlocked()
+    complete_report_service.complete_report_state(ID, OWNER, reports)
+    assert reports.loaded_input is False  # Polls and unlock skip the statement.
+    async def respond(count, kwargs):
+        return draft_of(example_complete_report(source)).model_dump_json()
+    use_model(monkeypatch, respond)
+    async def start():
+        tasks = set()
+        await complete_report_service.start_complete_report(ID, OWNER, reports, reports.factory(), tasks)
+        assert reports.loaded_input is True  # The model needs the statement.
+        await asyncio.gather(*tasks)
+    asyncio.run(start())
 
 
 def test_locked_and_needs_input_cannot_generate():

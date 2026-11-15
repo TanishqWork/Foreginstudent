@@ -12,6 +12,9 @@ import { formatCompleteReport } from './format'
 import styles from './CompleteReportPage.module.css'
 
 const completePlan = pricingPlans.find((plan) => plan.id === 'complete')
+const POLL_INTERVAL_MS = 4_000
+/** A complete report takes about 1.5–4 minutes, so the first check after Generate waits a minute. */
+const FIRST_POLL_AFTER_START_MS = 60_000
 
 function MockCheckout({ busy, error, onDismiss, onConfirm }: { busy: boolean; error: string; onDismiss: () => void; onConfirm: () => void }) {
   const dialogRef = useRef<HTMLDialogElement>(null)
@@ -55,6 +58,7 @@ function CompleteReportFlow({ assessmentId, userId, returnPath }: { assessmentId
   const navigate = useNavigate()
   const headingRef = useRef<HTMLHeadingElement>(null)
   const operationRef = useRef<AbortController | null>(null)
+  const justStartedRef = useRef(false)
   const [reportState, setReportState] = useState<CompleteReportState | null>(null)
   const [loading, setLoading] = useState(true)
   const [unavailable, setUnavailable] = useState(false)
@@ -124,7 +128,10 @@ function CompleteReportFlow({ assessmentId, userId, returnPath }: { assessmentId
     if (serverStatus !== 'generating') return
     const controller = new AbortController()
     let timer: ReturnType<typeof setTimeout>
-    const schedule = () => { timer = setTimeout(() => { void poll() }, 4_000) }
+    // Right after Generate, a report takes well over a minute, so the first check waits; after a reload it may be nearly done.
+    let delay = justStartedRef.current ? FIRST_POLL_AFTER_START_MS : POLL_INTERVAL_MS
+    justStartedRef.current = false
+    const schedule = () => { timer = setTimeout(() => { void poll() }, delay); delay = POLL_INTERVAL_MS }
     async function poll() {
       if (controller.signal.aborted) return
       if (document.visibilityState !== 'visible') { schedule(); return }
@@ -169,6 +176,7 @@ function CompleteReportFlow({ assessmentId, userId, returnPath }: { assessmentId
     setBusy('generating')
     setElapsed(0)
     setError('')
+    justStartedRef.current = true
     try {
       const result = await generateCompleteReport(assessmentId, controller.signal)
       if (!controller.signal.aborted) setReportState(result)

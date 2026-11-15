@@ -8,7 +8,7 @@ from depth.core.config import Settings, get_settings
 from depth.core.handlers import register_exception_handlers
 from depth.core.logging import configure_logging
 from depth.core.middleware import AuthMiddleware
-from depth.database.session import create_database
+from depth.database.session import create_database, warm_pool
 from depth.integrations.llm import close_client
 from depth.routes import router
 
@@ -20,6 +20,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
+        # In the background, so the API starts at once and requests never wait on the warm-up.
+        warm_up = asyncio.create_task(asyncio.to_thread(warm_pool, engine))
         try:
             yield
         finally:
@@ -27,6 +29,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             for task in list(app.state.background_tasks):
                 task.cancel()
             await asyncio.gather(*app.state.background_tasks, return_exceptions=True)
+            await asyncio.gather(warm_up, return_exceptions=True)
             await close_client()
             engine.dispose()
 

@@ -4,7 +4,7 @@ from typing import Any
 from uuid import UUID
 
 from sqlalchemy import select, update
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, defer
 
 from depth.models.assessment import Assessment
 
@@ -44,10 +44,13 @@ class AssessmentRepository:
         )
         return outcome.rowcount == 1
 
-    def get_owned(self, assessment_id: UUID, user_id: UUID) -> Assessment | None:
+    def get_owned(self, assessment_id: UUID, user_id: UUID, *, include_input: bool = True) -> Assessment | None:
         # Status changes use bulk UPDATEs, so always read the row's current values, never the session's copy.
-        return self.db.scalar(select(Assessment).where(Assessment.id == assessment_id, Assessment.user_id == user_id)
-                              .execution_options(populate_existing=True))
+        # Status polls skip the statement (input), which they never use, to send less over the network.
+        query = select(Assessment).where(Assessment.id == assessment_id, Assessment.user_id == user_id)
+        if not include_input:
+            query = query.options(defer(Assessment.input, raiseload=True))
+        return self.db.scalar(query.execution_options(populate_existing=True))
 
     def list_for_user(self, user_id: UUID, limit: int = 50) -> list[Assessment]:
         return list(self.db.scalars(

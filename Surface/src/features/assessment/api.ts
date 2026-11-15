@@ -12,6 +12,8 @@ export type FreeAssessmentState = {
 }
 
 export const FREE_POLL_INTERVAL_MS = 3_000
+/** A free review takes about 45–70 seconds, so the first check waits; earlier polls only cost database calls. */
+export const FREE_FIRST_POLL_MS = 30_000
 /** The backend gives up after 220 seconds; this leaves room for a final poll. */
 export const FREE_WAIT_LIMIT_MS = 300_000
 
@@ -79,6 +81,7 @@ export function getFreeAssessment(assessmentId: string, signal?: AbortSignal): P
 type WaitOptions = {
   signal?: AbortSignal
   intervalMs?: number
+  firstPollMs?: number
   limitMs?: number
   read?: typeof getFreeAssessment
   sleep?: (ms: number, signal?: AbortSignal) => Promise<void>
@@ -95,10 +98,12 @@ function pause(ms: number, signal?: AbortSignal): Promise<void> {
 
 /** Poll until the saved assessment is ready. A failed run throws its saved, student-safe message. */
 export async function waitForFreeAssessment(assessmentId: string, options: WaitOptions = {}): Promise<FreeAssessmentState & { assessment: DiagnosticResponse }> {
-  const { signal, intervalMs = FREE_POLL_INTERVAL_MS, limitMs = FREE_WAIT_LIMIT_MS, read = getFreeAssessment, sleep = pause } = options
+  const { signal, intervalMs = FREE_POLL_INTERVAL_MS, firstPollMs = FREE_FIRST_POLL_MS, limitMs = FREE_WAIT_LIMIT_MS, read = getFreeAssessment, sleep = pause } = options
   const deadline = Date.now() + limitMs
+  let first = true
   while (Date.now() < deadline) {
-    await sleep(intervalMs, signal)
+    await sleep(first ? firstPollMs : intervalMs, signal)
+    first = false
     let state: FreeAssessmentState
     try {
       state = await read(assessmentId, signal)

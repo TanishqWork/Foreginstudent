@@ -72,3 +72,14 @@ test('gives up after the wait limit', async () => {
     /took longer than expected/,
   )
 })
+
+test('the first poll waits 30 seconds, then polls every 3 seconds', async () => {
+  const states = [generating, generating, ready]
+  const waits = []
+  let reads = 0
+  await waitForFreeAssessment(id, {
+    sleep: async (ms) => { waits.push(ms) },
+    read: async () => parseFreeAssessmentState(structuredClone(states[reads++])),
+  })
+  assert.deepEqual(waits, [30_000, 3_000, 3_000])
+})

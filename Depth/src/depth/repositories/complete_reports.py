@@ -5,7 +5,7 @@ from uuid import UUID
 
 from sqlalchemy import and_, or_, select, update
 from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, defer
 
 from depth.database.base import utcnow
 from depth.models.assessment import Assessment
@@ -20,17 +20,20 @@ class CompleteReportRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def get_with_assessment(self, assessment_id: UUID, user_id: UUID) -> tuple[Assessment, CompleteReport | None] | None:
+    def get_with_assessment(
+        self, assessment_id: UUID, user_id: UUID, *, include_input: bool = True,
+    ) -> tuple[Assessment, CompleteReport | None] | None:
         """One round trip: the owner's assessment and its report row, if any.
 
         Status changes use bulk UPDATEs, so rows are read fresh, never from the session's copy.
+        Only generation needs the statement (input); status reads skip it to send less over the network.
         """
-        row = self.db.execute(
-            select(Assessment, CompleteReport)
-            .outerjoin(CompleteReport, CompleteReport.assessment_id == Assessment.id)
-            .where(Assessment.id == assessment_id, Assessment.user_id == user_id)
-            .execution_options(populate_existing=True)
-        ).one_or_none()
+        query = (select(Assessment, CompleteReport)
+                 .outerjoin(CompleteReport, CompleteReport.assessment_id == Assessment.id)
+                 .where(Assessment.id == assessment_id, Assessment.user_id == user_id))
+        if not include_input:
+            query = query.options(defer(Assessment.input, raiseload=True))
+        row = self.db.execute(query.execution_options(populate_existing=True)).one_or_none()
         return None if row is None else (row[0], row[1])
 
     def add_unlocked(self, assessment_id: UUID, user_id: UUID, model: str) -> None:

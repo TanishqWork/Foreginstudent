@@ -304,6 +304,12 @@ The API prints its own INFO logs without statement or report text: each stage of
 a free assessment and complete report (`generation started`, `OpenAI response` with
 `elapsed_seconds`, `output_tokens`, and `reasoning_tokens`, `check failed` with a
 path and code, `section repair`, `checked`, and `saved` with status and seconds).
+To limit database work, status polls skip the statement column, the page waits 30
+seconds before its first free-assessment poll and 60 seconds before its first
+complete-report poll after Generate (then every 3 and 4 seconds), and the API opens
+two database connections in the background at startup. Connections are not pinged
+per request; TCP keepalives detect dropped links and connections are recycled after
+30 minutes.
 See [the complete-report implementation and debug guide](../docs/complete-report-structure.md).
 
 ## Run FastAPI with Supabase

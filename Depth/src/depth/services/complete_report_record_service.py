@@ -44,13 +44,13 @@ class CompleteReportRecordService:
         self.db = db
         self.repository = repository
 
-    def load(self, assessment_id: str, owner_id: str, stale_after_seconds: float) -> LoadedReport | None:
+    def load(self, assessment_id: str, owner_id: str, stale_after_seconds: float, *, include_input: bool = False) -> LoadedReport | None:
         """The owner's ready free assessment and its report row. A run left `generating` past its deadline is marked failed."""
         record_id, user_id = _uuid(assessment_id), _uuid(owner_id)
         if record_id is None or user_id is None:
             return None
-        found = self.repository.get_with_assessment(record_id, user_id)
-        source = None if found is None else saved_assessment(found[0])
+        found = self.repository.get_with_assessment(record_id, user_id, include_input=include_input)
+        source = None if found is None else saved_assessment(found[0], include_input=include_input)
         if source is None:  # Missing, another user's, or a free assessment that is not ready.
             return None
         row = found[1]

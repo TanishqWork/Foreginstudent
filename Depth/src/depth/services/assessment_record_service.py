@@ -78,7 +78,7 @@ class AssessmentRecordService:
         record_id, user_id = _uuid(assessment_id), _uuid(owner_id)
         if record_id is None or user_id is None:
             return None
-        row = self.repository.get_owned(record_id, user_id)
+        row = self.repository.get_owned(record_id, user_id, include_input=False)
         if row is None:
             return None
         if row.status == "generating":
@@ -101,12 +101,15 @@ class AssessmentRecordService:
         return saved_assessment(self.repository.get_owned(record_id, user_id))
 
 
-def saved_assessment(row: Assessment | None) -> SavedAssessment | None:
-    """A ready assessment row as complete-report input; other rows are unavailable."""
+def saved_assessment(row: Assessment | None, *, include_input: bool = True) -> SavedAssessment | None:
+    """A ready assessment row as complete-report input; other rows are unavailable.
+
+    Without include_input the statement was not loaded, and original_input is empty (status reads only).
+    """
     if row is None or row.status != "ready" or row.result is None:
         return None
     return SavedAssessment(
-        original_input=dict(row.input),
+        original_input=dict(row.input) if include_input else {},
         assessment=FreeDiagnosticResponse.model_validate(row.result),
         generation_seconds=None if row.generation_seconds is None else float(row.generation_seconds),
     )
