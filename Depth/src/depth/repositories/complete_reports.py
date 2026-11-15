@@ -8,6 +8,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from depth.database.base import utcnow
+from depth.models.assessment import Assessment
 from depth.models.complete_report import CompleteReport
 
 
@@ -19,11 +20,18 @@ class CompleteReportRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def get(self, assessment_id: UUID, user_id: UUID) -> CompleteReport | None:
-        # Status changes use bulk UPDATEs, so always read the row's current values, never the session's copy.
-        return self.db.scalar(select(CompleteReport).where(
-            CompleteReport.assessment_id == assessment_id, CompleteReport.user_id == user_id,
-        ).execution_options(populate_existing=True))
+    def get_with_assessment(self, assessment_id: UUID, user_id: UUID) -> tuple[Assessment, CompleteReport | None] | None:
+        """One round trip: the owner's assessment and its report row, if any.
+
+        Status changes use bulk UPDATEs, so rows are read fresh, never from the session's copy.
+        """
+        row = self.db.execute(
+            select(Assessment, CompleteReport)
+            .outerjoin(CompleteReport, CompleteReport.assessment_id == Assessment.id)
+            .where(Assessment.id == assessment_id, Assessment.user_id == user_id)
+            .execution_options(populate_existing=True)
+        ).one_or_none()
+        return None if row is None else (row[0], row[1])
 
     def add_unlocked(self, assessment_id: UUID, user_id: UUID, model: str) -> None:
         """Idempotent: unlocking twice keeps the existing row and its report."""

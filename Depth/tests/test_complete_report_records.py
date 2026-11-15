@@ -34,7 +34,7 @@ def db(test_engine):
 
 def services(db):
     free = AssessmentRecordService(db, AssessmentRepository(db))
-    return free, CompleteReportRecordService(db, free, CompleteReportRepository(db))
+    return free, CompleteReportRecordService(db, CompleteReportRepository(db))
 
 
 def ready_assessment(db, email):

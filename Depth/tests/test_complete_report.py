@@ -414,7 +414,7 @@ def test_record_services_roll_back_and_hide_database_errors(caplog):
     assert free.free_state("not-a-uuid", str(uuid4()), 280) is None
 
     session = Session()
-    reports = CompleteReportRecordService(session, free, Broken())
+    reports = CompleteReportRecordService(session, Broken())
     with pytest.raises(OperationalError):
         reports.claim(str(uuid4()), str(uuid4()))
     assert session.rolled_back and not session.committed

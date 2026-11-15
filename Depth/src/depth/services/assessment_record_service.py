@@ -9,6 +9,7 @@ from uuid import UUID
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
+from depth.models.assessment import Assessment
 from depth.repositories.assessments import AssessmentRepository
 from depth.schemas.assessment_report import FreeDiagnosticResponse
 from depth.schemas.free_assessment import FreeAssessmentState
@@ -97,11 +98,15 @@ class AssessmentRecordService:
         record_id, user_id = _uuid(assessment_id), _uuid(owner_id)
         if record_id is None or user_id is None:
             return None
-        row = self.repository.get_owned(record_id, user_id)
-        if row is None or row.status != "ready" or row.result is None:
-            return None
-        return SavedAssessment(
-            original_input=dict(row.input),
-            assessment=FreeDiagnosticResponse.model_validate(row.result),
-            generation_seconds=None if row.generation_seconds is None else float(row.generation_seconds),
-        )
+        return saved_assessment(self.repository.get_owned(record_id, user_id))
+
+
+def saved_assessment(row: Assessment | None) -> SavedAssessment | None:
+    """A ready assessment row as complete-report input; other rows are unavailable."""
+    if row is None or row.status != "ready" or row.result is None:
+        return None
+    return SavedAssessment(
+        original_input=dict(row.input),
+        assessment=FreeDiagnosticResponse.model_validate(row.result),
+        generation_seconds=None if row.generation_seconds is None else float(row.generation_seconds),
+    )

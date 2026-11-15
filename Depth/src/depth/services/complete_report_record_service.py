@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from depth.database.base import utcnow
 from depth.repositories.complete_reports import CompleteReportRepository
 from depth.schemas.complete_report_content import CompleteReportContent
-from depth.services.assessment_record_service import AssessmentRecordService, SavedAssessment
+from depth.services.assessment_record_service import SavedAssessment, saved_assessment
 
 logger = logging.getLogger(__name__)
 INTERRUPTED_MESSAGE = "Generation was interrupted. Your mock unlock is kept; try again."
@@ -40,18 +40,20 @@ def _uuid(value: str) -> UUID | None:
 
 
 class CompleteReportRecordService:
-    def __init__(self, db: Session, assessments: AssessmentRecordService, repository: CompleteReportRepository):
+    def __init__(self, db: Session, repository: CompleteReportRepository):
         self.db = db
-        self.assessments = assessments
         self.repository = repository
 
     def load(self, assessment_id: str, owner_id: str, stale_after_seconds: float) -> LoadedReport | None:
         """The owner's ready free assessment and its report row. A run left `generating` past its deadline is marked failed."""
-        source = self.assessments.load_owned(assessment_id, owner_id)
-        if source is None:
+        record_id, user_id = _uuid(assessment_id), _uuid(owner_id)
+        if record_id is None or user_id is None:
             return None
-        record_id, user_id = UUID(assessment_id), UUID(owner_id)  # load_owned already validated both.
-        row = self.repository.get(record_id, user_id)
+        found = self.repository.get_with_assessment(record_id, user_id)
+        source = None if found is None else saved_assessment(found[0])
+        if source is None:  # Missing, another user's, or a free assessment that is not ready.
+            return None
+        row = found[1]
         if row is not None and row.status == "generating" and row.started_at is not None:
             if row.started_at < utcnow() - timedelta(seconds=stale_after_seconds):
                 if self.repository.mark_failed(record_id, row.started_at, INTERRUPTED_MESSAGE, None):
