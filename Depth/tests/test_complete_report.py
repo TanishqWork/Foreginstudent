@@ -112,7 +112,7 @@ def test_free_success_caches_the_exact_input_and_full_response(monkeypatch):
     monkeypatch.setattr(assessment_service, "generate_text", generate)
     body = example_body()
     response = asyncio.run(assessment_service.run_free_assessment(
-        body, SimpleNamespace(free_assessment_max_output_tokens=4096), owner_id="owner-1", store=store,
+        body, SimpleNamespace(free_assessment_max_output_tokens=4096, free_assessment_model="gpt-5", free_assessment_reasoning_effort="minimal"), owner_id="owner-1", store=store,
     ))
     entry = store.get(response.report.assessment_id, "owner-1")
     assert entry.original_input == json.loads(calls[0]["input_prompt"])

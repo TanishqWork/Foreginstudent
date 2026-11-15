@@ -115,12 +115,12 @@
 .lockedCopy ul { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 20px 0 0; padding: 0; color: rgb(255 255 255 / 80%); font-size: .72rem; list-style: none; }
 .lockedActions { display: grid; gap: 12px; }
 .lockedActions a { display: flex; min-height: 48px; justify-content: center; align-items: center; padding: 12px 16px; border-radius: 12px; font-size: .78rem; font-weight: 700; text-align: center; text-decoration: none; }
-.primaryLink { background: white; color: var(--color-navy); }
-.primaryLink:hover { background: var(--color-parchment); }
-.secondaryLink { border: 1px solid rgb(255 255 255 / 30%); color: white; }
+.lockedActions .primaryLink { background: white; color: var(--color-navy); }
+.lockedActions .primaryLink:hover { background: var(--color-parchment); }
+.lockedActions .secondaryLink { border: 1px solid rgb(255 255 255 / 30%); color: white; }
 .secondaryLink:hover { background: rgb(255 255 255 / 8%); }
-.reviewLink { color: rgb(255 255 255 / 80%); }
-.reviewLink:hover { color: white; text-decoration: underline; }
+.lockedActions .reviewLink { color: rgb(255 255 255 / 80%); }
+.lockedActions .reviewLink:hover { color: white; text-decoration: underline; }
 .reportFooter { display: grid; gap: 12px; margin-top: 28px; }
 .reportFooter p { max-width: 900px; color: var(--color-muted); font-size: .75rem; }
 .reportFooter > span { color: var(--color-muted); font-size: .65rem; }

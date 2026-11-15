@@ -270,7 +270,7 @@ def test_service_repairs_once_and_keeps_assessment_identity(monkeypatch, caplog)
             evaluation.report.strongest_sentence.quote = "private-invalid-quote-sentinel"
         return evaluation.model_dump_json()
     monkeypatch.setattr(assessment_service, "generate_text", generate)
-    settings = SimpleNamespace(free_assessment_max_output_tokens=4096)
+    settings = SimpleNamespace(free_assessment_max_output_tokens=4096, free_assessment_model="gpt-5", free_assessment_reasoning_effort="minimal")
     result = asyncio.run(assessment_service.run_free_assessment(example_body(), settings))
     assert result.schema_version == "free-diagnostic.v1" and result.report.overall_score == 75
     assert len(calls) == 2
@@ -288,7 +288,7 @@ def test_service_does_not_return_invalid_output_after_repair(monkeypatch, caplog
         calls.append(kwargs)
         return '{"private-input-sentinel": "invalid"}'
     monkeypatch.setattr(assessment_service, "generate_text", generate)
-    settings = SimpleNamespace(free_assessment_max_output_tokens=4096)
+    settings = SimpleNamespace(free_assessment_max_output_tokens=4096, free_assessment_model="gpt-5", free_assessment_reasoning_effort="minimal")
     with pytest.raises(LLMError):
         asyncio.run(assessment_service.run_free_assessment(example_body(), settings))
     assert len(calls) == 2
@@ -310,7 +310,7 @@ def test_free_wall_deadline_covers_initial_and_repair_attempts(monkeypatch, capl
             raise
     monkeypatch.setattr(assessment_service, "generate_text", generate)
     monkeypatch.setattr(assessment_service, "FREE_ASSESSMENT_TIMEOUT_SECONDS", 0.02)
-    settings = SimpleNamespace(free_assessment_max_output_tokens=4096)
+    settings = SimpleNamespace(free_assessment_max_output_tokens=4096, free_assessment_model="gpt-5", free_assessment_reasoning_effort="minimal")
     with pytest.raises(LLMError, match="timed out"):
         asyncio.run(assessment_service.run_free_assessment(example_body(), settings))
     assert len(calls) == 2 and cancelled == [True]

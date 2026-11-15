@@ -2,6 +2,8 @@ from functools import lru_cache
 from pathlib import Path
 from urllib.parse import urlsplit
 
+from typing import Literal
+
 from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -33,6 +35,9 @@ class Settings(BaseSettings):
     cookie_secure: bool = False
     openai_api_key: SecretStr | None = Field(default=None, repr=False)
     free_assessment_max_output_tokens: int = Field(default=16384, gt=0)
+    free_assessment_model: str = Field(default="gpt-5", min_length=1)
+    # "minimal" is the lowest effort gpt-5 accepts; gpt-5.1 also accepts "none".
+    free_assessment_reasoning_effort: Literal["none", "minimal", "low", "medium", "high"] = "minimal"
 
     @field_validator("supabase_url")
     @classmethod

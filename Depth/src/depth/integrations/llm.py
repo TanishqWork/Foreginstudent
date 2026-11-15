@@ -19,6 +19,17 @@ SAFE_ERROR_CODES = {
     "server_error", "service_unavailable", "timeout",
 }
 
+# One shared client keeps HTTPS connections to OpenAI open between requests.
+_client: AsyncOpenAI | None = None
+
+
+async def close_client() -> None:
+    """Close the shared client; called on application shutdown."""
+    global _client
+    if _client is not None:
+        await _client.close()
+        _client = None
+
 
 async def generate_text(
     input_prompt: str,
@@ -33,6 +44,7 @@ async def generate_text(
     timeout_seconds: float = 90,
 ) -> str:
     """Send prompts to OpenAI and return the completed response text."""
+    global _client
     api_key = get_settings().openai_api_key
     if api_key is None or not api_key.get_secret_value().strip():
         raise LLMError("Set OPENAI_API_KEY in the backend environment.")
@@ -59,15 +71,14 @@ async def generate_text(
     started = perf_counter()
     response = None
     try:
-        async with AsyncOpenAI(
+        if _client is None:
             # Avoid hidden provider retries; the assessment service owns validation repair.
-            api_key=api_key.get_secret_value(), timeout=timeout_seconds, max_retries=0,
-        ) as client:
-            stream = await client.responses.create(**params, stream=True)
-            async with stream:
-                async for event in stream:
-                    if event.type in {"response.completed", "response.incomplete", "response.failed"}:
-                        response = event.response
+            _client = AsyncOpenAI(api_key=api_key.get_secret_value(), max_retries=0)
+        stream = await _client.with_options(timeout=timeout_seconds).responses.create(**params, stream=True)
+        async with stream:
+            async for event in stream:
+                if event.type in {"response.completed", "response.incomplete", "response.failed"}:
+                    response = event.response
     except (APIError, httpx.HTTPError, json.JSONDecodeError) as error:
         status = getattr(error, "status_code", None)
         status = status if type(status) is int and 100 <= status <= 599 else None
@@ -96,4 +107,11 @@ async def generate_text(
         for part in item.content
     ):
         raise LLMError("The model declined to generate this response.")
+    usage = response.usage
+    logger.info(
+        "OpenAI response model=%s effort=%s elapsed_seconds=%.3f input_tokens=%s cached_tokens=%s output_tokens=%s reasoning_tokens=%s",
+        model, reasoning_effort, perf_counter() - started,
+        usage and usage.input_tokens, usage and usage.input_tokens_details.cached_tokens,
+        usage and usage.output_tokens, usage and usage.output_tokens_details.reasoning_tokens,
+    )
     return response.output_text

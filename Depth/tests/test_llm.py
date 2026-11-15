@@ -69,6 +69,7 @@ def mocked_provider(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(
         llm, "get_settings", lambda: SimpleNamespace(openai_api_key=SecretStr(API_KEY)),
     )
+    monkeypatch.setattr(llm, "_client", None)
     requests: list[httpx.Request] = []
     clients: list[AsyncOpenAI] = []
 
@@ -90,7 +91,7 @@ def mocked_provider(monkeypatch: pytest.MonkeyPatch):
     return install
 
 
-def test_generate_returns_text_keeps_prompts_separate_and_closes_client(mocked_provider) -> None:
+def test_generate_returns_text_keeps_prompts_separate_and_reuses_client(mocked_provider) -> None:
     requests, clients = mocked_provider(lambda request: streamed_completion())
 
     result = asyncio.run(llm.generate_text(INPUT_PROMPT, SYSTEM_PROMPT, "test-model"))
@@ -105,9 +106,15 @@ def test_generate_returns_text_keeps_prompts_separate_and_closes_client(mocked_p
     assert payload["stream"] is True
     assert payload["max_output_tokens"] == 4096
     assert not ({"reasoning", "text", "temperature"} & payload.keys())
-    assert clients[0].is_closed()
-    assert clients[0].timeout == 90
+    assert requests[0].extensions["timeout"]["read"] == 90
     assert clients[0].max_retries == 0
+
+    # A second request reuses the same client and its open connections.
+    asyncio.run(llm.generate_text(INPUT_PROMPT, SYSTEM_PROMPT, "test-model"))
+    assert len(clients) == 1 and len(requests) == 2
+    assert not clients[0].is_closed()
+    asyncio.run(llm.close_client())
+    assert clients[0].is_closed() and llm._client is None
 
 
 def test_selected_generation_options_reach_provider(mocked_provider) -> None:
@@ -123,7 +130,7 @@ def test_selected_generation_options_reach_provider(mocked_provider) -> None:
     assert payload["text"] == {"verbosity": "low"}
     assert payload["max_output_tokens"] == 2048
     assert payload["temperature"] == 0.2
-    assert clients[0].timeout == 180
+    assert requests[0].extensions["timeout"]["read"] == 180
     assert "timeout_seconds" not in payload
 
 
@@ -165,7 +172,6 @@ def test_provider_errors_are_sanitized_and_client_closes(
     for secret in (API_KEY, INPUT_PROMPT, SYSTEM_PROMPT):
         assert secret not in rendered
         assert secret not in caplog.text
-    assert clients[0].is_closed()
     expected_type = {400: "BadRequestError", 429: "RateLimitError", "timeout": "APITimeoutError"}[failure]
     assert f"type={expected_type}" in caplog.text
     assert f"status={None if failure == 'timeout' else failure}" in caplog.text
@@ -215,7 +221,6 @@ def test_incomplete_empty_or_refused_output_is_rejected(mocked_provider, respons
         asyncio.run(llm.generate_text(INPUT_PROMPT, SYSTEM_PROMPT, "test-model"))
 
     assert INPUT_PROMPT not in str(caught.value)
-    assert clients[0].is_closed()
     for secret in (API_KEY, INPUT_PROMPT, SYSTEM_PROMPT):
         assert secret not in caplog.text
     if response["status"] == "incomplete":
@@ -238,7 +243,7 @@ def test_partial_stream_without_terminal_response_is_never_returned(mocked_provi
     ))
     with pytest.raises(LLMError) as caught:
         asyncio.run(llm.generate_text(INPUT_PROMPT, SYSTEM_PROMPT, "test-model"))
-    assert len(requests) == 1 and body.closed and clients[0].is_closed()
+    assert len(requests) == 1 and body.closed
     rendered = "".join(traceback.format_exception(type(caught.value), caught.value, caught.value.__traceback__))
     for secret in (API_KEY, INPUT_PROMPT, SYSTEM_PROMPT, "invalid-private-json"):
         assert secret not in caplog.text + rendered
@@ -260,7 +265,7 @@ def test_successful_stream_and_client_close(mocked_provider):
         200, stream=body, headers={"Content-Type": "text/event-stream"},
     ))
     assert asyncio.run(llm.generate_text(INPUT_PROMPT, SYSTEM_PROMPT, "test-model")) == "Assessment text."
-    assert body.closed and clients[0].is_closed()
+    assert body.closed
 
 
 def test_missing_api_key_fails_without_creating_provider_client(monkeypatch: pytest.MonkeyPatch) -> None:

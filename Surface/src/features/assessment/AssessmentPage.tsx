@@ -13,6 +13,8 @@ import DiagnosticResult from './diagnostic/DiagnosticResult'
 import { DiagnosticResponseError, parseDiagnosticResponse } from './diagnostic/response'
 import type { DiagnosticResponse } from './diagnostic/types'
 import { rememberAssessmentId } from '../complete-report/session'
+import ReviewLoader from './review-loader/ReviewLoader'
+import { preloadReviewLoader } from './review-loader/preload'
 
 const preflightSteps = [
   ['Copy from Word or Google Docs', 'This gives the most reliable paragraph structure.'],
@@ -35,6 +37,8 @@ function AssessmentScreen({ initialPathway, embedded = false }: { initialPathway
   const headingRef = useRef<HTMLHeadingElement>(null)
   const statementRef = useRef<HTMLTextAreaElement>(null)
   const confirmationRef = useRef<HTMLDivElement>(null)
+  const loaderHeadingRef = useRef<HTMLHeadingElement>(null)
+  const errorRef = useRef<HTMLParagraphElement>(null)
   const [savedDraft] = useState(readAssessmentDraft)
   const [pending, setPending] = useState(false)
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
@@ -70,6 +74,24 @@ function AssessmentScreen({ initialPathway, embedded = false }: { initialPathway
     const timer = window.setInterval(() => setElapsedSeconds(Math.floor((performance.now() - requestStartedRef.current) / 1000)), 1000)
     return () => window.clearInterval(timer)
   }, [pending])
+
+  // Fetch the animation chunk ahead of time so the loader starts instantly on submit.
+  useEffect(() => {
+    if (embedded && session) preloadReviewLoader()
+  }, [embedded, session])
+
+  // The loader replaces the form: bring it into view; on failure, return to the error.
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      if (pending) {
+        window.scrollTo({ top: 0, behavior: 'instant' })
+        loaderHeadingRef.current?.focus({ preventScroll: true })
+      } else if (error) {
+        errorRef.current?.scrollIntoView({ block: 'center', behavior: 'instant' })
+      }
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [pending, error])
 
   useEffect(() => {
     if (!embedded || searchParams.get('resume') !== '1') return
@@ -166,6 +188,19 @@ function AssessmentScreen({ initialPathway, embedded = false }: { initialPathway
             setResult(null)
             requestAnimationFrame(() => headingRef.current?.focus({ preventScroll: false }))
           }} />
+        </main>
+        {!embedded && <SiteFooter />}
+      </div>
+    )
+  }
+
+  if (pending) {
+    return (
+      <div className={styles.page}>
+        <title>Reviewing your statement | Statement Studio</title>
+        {!embedded && <SiteHeader />}
+        <main className={`${styles.shell} ${styles.pendingMain}`} id="main" aria-labelledby="review-loader-heading">
+          <ReviewLoader elapsedSeconds={elapsedSeconds} headingRef={loaderHeadingRef} />
         </main>
         {!embedded && <SiteFooter />}
       </div>
@@ -282,8 +317,7 @@ function AssessmentScreen({ initialPathway, embedded = false }: { initialPathway
               <button disabled={pending} className={`${ui.button} ${ui.primary} min-h-[52px] cursor-pointer px-6 tracking-[-.01em] disabled:opacity-60`} id="run-assessment" type="submit">{pending ? 'Reviewing your statement…' : embedded && session ? 'Confirm and run assessment' : 'Run free assessment'}</button>
               <div><strong>{statement.trim() ? 'Review your information before continuing.' : 'Paste your statement to begin.'}</strong><small>{embedded && session ? 'Confirmation sends this draft and context to OpenAI.' : 'Sign in to continue with your assessment.'}</small></div>
             </div>
-            {error && <p className="mt-4 text-sm text-red-700" role="alert">{error}</p>}
-            {pending && <><p className="mt-5 text-sm text-slate" role="status">Reading your statement against the selected criteria. You can keep this tab open while the review completes.</p><p className="mt-2 text-sm text-slate" role="timer" aria-live="off">{elapsedSeconds}s elapsed</p></>}
+            {error && <p ref={errorRef} className="mt-4 text-sm text-red-700" role="alert">{error}</p>}
           </div>
 
           <aside className={styles.guideColumn}>

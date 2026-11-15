@@ -7,6 +7,7 @@ from depth.core.config import Settings, get_settings
 from depth.core.handlers import register_exception_handlers
 from depth.core.middleware import AuthMiddleware
 from depth.database.session import create_database
+from depth.integrations.llm import close_client
 from depth.routes import router
 from depth.services.assessment_store import AssessmentStore
 
@@ -20,6 +21,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         try:
             yield
         finally:
+            await close_client()
             engine.dispose()
 
     app = FastAPI(title="Statement Studio API", version="0.2.0", lifespan=lifespan)

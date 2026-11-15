@@ -99,8 +99,8 @@ async def _run_free_assessment(
         text = await generate_text(
             input_prompt=input_prompt,
             system_prompt=free_assessment_prompt() + repair_instruction,
-            model="gpt-5",
-            reasoning_effort="medium",
+            model=settings.free_assessment_model,
+            reasoning_effort=settings.free_assessment_reasoning_effort,
             max_output_tokens=settings.free_assessment_max_output_tokens,
             output_model=AssessmentEvaluation,
             timeout_seconds=180,
@@ -137,6 +137,11 @@ async def _run_free_assessment(
                 revision_opportunity=opportunity, pathway_observation=pathway_observation,
                 evidence_gap=evaluation.evidence_gap, evidence_examples=evaluation.evidence_examples,
             ),
+        )
+        logger.info(
+            "Free assessment finished model=%s effort=%s attempts=%d total_seconds=%.3f",
+            settings.free_assessment_model, settings.free_assessment_reasoning_effort,
+            attempt + 1, perf_counter() - started,
         )
         if store is not None:
             if owner_id is None:

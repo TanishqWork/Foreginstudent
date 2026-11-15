@@ -183,6 +183,14 @@
 .guideNote strong { color: var(--color-accent-soft); font-size: .7rem; font-weight: 700; }
 .shell .guideNote p { margin: 7px 0 0; color: rgba(255, 255, 255, .58); font-size: .7rem; line-height: 1.55; }
 
+.shell.pendingMain {
+  display: flex;
+  align-items: center;
+  min-height: min(720px, calc(100svh - 180px));
+  padding-block: 12px 64px;
+}
+.pendingMain > * { flex: 1; }
+
 @media (max-width: 1080px) {
   .hero { grid-template-columns: 1fr; gap: 28px; }
   .summary { max-width: 720px; }
