@@ -248,8 +248,11 @@ environment file; model selection does not use an environment variable.
 `schemas/assessment_report.py` owns the report contract. The assessment service
 requests schema-constrained JSON, checks exact source references, recalculates
 scores through `services/assessment_scoring.py`, and retries invalid reports once.
-The response is private (`Cache-Control: no-store`) and is not saved to the database.
-Successful assessments are temporarily cached for the complete-report prototype.
+The response is private (`Cache-Control: no-store`). Each successful assessment is
+saved to `public.assessments` (owner, submitted input, full result JSON, model,
+generation seconds) after the AI finishes and before the response is returned.
+The save runs outside the AI deadline; if it fails, the error type is logged
+without applicant text and the student still receives the result.
 Validation logs include only field paths/reason codes. Provider credentials and
 applicant prose are not logged or included in errors.
 
@@ -262,15 +265,16 @@ Focused provider-mocked tests need no database:
 
 ## Complete report prototype
 
-The authenticated complete-report endpoints reuse a temporary, owner-bound free
-assessment. Mock unlock charges no money. Generation uses GPT-5 and the adapted
+The authenticated complete-report endpoints load the owner's saved free
+assessment from `public.assessments`; other users receive 404. Mock unlock charges no money. Generation uses GPT-5 and the adapted
 `src/depth/prompts/complete-report-structured.md` prompt. GET, unlock, and generation
 return one JSON state with the canonical free assessment and a typed report.
 All eleven analytical groups use reusable rows without fixed finding counts.
 Validation checks baseline consistency, exact source references, and completeness.
-Responses include measured free and complete generation durations. No report
-database tables or migrations were added. The one-process memory cache lasts up
-to one hour and is lost on restart.
+Responses include measured free and complete generation durations. Unlock,
+generation state, and the complete report itself are not yet saved: they live in a
+one-process memory cache for up to one hour and are lost on restart, after which
+the free assessment reloads from the database as locked.
 See [the complete-report implementation and debug guide](../docs/complete-report-structure.md).
 
 ## Run FastAPI with Supabase
@@ -315,6 +319,7 @@ configuration, and do not manually modify the provider-managed Auth schema.
 - `users`: unique normalized email, stable application ID, provider identity mapping, creation timestamp.
 - `auth_sessions`: provider session IDs, session-proof/recovery-token fingerprints, account references, expiration/revocation timestamps.
 - `auth_rate_limits`: hashed request/email counters shared across API workers.
+- `assessments`: saved free AI assessments — `id` (the response's `assessment_id`), `user_id` (cascade-deleted with the user), `input` and `result` JSONB, `model`, `generation_seconds`, `created_at`. Indexed by primary key and `(user_id, created_at DESC)` for a student's newest-first history. Row-level security is enabled with no policies, like the other application tables.
 - `alembic_version`: applied database migration revision.
 
 Supabase Auth owns credential hashes and provider sessions. Legacy `password_hash`

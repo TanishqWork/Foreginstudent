@@ -3,21 +3,41 @@
 import asyncio
 import json
 from types import SimpleNamespace
+from uuid import uuid4
 
 import pytest
 from pydantic import ValidationError
+from sqlalchemy.exc import OperationalError
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from depth.core.exceptions import AssessmentError, AuthenticationError, LLMError
 from depth.core.handlers import register_exception_handlers
+from depth.dependencies import get_assessment_records
 from depth.routes.assessment import require_session, router
 from depth.services import assessment_service, complete_report_service
+from depth.services.assessment_record_service import AssessmentRecordService, SavedAssessment
 from depth.services.assessment_store import AssessmentStore
 from depth.schemas.complete_report_content import CompleteReportContent
 from depth.services.complete_report_validation import validate_complete_report
 from complete_report_fixture import example_complete_report
 from test_assessment import example_body, example_evaluation, example_response
+
+
+class FakeRecords:
+    """Stands in for the PostgreSQL-backed record service; no database needed."""
+
+    def __init__(self, saved_rows=None, fail=False):
+        self.rows, self.fail, self.saved, self.loads = dict(saved_rows or {}), fail, [], 0
+
+    async def save_async(self, owner_id, original_input, assessment, model, seconds):
+        if not self.fail:
+            self.saved.append((owner_id, original_input, assessment, model, seconds))
+        return not self.fail
+
+    def load_owned(self, assessment_id, owner_id):
+        self.loads += 1
+        return self.rows.get((assessment_id, owner_id))
 
 
 def seed(store, assessment_id="assessment-a", owner="owner-1", needs_input=False):
@@ -78,6 +98,16 @@ def test_cache_expiry_capacity_and_generation_pinning():
         store.get("a", "owner-1")
 
 
+def test_has_is_owner_bound_and_respects_expiry():
+    now = [100.0]
+    store = AssessmentStore(ttl_seconds=10, clock=lambda: now[0])
+    seed(store)
+    assert store.has("assessment-a", "owner-1")
+    assert not store.has("assessment-a", "owner-2")
+    now[0] += 11
+    assert not store.has("assessment-a", "owner-1")
+
+
 def test_full_cache_never_evicts_a_running_report():
     store = AssessmentStore(capacity=1)
     seed(store)
@@ -103,8 +133,8 @@ def test_mock_unlock_is_idempotent_and_needs_a_score():
             action("invalid", "owner-1")
 
 
-def test_free_success_caches_the_exact_input_and_full_response(monkeypatch):
-    store = AssessmentStore()
+def test_free_success_saves_the_exact_input_and_full_response(monkeypatch):
+    records = FakeRecords()
     calls = []
     async def generate(**kwargs):
         calls.append(kwargs)
@@ -112,14 +142,57 @@ def test_free_success_caches_the_exact_input_and_full_response(monkeypatch):
     monkeypatch.setattr(assessment_service, "generate_text", generate)
     body = example_body()
     response = asyncio.run(assessment_service.run_free_assessment(
-        body, SimpleNamespace(free_assessment_max_output_tokens=4096, free_assessment_model="gpt-5", free_assessment_reasoning_effort="minimal"), owner_id="owner-1", store=store,
+        body, SimpleNamespace(free_assessment_max_output_tokens=4096, free_assessment_model="gpt-5", free_assessment_reasoning_effort="minimal"), owner_id="owner-1", records=records,
     ))
-    entry = store.get(response.report.assessment_id, "owner-1")
-    assert entry.original_input == json.loads(calls[0]["input_prompt"])
-    assert entry.original_input["statement_text"] == body.statement_text
-    assert entry.assessment.model_dump() == response.model_dump()
-    assert entry.status == "locked"
-    assert entry.free_generation_seconds is not None and entry.free_generation_seconds >= 0
+    [(owner, original_input, assessment, model, seconds)] = records.saved
+    assert owner == "owner-1" and model == "gpt-5"
+    assert original_input == json.loads(calls[0]["input_prompt"])
+    assert original_input["statement_text"] == body.statement_text
+    assert assessment.model_dump() == response.model_dump()
+    assert seconds is not None and seconds >= 0
+
+
+def test_failed_save_still_returns_the_result(monkeypatch):
+    records = FakeRecords(fail=True)
+    async def generate(**kwargs):
+        return example_evaluation(json.loads(kwargs["input_prompt"])).model_dump_json()
+    monkeypatch.setattr(assessment_service, "generate_text", generate)
+    response = asyncio.run(assessment_service.run_free_assessment(
+        example_body(), SimpleNamespace(free_assessment_max_output_tokens=4096, free_assessment_model="gpt-5", free_assessment_reasoning_effort="minimal"), owner_id="owner-1", records=records,
+    ))
+    assert response.schema_version == "free-diagnostic.v1" and records.saved == []
+
+
+def test_record_service_rolls_back_and_hides_database_errors(caplog):
+    class BrokenRepository:
+        def add(self, *args):
+            raise OperationalError("INSERT", {}, Exception("connection lost"))
+    class Session:
+        rolled_back = committed = False
+        def commit(self): self.committed = True
+        def rollback(self): self.rolled_back = True
+    session = Session()
+    _, assessment = seed(AssessmentStore(), assessment_id=str(uuid4()))
+    service = AssessmentRecordService(session, BrokenRepository())
+    assert service.save(str(uuid4()), {"statement_text": "private-statement-sentinel"}, assessment, "gpt-5", 1.5) is False
+    assert session.rolled_back and not session.committed
+    assert "private-statement-sentinel" not in caplog.text and "OperationalError" in caplog.text
+    assert service.save("not-a-uuid", {}, assessment, "gpt-5", 1.5) is False
+    assert service.load_owned("not-a-uuid", str(uuid4())) is None
+
+
+def test_complete_report_loads_the_saved_assessment_from_records():
+    store = AssessmentStore()
+    owner, assessment_id = "owner-1", str(uuid4())
+    payload, assessment = seed(AssessmentStore(), assessment_id=assessment_id)
+    records = FakeRecords({(assessment_id, owner): SavedAssessment(payload, assessment, 12.5)})
+    state = complete_report_service.complete_report_state(assessment_id, owner, store, records)
+    assert state.status == "locked" and state.assessment == assessment and state.free_generation_seconds == 12.5
+    assert complete_report_service.mock_unlock(assessment_id, owner, store, records).status == "unlocked"
+    assert records.loads == 1  # Later calls reuse the loaded workflow state.
+    for other_owner, other_id in [("owner-2", assessment_id), (owner, str(uuid4()))]:
+        with pytest.raises(AssessmentError, match="not_found"):
+            complete_report_service.complete_report_state(other_id, other_owner, store, records)
 
 
 def test_structured_generation_uses_selected_prompt_and_reuses_ready_report(monkeypatch):
@@ -248,6 +321,7 @@ def app_for(store, owner):
     register_exception_handlers(app)
     app.include_router(router)
     app.dependency_overrides[require_session] = lambda: SimpleNamespace(user_id=owner[0])
+    app.dependency_overrides[get_assessment_records] = FakeRecords
     return app
 
 

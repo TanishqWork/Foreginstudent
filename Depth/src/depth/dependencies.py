@@ -5,10 +5,12 @@ from sqlalchemy.orm import Session
 
 from depth.database.session import get_db
 from depth.integrations.supabase_auth import SupabaseAuthProvider
+from depth.repositories.assessments import AssessmentRepository
 from depth.repositories.health import HealthRepository
 from depth.repositories.rate_limits import RateLimitRepository
 from depth.repositories.sessions import SessionRepository
 from depth.repositories.users import UserRepository
+from depth.services.assessment_record_service import AssessmentRecordService
 from depth.services.auth_service import AuthService
 from depth.services.assessment_store import AssessmentStore
 from depth.services.health_service import HealthService
@@ -35,3 +37,7 @@ def get_health_service(db: Db) -> HealthService:
 
 def get_assessment_store(request: Request) -> AssessmentStore:
     return request.app.state.assessment_store
+
+
+def get_assessment_records(db: Db) -> AssessmentRecordService:
+    return AssessmentRecordService(db, AssessmentRepository(db))

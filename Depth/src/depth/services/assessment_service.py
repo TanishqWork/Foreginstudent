@@ -17,7 +17,7 @@ from depth.schemas.assessment_report import (
     AssessmentContext, AssessmentEvaluation, DiagnosticPresentation, FreeDiagnosticResponse,
 )
 from depth.services.assessment_scoring import calculate_report, validate_evaluation
-from depth.services.assessment_store import AssessmentStore
+from depth.services.assessment_record_service import AssessmentRecordService
 
 logger = logging.getLogger(__name__)
 FREE_ASSESSMENT_TIMEOUT_SECONDS = 220
@@ -77,20 +77,24 @@ PATHWAY_GUIDANCE = {
 
 async def run_free_assessment(
     body: AssessmentRequest, settings: Settings, *,
-    owner_id: str | None = None, store: AssessmentStore | None = None,
+    owner_id: str | None = None, records: AssessmentRecordService | None = None,
 ) -> FreeDiagnosticResponse:
+    started = perf_counter()
     try:
         async with asyncio.timeout(FREE_ASSESSMENT_TIMEOUT_SECONDS):
-            return await _run_free_assessment(body, settings, owner_id=owner_id, store=store)
+            response, payload = await _run_free_assessment(body, settings)
     except TimeoutError:
         logger.warning("Free assessment generation failed type=TimeoutError")
         raise LLMError("Free assessment generation timed out.") from None
+    # Saved outside the AI deadline; a failed save is logged and the student still gets the result.
+    if records is not None:
+        if owner_id is None:
+            raise ValueError("A saved assessment requires an authenticated owner.")
+        await records.save_async(owner_id, payload, response, settings.free_assessment_model, round(perf_counter() - started, 3))
+    return response
 
 
-async def _run_free_assessment(
-    body: AssessmentRequest, settings: Settings, *,
-    owner_id: str | None = None, store: AssessmentStore | None = None,
-) -> FreeDiagnosticResponse:
+async def _run_free_assessment(body: AssessmentRequest, settings: Settings) -> tuple[FreeDiagnosticResponse, dict]:
     started = perf_counter()
     input_prompt = assessment_input(body)
     payload = json.loads(input_prompt)
@@ -143,9 +147,5 @@ async def _run_free_assessment(
             settings.free_assessment_model, settings.free_assessment_reasoning_effort,
             attempt + 1, perf_counter() - started,
         )
-        if store is not None:
-            if owner_id is None:
-                raise ValueError("A cached assessment requires an authenticated owner.")
-            store.save(owner_id, payload, response, free_generation_seconds=round(perf_counter() - started, 3))
-        return response
+        return response, payload
     raise LLMError("The assessment response failed validation after one repair attempt.")

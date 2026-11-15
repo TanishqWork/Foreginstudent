@@ -320,21 +320,23 @@ def test_free_wall_deadline_covers_initial_and_repair_attempts(monkeypatch, capl
 
 def test_json_endpoint_declares_v1_and_no_store(monkeypatch):
     from depth.controllers import assessment_controller
-    from depth.services.assessment_store import AssessmentStore
-    async def assess(body, settings, owner_id, store):
-        assert owner_id == "owner-1" and isinstance(store, AssessmentStore)
+    from depth.dependencies import get_assessment_records
+    sentinel = object()
+    async def assess(body, settings, owner_id, records):
+        assert owner_id == "owner-1" and records is sentinel
         return example_response()
     monkeypatch.setattr(assessment_controller, "assess", assess)
     app = FastAPI()
     app.state.settings = object()
-    app.state.assessment_store = AssessmentStore()
     app.include_router(router)
     app.dependency_overrides[require_session] = lambda: SimpleNamespace(user_id="owner-1")
+    app.dependency_overrides[get_assessment_records] = lambda: sentinel
     with TestClient(app) as client:
         response = client.post("/api/assessments/free", json=example_body().model_dump())
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("application/json")
     assert response.headers["cache-control"] == "no-store"
+    assert float(response.headers["x-generation-seconds"]) >= 0
     assert FreeDiagnosticResponse.model_validate(response.json()).schema_version == "free-diagnostic.v1"
 
 

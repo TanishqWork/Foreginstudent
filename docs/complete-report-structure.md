@@ -1,8 +1,9 @@
 # Structured complete report
 
 The flow is **free assessment → complete report → mock checkout → generate report**.
-Checkout is simulated and charges no money. Reports use the existing owner-bound
-temporary memory cache; no report database tables or migrations were added.
+Checkout is simulated and charges no money. The free assessment is loaded from
+`public.assessments`; unlock and report state still use an owner-bound
+temporary memory cache, so no report tables were added.
 
 ## Response contract
 
@@ -41,6 +42,23 @@ not introduced to reproduce the old heuristic sample's meters.
 The analytical `report_status` is separate from the request lifecycle. A stored
 result can be `incomplete` or `review_required`; the UI must display its limitations
 clearly and must not describe it as an unqualified complete assessment.
+
+## Unlock prompt on the free result
+
+After the free result renders, an unlock dialog appears once per assessment:
+when the student reaches the existing locked-preview section (no earlier than 15
+visible seconds) or after 30 seconds of visible reading time, whichever comes
+first. The timer pauses while the tab is hidden, and the dialog waits while text
+is selected, a field is focused, or another dialog is open. It is not shown for
+unscored or `needs_input` results.
+
+Every statement in the dialog comes from the student's own result: score,
+weakest category, and riskiest sentence (or main concern). There is no
+countdown: free assessments are saved, so a deletion deadline would be untrue.
+The call to action opens `/dashboard/complete-report?assessment=<id>&checkout=1`,
+which opens the mock checkout once while the assessment is locked. After the
+dialog is closed, a small floating link stays visible until the locked-preview
+section is on screen.
 
 ## Prompt and validation
 

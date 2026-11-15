@@ -95,6 +95,15 @@ function CompleteReportFlow({ assessmentId, userId, returnPath }: { assessmentId
     return () => controller.abort()
   }, [assessmentId, handleFailure, reload, userId])
 
+  // The free-result unlock prompt links here with checkout=1; open checkout once, only while locked.
+  const [searchParams] = useSearchParams()
+  const checkoutRequested = searchParams.get('checkout') === '1'
+  const autoCheckoutRef = useRef(false)
+  useEffect(() => {
+    if (!checkoutRequested || autoCheckoutRef.current || reportState?.status !== 'locked' || reportState.assessment.report.status === 'needs_input') return
+    autoCheckoutRef.current = true
+    setCheckoutOpen(true)
+  }, [checkoutRequested, reportState])
   useEffect(() => () => operationRef.current?.abort(), [])
   useEffect(() => { headingRef.current?.focus({ preventScroll: true }) }, [])
 

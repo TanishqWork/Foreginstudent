@@ -25,7 +25,7 @@ def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(AssessmentError)
     async def assessment_error(request: Request, error: AssessmentError):
         errors = {
-            "not_found": (404, "This temporary assessment is unavailable. Run a new free assessment."),
+            "not_found": (404, "This assessment is unavailable. Run a new free assessment."),
             "locked": (403, "Use the mock unlock before generating this report."),
             "generating": (409, "This report is already generating. Wait for it to finish."),
             "needs_input": (422, "Complete the free assessment inputs before unlocking a report."),

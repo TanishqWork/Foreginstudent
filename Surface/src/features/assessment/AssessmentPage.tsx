@@ -311,7 +311,7 @@ function AssessmentScreen({ initialPathway, embedded = false }: { initialPathway
 
             <div className={styles.privacy}>
               <strong>Privacy and assessment standard</strong>
-              <p>When you confirm, your statement and application context are sent through our server to OpenAI for review. This prototype temporarily keeps your draft and results so you can open the complete report; they are not saved to your account. Your pending draft stays in this browser tab. Keep a copy and remove passport, visa, financial, or other highly sensitive information. The assessment does not estimate admission chances.</p>
+              <p>When you confirm, your statement and application context are sent through our server to OpenAI for review. Your statement, application context, and results are saved to your account so you can unlock the complete report later. Your pending draft also stays in this browser tab. Remove passport, visa, financial, or other highly sensitive information before you submit. The assessment does not estimate admission chances.</p>
             </div>
             <div ref={confirmationRef} className={styles.submit}>
               <button disabled={pending} className={`${ui.button} ${ui.primary} min-h-[52px] cursor-pointer px-6 tracking-[-.01em] disabled:opacity-60`} id="run-assessment" type="submit">{pending ? 'Reviewing your statement…' : embedded && session ? 'Confirm and run assessment' : 'Run free assessment'}</button>

@@ -1,4 +1,7 @@
-"""Small, owner-bound process cache. Nothing here writes to the database."""
+"""Owner-bound, in-process complete-report workflow state (unlock, generation, report).
+
+The free assessment itself is saved in PostgreSQL and loaded into this cache on demand.
+"""
 
 from collections import OrderedDict
 from copy import deepcopy
@@ -77,6 +80,12 @@ class AssessmentStore:
     def get(self, assessment_id: str, owner_id: str) -> CachedAssessment:
         with self._lock:
             return deepcopy(self._owned(assessment_id, owner_id))
+
+    def has(self, assessment_id: str, owner_id: str) -> bool:
+        with self._lock:
+            self._prune()
+            entry = self._entries.get(assessment_id)
+            return entry is not None and entry.owner_id == owner_id
 
     def unlock(self, assessment_id: str, owner_id: str) -> CachedAssessment:
         with self._lock:

@@ -9,11 +9,12 @@ from time import perf_counter
 
 from pydantic import ValidationError
 
-from depth.core.exceptions import LLMError
+from depth.core.exceptions import AssessmentError, LLMError
 from depth.integrations.llm import generate_text
 from depth.schemas.complete_report import CompleteReportState
 from depth.schemas.complete_report_content import CompleteReportContent
 from depth.services.assessment_scoring import assessment_rubric, selected_dimensions
+from depth.services.assessment_record_service import AssessmentRecordService
 from depth.services.assessment_store import AssessmentStore, CachedAssessment
 from depth.services.complete_report_validation import source_maps, validate_complete_report
 
@@ -26,7 +27,22 @@ def complete_report_prompt() -> str:
     return files("depth.prompts").joinpath("complete-report-structured.md").read_text(encoding="utf-8").strip()
 
 
-def complete_report_state(assessment_id: str, owner_id: str, store: AssessmentStore) -> CompleteReportState:
+def load_saved_assessment(assessment_id: str, owner_id: str, store: AssessmentStore, records: AssessmentRecordService | None) -> None:
+    """The free result lives in the database; the report workflow state stays in memory for this prototype."""
+    if records is None or store.has(assessment_id, owner_id):
+        return
+    saved = records.load_owned(assessment_id, owner_id)
+    if saved is None:
+        raise AssessmentError("not_found")
+    try:
+        store.save(owner_id, saved.original_input, saved.assessment, free_generation_seconds=saved.generation_seconds)
+    except AssessmentError as error:
+        if str(error) != "duplicate":  # Another request loaded it first.
+            raise
+
+
+def complete_report_state(assessment_id: str, owner_id: str, store: AssessmentStore, records: AssessmentRecordService | None = None) -> CompleteReportState:
+    load_saved_assessment(assessment_id, owner_id, store, records)
     entry = store.get(assessment_id, owner_id)
     return state_from_entry(entry)
 
@@ -40,7 +56,8 @@ def state_from_entry(entry: CachedAssessment) -> CompleteReportState:
     )
 
 
-def mock_unlock(assessment_id: str, owner_id: str, store: AssessmentStore) -> CompleteReportState:
+def mock_unlock(assessment_id: str, owner_id: str, store: AssessmentStore, records: AssessmentRecordService | None = None) -> CompleteReportState:
+    load_saved_assessment(assessment_id, owner_id, store, records)
     return state_from_entry(store.unlock(assessment_id, owner_id))
 
 
@@ -61,7 +78,8 @@ def complete_report_input(entry: CachedAssessment) -> str:
     return json.dumps(data, ensure_ascii=False)
 
 
-async def generate_complete_report(assessment_id: str, owner_id: str, store: AssessmentStore) -> CompleteReportState:
+async def generate_complete_report(assessment_id: str, owner_id: str, store: AssessmentStore, records: AssessmentRecordService | None = None) -> CompleteReportState:
+    await asyncio.to_thread(load_saved_assessment, assessment_id, owner_id, store, records)
     # The transition is atomic and happens before any await, preventing duplicate calls.
     entry = store.begin_generation(assessment_id, owner_id)
     if entry.status == "ready":
