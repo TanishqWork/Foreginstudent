@@ -119,7 +119,8 @@ class AuthService:
     ) -> AuthenticatedSession:
         if not token or not proof:
             raise AuthenticationError()
-        session = self.sessions.find_by_token_hash(token_hash(proof))
+        found = self.sessions.find_for_request(token_hash(proof))
+        session, provider_active = found if found is not None else (None, False)
         now = datetime.now(timezone.utc)
         if session is None or session.revoked_at is not None or session.expires_at <= now:
             raise AuthenticationError()
@@ -135,7 +136,7 @@ class AuthService:
         if (
             identity.recovery or session.id != identity.session_id
             or session.user.supabase_user_id != identity.user_id
-            or not self.sessions.provider_is_active(identity.session_id, identity.user_id)
+            or not provider_active
         ):
             raise AuthenticationError()
         return AuthenticatedSession(session, refreshed)
@@ -195,7 +196,8 @@ class AuthService:
     def recovery_session(self, token: str | None) -> AuthSession:
         if not token:
             raise AuthenticationError()
-        session = self.sessions.find_by_token_hash(token_hash(token))
+        found = self.sessions.find_for_request(token_hash(token))
+        session, provider_active = found if found is not None else (None, False)
         now = datetime.now(timezone.utc)
         if session is None or session.revoked_at is not None or session.expires_at <= now:
             raise AuthenticationError()
@@ -203,7 +205,7 @@ class AuthService:
         if (
             not identity.recovery or session.id != identity.session_id
             or session.user.supabase_user_id != identity.user_id
-            or not self.sessions.provider_is_active(identity.session_id, identity.user_id)
+            or not provider_active
         ):
             raise AuthenticationError()
         return session

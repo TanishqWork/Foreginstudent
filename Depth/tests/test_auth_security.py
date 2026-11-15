@@ -67,6 +67,10 @@ class MemorySessions:
     def provider_is_active(self, sid, uid):
         return self.provider.session_active(sid, uid)
 
+    def find_for_request(self, hashed):
+        row = self.find_by_token_hash(hashed)
+        return None if row is None else (row, self.provider.session_active(row.id, row.user.supabase_user_id))
+
     def revoke(self, session, now):
         session.revoked_at = now
 

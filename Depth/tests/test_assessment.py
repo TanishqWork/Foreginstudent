@@ -2,6 +2,8 @@
 
 import asyncio
 import json
+import time
+from contextlib import contextmanager
 from copy import deepcopy
 from pathlib import Path
 from types import SimpleNamespace
@@ -9,11 +11,14 @@ from types import SimpleNamespace
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from sqlalchemy.exc import OperationalError
 
 from depth.core.exceptions import LLMError
+from depth.core.handlers import register_exception_handlers
 from depth.routes.assessment import require_session, router
 from depth.schemas.assessment import AssessmentRequest
 from depth.schemas.assessment_report import AssessmentEvaluation, FreeDiagnosticResponse
+from depth.schemas.free_assessment import FreeAssessmentState
 from depth.services import assessment_service
 from depth.services.assessment_scoring import (
     calculate_report, length_compliance, selected_dimensions, validate_evaluation,
@@ -318,26 +323,138 @@ def test_free_wall_deadline_covers_initial_and_repair_attempts(monkeypatch, capl
     assert "private-input-sentinel" not in caplog.text
 
 
-def test_json_endpoint_declares_v1_and_no_store(monkeypatch):
-    from depth.controllers import assessment_controller
-    from depth.dependencies import get_assessment_records
-    sentinel = object()
-    async def assess(body, settings, owner_id, records):
-        assert owner_id == "owner-1" and records is sentinel
-        return example_response()
-    monkeypatch.setattr(assessment_controller, "assess", assess)
+FREE_SETTINGS = SimpleNamespace(free_assessment_max_output_tokens=4096, free_assessment_model="gpt-5", free_assessment_reasoning_effort="minimal")
+
+
+class MemoryRecords:
+    """In-memory stand-in for AssessmentRecordService, shared by the request and its background job."""
+
+    def __init__(self, fail_create=False):
+        self.rows, self.fail_create = {}, fail_create
+
+    def create_pending(self, owner_id, assessment_id, original_input, model):
+        if self.fail_create:
+            raise OperationalError("INSERT", {}, Exception("connection lost"))
+        self.rows[assessment_id] = {"owner": owner_id, "status": "generating", "input": original_input,
+                                    "model": model, "result": None, "error": None, "seconds": None}
+
+    def _resolve(self, assessment_id, **values):
+        row = self.rows.get(assessment_id)
+        if row is None or row["status"] != "generating":
+            return False
+        row.update(values)
+        return True
+
+    def mark_ready(self, assessment_id, assessment, seconds):
+        return self._resolve(assessment_id, status="ready", result=assessment, seconds=seconds)
+
+    def mark_failed(self, assessment_id, error, seconds=None):
+        return self._resolve(assessment_id, status="failed", error=error, seconds=seconds)
+
+    def free_state(self, assessment_id, owner_id, stale_after_seconds):
+        row = self.rows.get(assessment_id)
+        if row is None or row["owner"] != owner_id:
+            return None
+        return FreeAssessmentState(assessment_id=assessment_id, status=row["status"], assessment=row["result"],
+                                   generation_seconds=row["seconds"], error=row["error"])
+
+    def factory(self):
+        @contextmanager
+        def records():
+            yield self
+        return records
+
+
+def free_app(records, owner):
+    from depth.dependencies import get_assessment_record_factory, get_assessment_records
     app = FastAPI()
-    app.state.settings = object()
+    app.state.settings = FREE_SETTINGS
+    app.state.background_tasks = set()
+    register_exception_handlers(app)
     app.include_router(router)
-    app.dependency_overrides[require_session] = lambda: SimpleNamespace(user_id="owner-1")
-    app.dependency_overrides[get_assessment_records] = lambda: sentinel
+    app.dependency_overrides[require_session] = lambda: SimpleNamespace(user_id=owner[0])
+    app.dependency_overrides[get_assessment_records] = lambda: records
+    app.dependency_overrides[get_assessment_record_factory] = records.factory
+    return app
+
+
+def wait_for_free(client, assessment_id):
+    for _ in range(200):
+        state = client.get(f"/api/assessments/{assessment_id}/free").json()
+        if state["status"] != "generating":
+            return state
+        time.sleep(0.01)
+    pytest.fail("Background assessment did not finish")
+
+
+def test_free_post_returns_generating_then_get_returns_the_saved_v1_result(monkeypatch):
+    calls = []
+    async def generate(**kwargs):
+        calls.append(kwargs)
+        return example_evaluation(json.loads(kwargs["input_prompt"])).model_dump_json()
+    monkeypatch.setattr(assessment_service, "generate_text", generate)
+    records, owner = MemoryRecords(), ["owner-1"]
+    body = example_body()
+    with TestClient(free_app(records, owner)) as client:
+        started = client.post("/api/assessments/free", json=body.model_dump())
+        assert started.status_code == 202 and started.headers["cache-control"] == "no-store"
+        assert started.headers["content-type"].startswith("application/json")
+        assessment_id = started.json()["assessment_id"]
+        assert started.json() == {"assessment_id": assessment_id, "status": "generating", "assessment": None,
+                                  "generation_seconds": None, "error": None}
+        row = records.rows[assessment_id]
+        assert row["input"]["assessment_id"] == assessment_id and row["input"]["statement_text"] == body.statement_text
+        state = wait_for_free(client, assessment_id)
+        assert state["status"] == "ready" and state["generation_seconds"] >= 0
+        result = FreeDiagnosticResponse.model_validate(state["assessment"])
+        assert result.schema_version == "free-diagnostic.v1" and result.report.assessment_id == assessment_id
+        assert json.loads(calls[0]["input_prompt"]) == row["input"]
+        owner[0] = "owner-2"
+        assert client.get(f"/api/assessments/{assessment_id}/free").status_code == 404
+        assert client.get("/api/assessments/missing/free").status_code == 404
+
+
+def test_free_failure_is_saved_without_provider_details(monkeypatch):
+    async def fail(**kwargs):
+        raise LLMError("private-provider-detail")
+    monkeypatch.setattr(assessment_service, "generate_text", fail)
+    records = MemoryRecords()
+    with TestClient(free_app(records, ["owner-1"])) as client:
+        assessment_id = client.post("/api/assessments/free", json=example_body().model_dump()).json()["assessment_id"]
+        state = wait_for_free(client, assessment_id)
+    assert state["status"] == "failed" and state["assessment"] is None and "try again" in state["error"]
+    assert "private-provider-detail" not in json.dumps(state)
+
+
+def test_free_is_not_started_when_its_row_cannot_be_saved(monkeypatch):
+    async def generate(**kwargs):
+        pytest.fail("The model must not run without a saved row")
+    monkeypatch.setattr(assessment_service, "generate_text", generate)
+    records = MemoryRecords(fail_create=True)
+    app = free_app(records, ["owner-1"])
     with TestClient(app) as client:
         response = client.post("/api/assessments/free", json=example_body().model_dump())
-    assert response.status_code == 200
-    assert response.headers["content-type"].startswith("application/json")
-    assert response.headers["cache-control"] == "no-store"
-    assert float(response.headers["x-generation-seconds"]) >= 0
-    assert FreeDiagnosticResponse.model_validate(response.json()).schema_version == "free-diagnostic.v1"
+    assert response.status_code == 503 and not app.state.background_tasks
+
+
+def test_free_shutdown_marks_the_running_assessment_failed(monkeypatch):
+    async def generate(**kwargs):
+        await asyncio.Future()  # The model never answers.
+    monkeypatch.setattr(assessment_service, "generate_text", generate)
+    records = MemoryRecords()
+    async def scenario():
+        tasks = set()
+        state = await assessment_service.start_free_assessment(
+            example_body(), FREE_SETTINGS, "owner-1", records, records.factory(), tasks,
+        )
+        assert state.status == "generating" and len(tasks) == 1
+        await asyncio.sleep(0)
+        for task in list(tasks):  # What the app lifespan does on shutdown.
+            task.cancel()
+        await asyncio.gather(*tasks, return_exceptions=True)
+        return state.assessment_id
+    assessment_id = asyncio.run(scenario())
+    assert records.rows[assessment_id]["status"] == "failed" and "interrupted" in records.rows[assessment_id]["error"]
 
 
 def test_shared_frontend_fixture_matches_backend_contract():

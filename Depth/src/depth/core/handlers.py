@@ -29,8 +29,6 @@ def register_exception_handlers(app: FastAPI) -> None:
             "locked": (403, "Use the mock unlock before generating this report."),
             "generating": (409, "This report is already generating. Wait for it to finish."),
             "needs_input": (422, "Complete the free assessment inputs before unlocking a report."),
-            "capacity": (503, "All temporary report slots are busy. Try again after a report finishes."),
-            "duplicate": (409, "This assessment is already cached."),
         }
         code, detail = errors[error.code]
         return JSONResponse(status_code=code, content={"detail": detail}, headers={"Cache-Control": "no-store"})

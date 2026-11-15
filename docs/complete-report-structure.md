@@ -2,8 +2,8 @@
 
 The flow is **free assessment → complete report → mock checkout → generate report**.
 Checkout is simulated and charges no money. The free assessment is loaded from
-`public.assessments`; unlock and report state still use an owner-bound
-temporary memory cache, so no report tables were added.
+`public.assessments`; unlock, generation status, and the report are stored in
+`public.complete_reports` (see Timing and saved state).
 
 ## Response contract
 
@@ -65,14 +65,14 @@ section is on screen.
 The source is the client's `../../prompt data/statement-studio-complete-report-prompt.md`,
 especially sections E and G. The runtime prompt is
 `Depth/src/depth/prompts/complete-report-structured.md`. The original client files
-and earlier `complete-report-raw.md` remain available. The temporary prototype
-does not add the client's production database, digest, or permanent-history workflow.
+and earlier `complete-report-raw.md` remain available. The prototype does not add
+the client's digest or report-history workflow.
 
 The existing shared helper supplies the Pydantic model as a strict JSON Schema.
 `gpt-5` is selected directly in the generation function, with medium reasoning.
 The backend validates structure, source IDs/order, exact quotations, baseline
 equality, references, and review coverage. It computes coverage counts itself.
-One bounded repair is allowed for an invalid report. Structured output controls
+The model writes only the analysis, in the `DraftCompleteReport` schema (`schemas/complete_report_draft.py`). Fields that would only repeat the saved free assessment or the statement (baseline scores, labels, checkpoint ratings, prompt-requirement text and verdicts, limit compliance, sentence and paragraph text, coverage, report_version) are not requested; `services/complete_report_assembly.py` fills them from saved data, and an evidence quote that is not in its cited sentence becomes the whole sentence. Validation then checks the analysis: row coverage and order, references, quotes, finding IDs, dispositions, and completeness. A failure inside one section is repaired by regenerating only that section (up to two section repairs, with the rest of the report as context); the whole report is regenerated once only when the draft is unusable or a problem spans sections. Structured output controls
 the response shape; it does not prove every explanation is factually correct.
 The provider schema requires nonempty adjustment explanations; an unadjusted
 criterion explicitly says that no adjustment applies. This prevents a blank
@@ -82,21 +82,31 @@ The helper consumes provider streams internally and returns only a completed
 response. The frontend receives one validated JSON result. No frontend streaming
 framework or component-definition language is involved.
 
-## Timing and temporary state
+## Timing and saved state
 
 Both response timing fields measure successful server processing, including any
-validation repair. The free endpoint also returns `X-Generation-Seconds` without
-changing the existing `free-diagnostic.v1` JSON envelope. The frontend displays
+validation repair. The free assessment's duration is saved with its row and
+returned as `generation_seconds` by `GET /api/assessments/{id}/free`. The frontend displays
 elapsed time during generation and measured durations afterwards.
 
-Free generation has a 220-second total deadline. Structured complete generation
-has a 270-second total deadline. API errors preserve the mock unlock for a retry.
+Free generation has a 220-second total deadline. `POST /complete` is asynchronous:
+it reads the statement and free assessment from `public.assessments`, starts the
+model in a background task, and returns `202` with status `generating` (or `200`
+with the existing state when the report is already ready). The page then polls
+`GET /complete` every 4 seconds until the status is `ready` or `failed`. Each OpenAI
+call may take 420 seconds and the whole job, including one repair, 600 seconds.
+Stopping the API cancels running jobs and marks them failed. Errors preserve the
+mock unlock for a retry.
 Ready results are reused without another model request. API responses disable
-HTTP caching. Reports expire after one hour, capacity eviction, or API restart;
-active generation is pinned. This prototype uses one API process.
+HTTP caching. Each report is one `public.complete_reports` row (no row = locked;
+`unlocked` → `generating` → `ready` | `failed`). Starting a run is one atomic
+UPDATE, so duplicate clicks and several API processes start a single run; a run
+saves its result only while its `started_at` still matches. A row left
+`generating` for 660 seconds (after a crash or restart) is marked failed on the
+next read. Reports survive restarts and reopen from the database.
 Failed attempts retain the unlock and show their measured duration. An explicitly
-incomplete report has a Retry full report action; a completed report reopens from
-cache, and baseline-review notices remain explicit.
+incomplete report has a Retry full report action, and baseline-review notices
+remain explicit.
 
 ## Checks
 
@@ -108,7 +118,7 @@ It makes no assessment or provider requests.
 From `Depth`, run:
 
 ```powershell
-.venv\Scripts\python.exe -m pytest tests/test_assessment.py tests/test_complete_report.py tests/test_llm.py -q -p no:cacheprovider
+.venv\Scripts\python.exe -m pytest tests/test_assessment.py tests/test_complete_report.py tests/test_complete_report_validation.py tests/test_llm.py -q -p no:cacheprovider
 ```
 
 For the live scenario, sign in with a disposable local account and submit a

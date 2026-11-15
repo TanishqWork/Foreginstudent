@@ -96,3 +96,48 @@ def example_complete_report(entry, finding_count=1):
                      "unreviewed_sentence_ids": [], "unreviewed_paragraph_ids": []},
     }
     return validate_complete_report(CompleteReportContent.model_validate(data), entry)
+
+
+def make_source(assessment_id="assessment-a", needs_input=False, generation_seconds=12.5):
+    """A finished free assessment as loaded from the database: the input and baseline for a complete report."""
+    import json as _json
+    from depth.services import assessment_service
+    from depth.services.assessment_record_service import SavedAssessment
+    from test_assessment import example_body, example_response
+
+    payload = _json.loads(assessment_service.assessment_input(example_body(), assessment_id))
+    assessment = example_response()
+    assessment.report.assessment_id = assessment_id
+    if needs_input:
+        assessment.report.status = "needs_input"
+        assessment.report.overall_score = assessment.report.assessment_band = None
+        assessment.report.recommendation.path = None
+        assessment.diagnostic.revision_opportunity = None
+    return SavedAssessment(payload, assessment, generation_seconds)
+
+
+def draft_of(report):
+    """What the model now returns for a report: the analysis without host-filled fields."""
+    from depth.schemas.complete_report_draft import DraftCompleteReport
+
+    data = report.model_dump()
+    for key in ["report_version", "coverage"]:
+        data.pop(key)
+    if data["executive_summary"] is not None:
+        for key in ["overall_score", "assessment_band", "assessment_status", "recommendation_path", "main_concern_title"]:
+            data["executive_summary"].pop(key)
+    for row in data["criterion_details"]:
+        row.pop("label"); row.pop("baseline")
+        for item in row["checkpoints"]:
+            item.pop("status"); item.pop("rating")
+    if data["prompt_coverage"] is not None:
+        for key in ["assessment_status", "limit_compliance", "missing_or_partial_required_ids", "uncertain_requirement_ids"]:
+            data["prompt_coverage"].pop(key)
+        for row in data["prompt_coverage"]["requirements"]:
+            for key in ["prompt_quote", "requirement", "priority", "status"]:
+                row.pop(key)
+    for row in data["sentence_reviews"]:
+        row.pop("text"); row.pop("paragraph")
+    for row in data["paragraph_reviews"]:
+        row.pop("text"); row.pop("number"); row.pop("sentence_ids")
+    return DraftCompleteReport.model_validate(data)

@@ -1,12 +1,17 @@
-"""Source and baseline checks after schema validation. Errors contain paths only."""
+"""Analysis checks after the report is assembled. Errors contain paths only.
+
+Fields copied from the saved free assessment and the statement are filled by
+complete_report_assembly, so they are not re-checked here; this module judges the analysis:
+row coverage and order, references, quotes, finding IDs, dispositions, and completeness.
+"""
 
 import re
 
 from depth.schemas.complete_report_content import CompleteReportContent, Coverage
-from depth.services.assessment_store import CachedAssessment
+from depth.services.assessment_record_service import SavedAssessment
 
 
-def source_maps(entry: CachedAssessment) -> tuple[list[dict], list[dict], list[dict]]:
+def source_maps(entry: SavedAssessment) -> tuple[list[dict], list[dict], list[dict]]:
     original = entry.original_input
     sentences = original["measurements"]["sentences"]
     paragraphs = [{
@@ -24,8 +29,8 @@ def source_maps(entry: CachedAssessment) -> tuple[list[dict], list[dict], list[d
     return sentences, paragraphs, context_sources
 
 
-def validate_complete_report(report: CompleteReportContent, entry: CachedAssessment) -> CompleteReportContent:
-    """Reject contradictory identities/quotes. The host computes coverage counts."""
+def validate_complete_report(report: CompleteReportContent, entry: SavedAssessment) -> CompleteReportContent:
+    """Reject incomplete or inconsistent analysis. The host computes coverage counts."""
     def require(condition: bool, path: str, code: str) -> None:
         if not condition:
             raise ValueError(f"{path}:{code}")
@@ -68,24 +73,10 @@ def validate_complete_report(report: CompleteReportContent, entry: CachedAssessm
                     report.evidence_gaps, report.unsupported_claims, report.cut_or_expand, report.revision_plan]),
                 "report_status", "needs_input_has_analysis")
 
-    summary = report.executive_summary
-    if summary is not None:
-        values = {"overall_score": baseline.overall_score, "assessment_band": baseline.assessment_band,
-                  "assessment_status": baseline.status, "recommendation_path": baseline.recommendation.path,
-                  "main_concern_title": baseline.main_concern.title}
-        for key, expected in values.items():
-            require(getattr(summary, key) == expected, f"executive_summary.{key}", "baseline_mismatch")
-
     for i, row in enumerate(report.criterion_details):
         original = dimension_map[row.dimension_id]
-        require(row.label == original.label, f"criterion_details.{i}.label", "baseline_mismatch")
-        expected = original.model_dump(include=set(type(row.baseline).model_fields))
-        require(row.baseline.model_dump() == expected, f"criterion_details.{i}.baseline", "baseline_mismatch")
         require([item.index for item in row.checkpoints] == [item.index for item in original.checkpoints],
                 f"criterion_details.{i}.checkpoints", "checkpoint_coverage")
-        for j, (item, source) in enumerate(zip(row.checkpoints, original.checkpoints)):
-            require((item.status, item.rating) == (source.status, source.rating),
-                    f"criterion_details.{i}.checkpoints.{j}", "baseline_mismatch")
         if row.explanation_status == "review_required":
             require(report.report_status == "review_required" and bool(report.discrepancies),
                     f"criterion_details.{i}.explanation_status", "unreported_discrepancy")
@@ -95,18 +86,7 @@ def validate_complete_report(report: CompleteReportContent, entry: CachedAssessm
 
     prompt = report.prompt_coverage
     if prompt is not None:
-        require(prompt.assessment_status == baseline.prompt_requirements_status, "prompt_coverage.assessment_status", "baseline_mismatch")
-        require(prompt.limit_compliance == baseline.limit_compliance, "prompt_coverage.limit_compliance", "baseline_mismatch")
         source_order(prompt.requirements, "requirement_id", list(requirement_map), "prompt_coverage.requirements")
-        for i, row in enumerate(prompt.requirements):
-            original = requirement_map[row.requirement_id]
-            for key in ["prompt_quote", "requirement", "priority", "status"]:
-                require(getattr(row, key) == getattr(original, key), f"prompt_coverage.requirements.{i}.{key}", "baseline_mismatch")
-        require(prompt.missing_or_partial_required_ids == [row.id for row in baseline.prompt_requirements
-                if row.priority == "required" and row.status in {"missing", "partial"}],
-                "prompt_coverage.missing_or_partial_required_ids", "baseline_mismatch")
-        require(prompt.uncertain_requirement_ids == [row.id for row in baseline.prompt_requirements if row.status == "uncertain"],
-                "prompt_coverage.uncertain_requirement_ids", "baseline_mismatch")
 
     for path, rows, source_key, prefix in [
         ("criterion_details", report.criterion_details, "dimension_id", "criterion:"),
@@ -129,13 +109,6 @@ def validate_complete_report(report: CompleteReportContent, entry: CachedAssessm
             require(row.finding_id.startswith(prefix) and bool(row.finding_id[len(prefix):].strip()),
                     f"{path}.{i}.finding_id", "finding_id_prefix")
 
-    for i, row in enumerate(report.sentence_reviews):
-        original = sentence_map[row.sentence_id]
-        require((row.text, row.paragraph) == (original["text"], original["paragraph"]), f"sentence_reviews.{i}", "source_mismatch")
-    for i, row in enumerate(report.paragraph_reviews):
-        original = paragraph_map[row.paragraph_id]
-        require((row.text, row.number, row.sentence_ids) == (original["text"], original["number"], original["sentence_ids"]),
-                f"paragraph_reviews.{i}", "source_mismatch")
     for group_name, rows in [("sentence_reviews", report.sentence_reviews), ("paragraph_reviews", report.paragraph_reviews)]:
         for i, row in enumerate(rows):
             require((row.disposition == "Keep" and row.action == "preserve") or

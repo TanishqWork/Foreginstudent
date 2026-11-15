@@ -1,17 +1,20 @@
+import asyncio
 from typing import Annotated
-from time import perf_counter
 
 from fastapi import APIRouter, Depends, Request, Response
 
 from depth.controllers import assessment_controller, auth_controller, complete_report_controller
-from depth.dependencies import get_assessment_records, get_assessment_store, get_auth_service
+from depth.dependencies import (
+    get_assessment_record_factory, get_assessment_records, get_auth_service, get_background_tasks,
+    get_complete_report_record_factory, get_complete_report_records,
+)
 from depth.models.auth_session import AuthSession
 from depth.schemas.assessment import AssessmentRequest
-from depth.schemas.assessment_report import FreeDiagnosticResponse
+from depth.schemas.free_assessment import FreeAssessmentState
 from depth.schemas.complete_report import CompleteReportState
 from depth.services.assessment_record_service import AssessmentRecordService
-from depth.services.assessment_store import AssessmentStore
 from depth.services.auth_service import AuthService
+from depth.services.complete_report_record_service import CompleteReportRecordService
 
 router = APIRouter(prefix="/api/assessments", tags=["assessments"])
 
@@ -21,34 +24,51 @@ def require_session(request: Request, response: Response, service: Annotated[Aut
 
 
 CurrentSession = Annotated[AuthSession, Depends(require_session)]
-Store = Annotated[AssessmentStore, Depends(get_assessment_store)]
 Records = Annotated[AssessmentRecordService, Depends(get_assessment_records)]
+RunningTasks = Annotated[set[asyncio.Task], Depends(get_background_tasks)]
+RecordFactory = Annotated[object, Depends(get_assessment_record_factory)]
+Reports = Annotated[CompleteReportRecordService, Depends(get_complete_report_records)]
+ReportFactory = Annotated[object, Depends(get_complete_report_record_factory)]
 
 
-@router.post("/free", response_model=FreeDiagnosticResponse)
-async def free_assessment(body: AssessmentRequest, request: Request, response: Response, session: CurrentSession, records: Records) -> FreeDiagnosticResponse:
+@router.post("/free", response_model=FreeAssessmentState, status_code=202)
+async def start_free(
+    body: AssessmentRequest, request: Request, response: Response, session: CurrentSession,
+    records: Records, record_factory: RecordFactory, tasks: RunningTasks,
+) -> FreeAssessmentState:
+    """Saves a `generating` assessment, starts the model, and returns at once; poll GET /{id}/free for the result."""
     response.headers["Cache-Control"] = "no-store"
-    started = perf_counter()
-    result = await assessment_controller.assess(body, request.app.state.settings, str(session.user_id), records)
-    response.headers["X-Generation-Seconds"] = str(round(perf_counter() - started, 3))
-    return result
+    return await assessment_controller.start(body, request.app.state.settings, str(session.user_id), records, record_factory, tasks)
+
+
+@router.get("/{assessment_id}/free", response_model=FreeAssessmentState)
+def free_state(assessment_id: str, response: Response, session: CurrentSession, records: Records) -> FreeAssessmentState:
+    response.headers["Cache-Control"] = "no-store"
+    return assessment_controller.get(assessment_id, str(session.user_id), records)
 
 
 @router.get("/{assessment_id}/complete", response_model=CompleteReportState)
-def complete_state(assessment_id: str, response: Response, session: CurrentSession, store: Store, records: Records) -> CompleteReportState:
+def complete_state(assessment_id: str, response: Response, session: CurrentSession, reports: Reports) -> CompleteReportState:
     response.headers["Cache-Control"] = "no-store"
-    return complete_report_controller.get(assessment_id, str(session.user_id), store, records)
+    return complete_report_controller.get(assessment_id, str(session.user_id), reports)
 
 
 @router.post("/{assessment_id}/mock-unlock", response_model=CompleteReportState)
-def mock_unlock(assessment_id: str, response: Response, session: CurrentSession, store: Store, records: Records) -> CompleteReportState:
+def mock_unlock(assessment_id: str, response: Response, session: CurrentSession, reports: Reports) -> CompleteReportState:
     response.headers["Cache-Control"] = "no-store"
-    return complete_report_controller.unlock(assessment_id, str(session.user_id), store, records)
+    return complete_report_controller.unlock(assessment_id, str(session.user_id), reports)
 
 
 @router.post("/{assessment_id}/complete", response_model=CompleteReportState)
-async def generate_complete(assessment_id: str, response: Response, session: CurrentSession, store: Store, records: Records) -> CompleteReportState:
-    result = await complete_report_controller.generate(assessment_id, str(session.user_id), store, records)
+async def start_complete(
+    assessment_id: str, response: Response, session: CurrentSession, reports: Reports,
+    report_factory: ReportFactory, tasks: RunningTasks,
+) -> CompleteReportState:
+    """Starts generation and returns at once (202 while generating); poll GET for the result."""
+    result = await complete_report_controller.start(assessment_id, str(session.user_id), reports, report_factory, tasks)
     response.headers["Cache-Control"] = "no-store"
-    response.headers["X-Generation-Seconds"] = str(result.generation_seconds)
+    if result.status == "generating":
+        response.status_code = 202
+    if result.generation_seconds is not None:
+        response.headers["X-Generation-Seconds"] = str(result.generation_seconds)
     return result

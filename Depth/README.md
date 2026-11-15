@@ -239,8 +239,14 @@ text for service-level validation.
 
 ## Free diagnostic assessment
 
-Authenticated `POST /api/assessments/free` returns the `free-diagnostic.v1` JSON
-envelope: `context`, the canonical `report`, and supplemental `diagnostic` fields.
+The free assessment is asynchronous. Authenticated `POST /api/assessments/free`
+saves a `generating` row in `public.assessments` (owner, submitted input, model),
+starts the AI in a background task, and returns `202` with
+`{assessment_id, status, assessment, generation_seconds, error}`. The owner polls
+`GET /api/assessments/{assessment_id}/free` until `status` is `ready` (with the
+`free-diagnostic.v1` envelope in `assessment`: `context`, the canonical `report`,
+and supplemental `diagnostic` fields) or `failed` (with a student-safe `error`).
+Other users receive 404.
 The assessment function selects `model="gpt-5"` directly in
 `services/assessment_service.py`. Set `OPENAI_API_KEY` in the ignored backend
 environment file; model selection does not use an environment variable.
@@ -248,11 +254,15 @@ environment file; model selection does not use an environment variable.
 `schemas/assessment_report.py` owns the report contract. The assessment service
 requests schema-constrained JSON, checks exact source references, recalculates
 scores through `services/assessment_scoring.py`, and retries invalid reports once.
-The response is private (`Cache-Control: no-store`). Each successful assessment is
-saved to `public.assessments` (owner, submitted input, full result JSON, model,
-generation seconds) after the AI finishes and before the response is returned.
-The save runs outside the AI deadline; if it fails, the error type is logged
-without applicant text and the student still receives the result.
+Responses are private (`Cache-Control: no-store`). If the row cannot be created,
+the request fails with 503 and no AI call starts. The background task stores the
+result and generation seconds (`ready`) or a failure (`failed`) through its own
+database session. Stopping the API marks running assessments failed; a row still
+`generating` 280 seconds after it started (the 220-second AI deadline plus margin)
+is marked failed when read, which covers crashes. Migration
+`0007_assessment_status` adds `status` and `error`, allows `result` to be empty
+until ready, and marks existing rows `ready`. The complete report accepts only
+`ready` assessments.
 Validation logs include only field paths/reason codes. Provider credentials and
 applicant prose are not logged or included in errors.
 
@@ -260,7 +270,7 @@ See [the implementation and debug guide](../docs/free-assessment-response-struct
 Focused provider-mocked tests need no database:
 
 ```powershell
-.venv\Scripts\python.exe -m pytest tests/test_assessment.py tests/test_llm.py -q -p no:cacheprovider
+.venv\Scripts\python.exe -m pytest tests/test_assessment.py tests/test_complete_report.py tests/test_complete_report_validation.py tests/test_llm.py -q -p no:cacheprovider
 ```
 
 ## Complete report prototype
@@ -271,10 +281,29 @@ assessment from `public.assessments`; other users receive 404. Mock unlock charg
 return one JSON state with the canonical free assessment and a typed report.
 All eleven analytical groups use reusable rows without fixed finding counts.
 Validation checks baseline consistency, exact source references, and completeness.
-Responses include measured free and complete generation durations. Unlock,
-generation state, and the complete report itself are not yet saved: they live in a
-one-process memory cache for up to one hour and are lost on restart, after which
-the free assessment reloads from the database as locked.
+The model writes only the analysis, in the `DraftCompleteReport` schema (`schemas/complete_report_draft.py`). Fields that would only repeat the saved free assessment or the statement (baseline scores, labels, checkpoint ratings, prompt-requirement text and verdicts, limit compliance, sentence and paragraph text, coverage, report_version) are not requested; `services/complete_report_assembly.py` fills them from saved data, and an evidence quote that is not in its cited sentence becomes the whole sentence. Validation then checks the analysis: row coverage and order, references, quotes, finding IDs, dispositions, and completeness. A failure inside one section is repaired by regenerating only that section (up to two section repairs, with the rest of the report as context); the whole report is regenerated once only when the draft is unusable or a problem spans sections.
+Responses include measured free and complete generation durations.
+
+Report state is stored in `public.complete_reports` (migration `0008_complete_reports`),
+one row per unlocked assessment: `assessment_id` (primary key and foreign key to
+`assessments`), `user_id`, `status`, `report` (JSONB), `error`, `model`,
+`started_at`, `generation_seconds`, `created_at`, and `updated_at`. No row means
+locked; mock unlock inserts an `unlocked` row (idempotent). `POST /complete`
+claims the row with one atomic UPDATE (`unlocked`, `failed`, or an incomplete
+`ready` report becomes `generating`), so double clicks or several API processes
+start a single run. It returns `202` at once; the model runs in a background task
+that saves `ready` with the report or `failed` with a safe message through its own
+database session, and clients poll `GET /complete`. A run's result is saved only
+if `started_at` still matches, so a late run can never overwrite a newer one.
+Stopping the API marks running reports failed; a row still `generating` 660
+seconds after it started (the 600-second job deadline plus margin) is marked
+failed on the next read. The unlock is always kept, so a failed run is retried
+without paying again. Each run reads the statement and free assessment from the
+owner's `ready` row in `public.assessments` and validates the report against it.
+The API prints its own INFO logs without statement or report text: each stage of
+a free assessment and complete report (`generation started`, `OpenAI response` with
+`elapsed_seconds`, `output_tokens`, and `reasoning_tokens`, `check failed` with a
+path and code, `section repair`, `checked`, and `saved` with status and seconds).
 See [the complete-report implementation and debug guide](../docs/complete-report-structure.md).
 
 ## Run FastAPI with Supabase
