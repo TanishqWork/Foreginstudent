@@ -2,6 +2,8 @@ import asyncio
 import json
 import logging
 import re
+from collections.abc import Callable
+from contextlib import AbstractContextManager
 from functools import lru_cache
 from importlib.resources import files
 from uuid import uuid4
@@ -17,10 +19,15 @@ from depth.schemas.assessment_report import (
     AssessmentContext, AssessmentEvaluation, DiagnosticPresentation, FreeDiagnosticResponse,
 )
 from depth.services.assessment_scoring import calculate_report, validate_evaluation
+from depth.schemas.free_assessment import FreeAssessmentState
 from depth.services.assessment_record_service import AssessmentRecordService
+from depth.services.background_jobs import spawn, write_with
 
 logger = logging.getLogger(__name__)
 FREE_ASSESSMENT_TIMEOUT_SECONDS = 220
+# A row still `generating` after this was lost to a restart; readers mark it failed.
+FREE_ASSESSMENT_STALE_SECONDS = FREE_ASSESSMENT_TIMEOUT_SECONDS + 60
+RecordFactory = Callable[[], AbstractContextManager[AssessmentRecordService]]
 
 
 @lru_cache
@@ -31,7 +38,7 @@ def free_assessment_prompt() -> str:
     return prompt + "\n\n" + extension
 
 
-def assessment_input(body: AssessmentRequest) -> str:
+def assessment_input(body: AssessmentRequest, assessment_id: str | None = None) -> str:
     text = body.statement_text
     paragraphs = [part for part in re.split(r"\r?\n[ \t]*\r?\n", text) if part.strip()]
     sentences = []
@@ -41,7 +48,7 @@ def assessment_input(body: AssessmentRequest) -> str:
             if sentence:
                 sentences.append({"id": f"s{len(sentences) + 1}", "paragraph": number, "text": sentence})
     payload = {
-        "assessment_id": str(uuid4()),
+        "assessment_id": assessment_id or str(uuid4()),
         "statement_text": text,
         "statement_type": body.statement_type,
         "degree": body.degree,
@@ -75,28 +82,64 @@ PATHWAY_GUIDANCE = {
 }
 
 
-async def run_free_assessment(
-    body: AssessmentRequest, settings: Settings, *,
-    owner_id: str | None = None, records: AssessmentRecordService | None = None,
-) -> FreeDiagnosticResponse:
-    started = perf_counter()
-    try:
-        async with asyncio.timeout(FREE_ASSESSMENT_TIMEOUT_SECONDS):
-            response, payload = await _run_free_assessment(body, settings)
-    except TimeoutError:
-        logger.warning("Free assessment generation failed type=TimeoutError")
-        raise LLMError("Free assessment generation timed out.") from None
-    # Saved outside the AI deadline; a failed save is logged and the student still gets the result.
-    if records is not None:
-        if owner_id is None:
-            raise ValueError("A saved assessment requires an authenticated owner.")
-        await records.save_async(owner_id, payload, response, settings.free_assessment_model, round(perf_counter() - started, 3))
+async def run_free_assessment(body: AssessmentRequest, settings: Settings, *, assessment_id: str | None = None) -> FreeDiagnosticResponse:
+    """Generate and wait for the result, without saving it."""
+    response, _ = await _generate_within_deadline(body, settings, assessment_input(body, assessment_id))
     return response
 
 
-async def _run_free_assessment(body: AssessmentRequest, settings: Settings) -> tuple[FreeDiagnosticResponse, dict]:
+async def _generate_within_deadline(body: AssessmentRequest, settings: Settings, input_prompt: str) -> tuple[FreeDiagnosticResponse, dict]:
+    try:
+        async with asyncio.timeout(FREE_ASSESSMENT_TIMEOUT_SECONDS):
+            return await _run_free_assessment(body, settings, input_prompt)
+    except TimeoutError:
+        logger.warning("Free assessment generation failed type=TimeoutError")
+        raise LLMError("Free assessment generation timed out.") from None
+
+
+async def start_free_assessment(
+    body: AssessmentRequest, settings: Settings, owner_id: str,
+    records: AssessmentRecordService, record_factory: RecordFactory, tasks: set[asyncio.Task],
+) -> FreeAssessmentState:
+    """Save a `generating` row, run the model in the background, and return at once; clients poll GET for the result."""
+    assessment_id = str(uuid4())
+    input_prompt = assessment_input(body, assessment_id)
+    await asyncio.to_thread(records.create_pending, owner_id, assessment_id, json.loads(input_prompt), settings.free_assessment_model)
+    spawn(_finish_free_assessment(body, settings, assessment_id, input_prompt, record_factory), tasks)
+    return FreeAssessmentState(assessment_id=assessment_id, status="generating", assessment=None, generation_seconds=None, error=None)
+
+
+async def _finish_free_assessment(
+    body: AssessmentRequest, settings: Settings, assessment_id: str, input_prompt: str, record_factory: RecordFactory,
+) -> None:
     started = perf_counter()
-    input_prompt = assessment_input(body)
+    logger.info("Free assessment generation started assessment_id=%s", assessment_id)
+
+    async def fail(message: str) -> None:
+        seconds = round(perf_counter() - started, 3)
+        stored = await asyncio.to_thread(write_with, record_factory, lambda records: records.mark_failed(assessment_id, message, seconds))
+        logger.info("Free assessment saved assessment_id=%s status=failed seconds=%.1f stored=%s", assessment_id, seconds, stored)
+
+    try:
+        response, _ = await _generate_within_deadline(body, settings, input_prompt)
+    except asyncio.CancelledError:
+        await fail("The assessment was interrupted. Your draft is still here; run it again.")
+        raise
+    except Exception as error:
+        if not isinstance(error, LLMError):
+            logger.warning("Free assessment generation failed type=%s", type(error).__name__)
+        await fail("The assessment could not finish. Your draft is still here; please try again.")
+        raise LLMError("Free assessment generation failed.") from None
+    seconds = round(perf_counter() - started, 3)
+    if await asyncio.to_thread(write_with, record_factory, lambda records: records.mark_ready(assessment_id, response, seconds)):
+        logger.info("Free assessment saved assessment_id=%s status=ready overall_score=%s seconds=%.1f",
+                    assessment_id, response.report.overall_score, seconds)
+    else:
+        logger.warning("Free assessment result was not saved assessment_id=%s seconds=%.1f", assessment_id, seconds)
+
+
+async def _run_free_assessment(body: AssessmentRequest, settings: Settings, input_prompt: str) -> tuple[FreeDiagnosticResponse, dict]:
+    started = perf_counter()
     payload = json.loads(input_prompt)
     repair_instruction = ""
     for attempt in range(2):

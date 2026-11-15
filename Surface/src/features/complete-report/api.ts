@@ -62,7 +62,8 @@ function requestFailure(status: number): CompleteReportError {
 
 async function request(assessmentId: string, suffix: string, method: 'GET' | 'POST', signal?: AbortSignal): Promise<Response> {
   let response: Response
-  const timeout = suffix === 'complete' && method === 'POST' ? 300_000 : 20_000
+  // POST /complete only starts generation (202 + status "generating"); the page then polls GET for the result.
+  const timeout = 20_000
   try {
     response = await fetch(`/api/assessments/${encodeURIComponent(assessmentId)}/${suffix}`, {
       method,

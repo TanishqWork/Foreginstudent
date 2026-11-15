@@ -1,0 +1,20 @@
+.frame {
+  width: min(100%, 720px);
+  margin: 14px 0 6px;
+  overflow: hidden;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-card);
+  background: #f5f6fd;
+}
+
+.stage {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  opacity: 0;
+  transition: opacity .3s ease;
+}
+
+/* Shown once the first frame has been drawn, so nothing flashes at the origin. */
+.ready { opacity: 1; }

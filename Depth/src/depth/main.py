@@ -1,3 +1,4 @@
+import asyncio
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -5,15 +6,16 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from depth.core.config import Settings, get_settings
 from depth.core.handlers import register_exception_handlers
+from depth.core.logging import configure_logging
 from depth.core.middleware import AuthMiddleware
 from depth.database.session import create_database
 from depth.integrations.llm import close_client
 from depth.routes import router
-from depth.services.assessment_store import AssessmentStore
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or get_settings()
+    configure_logging()
     engine, session_factory = create_database(settings.database_url)
 
     @asynccontextmanager
@@ -21,6 +23,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         try:
             yield
         finally:
+            # Interrupted AI jobs are marked failed (a report keeps its unlock) so students can retry after a restart.
+            for task in list(app.state.background_tasks):
+                task.cancel()
+            await asyncio.gather(*app.state.background_tasks, return_exceptions=True)
             await close_client()
             engine.dispose()
 
@@ -28,7 +34,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.settings = settings
     app.state.engine = engine
     app.state.session_factory = session_factory
-    app.state.assessment_store = AssessmentStore()
+    app.state.background_tasks = set()
     allowed_origins = list({settings.frontend_url, settings.api_url})
     app.add_middleware(
         CORSMiddleware, allow_origins=allowed_origins, allow_credentials=True,

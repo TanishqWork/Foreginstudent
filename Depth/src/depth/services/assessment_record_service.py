@@ -1,8 +1,8 @@
-"""Persist free AI assessments. The AI result is already paid for, so a failed save never discards it."""
+"""Persist free AI assessments and their generation status. Never log statements or results."""
 
-import asyncio
 import logging
 from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 from typing import Any
 from uuid import UUID
 
@@ -11,8 +11,10 @@ from sqlalchemy.orm import Session
 
 from depth.repositories.assessments import AssessmentRepository
 from depth.schemas.assessment_report import FreeDiagnosticResponse
+from depth.schemas.free_assessment import FreeAssessmentState
 
 logger = logging.getLogger(__name__)
+INTERRUPTED_MESSAGE = "The assessment was interrupted. Your draft is still here; run it again."
 
 
 @dataclass(frozen=True)
@@ -34,36 +36,69 @@ class AssessmentRecordService:
         self.db = db
         self.repository = repository
 
-    def save(
-        self, owner_id: str, original_input: dict[str, Any], assessment: FreeDiagnosticResponse,
-        model: str, generation_seconds: float | None,
-    ) -> bool:
-        assessment_id, user_id = _uuid(assessment.report.assessment_id), _uuid(owner_id)
-        if assessment_id is None or user_id is None:
-            logger.warning("Assessment save skipped reason=invalid_identifier")
+    def create_pending(self, owner_id: str, assessment_id: str, original_input: dict[str, Any], model: str) -> None:
+        """Record the run before the AI starts. Errors propagate: no row means no generation."""
+        record_id, user_id = _uuid(assessment_id), _uuid(owner_id)
+        if record_id is None or user_id is None:
+            raise ValueError("A saved assessment requires UUID identifiers.")
+        try:
+            self.repository.add_pending(record_id, user_id, original_input, model)
+            self.db.commit()
+        except SQLAlchemyError:
+            self.db.rollback()
+            raise
+
+    def mark_ready(self, assessment_id: str, assessment: FreeDiagnosticResponse, generation_seconds: float | None) -> bool:
+        return self._resolve("ready", lambda record_id: self.repository.mark_ready(
+            record_id, assessment.model_dump(mode="json"), generation_seconds,
+        ), assessment_id)
+
+    def mark_failed(self, assessment_id: str, error: str, generation_seconds: float | None = None) -> bool:
+        return self._resolve("failed", lambda record_id: self.repository.mark_failed(
+            record_id, error, generation_seconds,
+        ), assessment_id)
+
+    def _resolve(self, status: str, write, assessment_id: str) -> bool:
+        record_id = _uuid(assessment_id)
+        if record_id is None:
             return False
         try:
-            self.repository.add(
-                assessment_id, user_id, original_input, assessment.model_dump(mode="json"), model, generation_seconds,
-            )
+            changed = write(record_id)
             self.db.commit()
-            return True
+            return changed
         except SQLAlchemyError as error:
             self.db.rollback()
-            # Never log the statement or result; the type is enough to diagnose connectivity or schema issues.
-            logger.warning("Assessment save failed type=%s", type(error).__name__)
+            # The type is enough to diagnose connectivity or schema issues.
+            logger.warning("Assessment status update failed status=%s type=%s", status, type(error).__name__)
             return False
 
-    async def save_async(self, *args: Any, **kwargs: Any) -> bool:
-        # SQLAlchemy here is synchronous; keep the event loop free for other requests.
-        return await asyncio.to_thread(self.save, *args, **kwargs)
-
-    def load_owned(self, assessment_id: str, owner_id: str) -> SavedAssessment | None:
+    def free_state(self, assessment_id: str, owner_id: str, stale_after_seconds: float) -> FreeAssessmentState | None:
+        """The owner's run, or None. A run still `generating` past its deadline was lost to a restart: mark it failed."""
         record_id, user_id = _uuid(assessment_id), _uuid(owner_id)
         if record_id is None or user_id is None:
             return None
         row = self.repository.get_owned(record_id, user_id)
         if row is None:
+            return None
+        if row.status == "generating":
+            cutoff = datetime.now(timezone.utc) - timedelta(seconds=stale_after_seconds)
+            if row.created_at < cutoff and self.repository.mark_failed(record_id, INTERRUPTED_MESSAGE, started_before=cutoff):
+                self.db.commit()
+                self.db.refresh(row)
+        return FreeAssessmentState(
+            assessment_id=str(row.id), status=row.status,
+            assessment=None if row.result is None else FreeDiagnosticResponse.model_validate(row.result),
+            generation_seconds=None if row.generation_seconds is None else float(row.generation_seconds),
+            error=row.error,
+        )
+
+    def load_owned(self, assessment_id: str, owner_id: str) -> SavedAssessment | None:
+        """A finished free assessment for the complete report; runs still generating or failed are unavailable."""
+        record_id, user_id = _uuid(assessment_id), _uuid(owner_id)
+        if record_id is None or user_id is None:
+            return None
+        row = self.repository.get_owned(record_id, user_id)
+        if row is None or row.status != "ready" or row.result is None:
             return None
         return SavedAssessment(
             original_input=dict(row.input),

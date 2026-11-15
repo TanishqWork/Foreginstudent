@@ -10,7 +10,8 @@ import styles from './AssessmentPage.module.css'
 import { useAuth } from '../account/auth-context'
 import { readAssessmentDraft, saveAssessmentDraft } from './draft'
 import DiagnosticResult from './diagnostic/DiagnosticResult'
-import { DiagnosticResponseError, parseDiagnosticResponse } from './diagnostic/response'
+import { DiagnosticResponseError } from './diagnostic/response'
+import { FreeAssessmentError, startFreeAssessment, waitForFreeAssessment } from './api'
 import type { DiagnosticResponse } from './diagnostic/types'
 import { rememberAssessmentId } from '../complete-report/session'
 import ReviewLoader from './review-loader/ReviewLoader'
@@ -44,6 +45,7 @@ function AssessmentScreen({ initialPathway, embedded = false }: { initialPathway
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
   const [generationSeconds, setGenerationSeconds] = useState<number | null>(null)
   const requestStartedRef = useRef(0)
+  const runRef = useRef<AbortController | null>(null)
   const [error, setError] = useState('')
   const [result, setResult] = useState<DiagnosticResponse | null>(null)
   const initialProfile = assessmentPathways.find((item) => item.id === initialPathway)!
@@ -68,6 +70,9 @@ function AssessmentScreen({ initialPathway, embedded = false }: { initialPathway
   useEffect(() => {
     headingRef.current?.focus({ preventScroll: true })
   }, [])
+
+  // Leaving the page stops polling; the saved assessment still finishes on the server.
+  useEffect(() => () => runRef.current?.abort(), [])
 
   useEffect(() => {
     if (!pending) return
@@ -147,35 +152,28 @@ function AssessmentScreen({ initialPathway, embedded = false }: { initialPathway
     setGenerationSeconds(null)
     setPending(true)
     setResult(null)
+    runRef.current?.abort()
+    const run = new AbortController()
+    runRef.current = run
     try {
-      const response = await fetch('/api/assessments/free', {
-        method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
-        signal: AbortSignal.timeout(240_000),
-        body: JSON.stringify({ statement_text: statement, statement_type: context.statementType, degree: context.degree, field: context.field, pathway: context.pathway, applicant_type: context.applicantType, target_institution: context.institution || null, target_program: context.program || null, application_prompt: prompt || null, word_limit: context.wordLimit ? Number(context.wordLimit) : null, review_goal: context.reviewGoal }),
-      })
-      if (response.status === 401) { navigate('/account?next=%2Fdashboard%2Fassessment%3Fresume%3D1'); return }
-      if (!response.ok) throw new Error('The assessment could not finish. Check your connection and try again. Your draft is still here.')
-      if (!response.headers.get('Content-Type')?.includes('application/json')) {
-        throw new Error('The assessment service returned an unsupported response format. Please try again. Your draft is still here.')
-      }
-      const payload: unknown = await response.json()
-      const assessment = parseDiagnosticResponse(payload)
-      const timingHeader = response.headers.get('X-Generation-Seconds')
-      const timing = timingHeader?.trim() ? Number(timingHeader) : NaN
-      setGenerationSeconds(Number.isFinite(timing) && timing >= 0 ? timing : (performance.now() - requestStartedRef.current) / 1000)
-      rememberAssessmentId(session.user.id, assessment.report.assessment_id)
-      setResult(assessment)
+      // POST saves the assessment and starts the review; the result is read back from the saved record.
+      const started = await startFreeAssessment({ statement_text: statement, statement_type: context.statementType, degree: context.degree, field: context.field, pathway: context.pathway, applicant_type: context.applicantType, target_institution: context.institution || null, target_program: context.program || null, application_prompt: prompt || null, word_limit: context.wordLimit ? Number(context.wordLimit) : null, review_goal: context.reviewGoal }, run.signal)
+      const finished = await waitForFreeAssessment(started.assessment_id, { signal: run.signal })
+      if (run.signal.aborted) return
+      setGenerationSeconds(finished.generation_seconds ?? (performance.now() - requestStartedRef.current) / 1000)
+      rememberAssessmentId(session.user.id, finished.assessment_id)
+      setResult(finished.assessment)
     } catch (cause) {
+      if (run.signal.aborted) return
+      if (cause instanceof FreeAssessmentError && cause.status === 401) { navigate('/account?next=%2Fdashboard%2Fassessment%3Fresume%3D1'); return }
       if (cause instanceof DiagnosticResponseError) {
         console.warn('Diagnostic response rejected at field:', cause.field)
       }
-      setError(cause instanceof SyntaxError
-        ? 'The assessment service returned invalid JSON. Please try again. Your draft is still here.'
-        : cause instanceof Error && cause.name !== 'TimeoutError'
-          ? cause.message
-          : 'The review took longer than expected. Your draft is still here; please try again.')
+      setError(cause instanceof Error
+        ? cause.message
+        : 'The assessment could not finish. Check your connection and try again. Your draft is still here.')
     }
-    finally { setPending(false) }
+    finally { if (runRef.current === run) setPending(false) }
   }
 
   if (result) {

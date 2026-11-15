@@ -1,628 +1,504 @@
-"""Temporary complete-report tests: no database, provider, or payment traffic."""
+"""Complete-report workflow over its saved status: no database, provider, or payment traffic.
+
+MemoryReports mirrors CompleteReportRecordService; the real SQL is covered in test_complete_report_records.py.
+"""
 
 import asyncio
 import json
+import time
+from contextlib import contextmanager
+from datetime import timedelta
 from types import SimpleNamespace
 from uuid import uuid4
 
 import pytest
-from pydantic import ValidationError
-from sqlalchemy.exc import OperationalError
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from sqlalchemy.exc import OperationalError
 
+from complete_report_fixture import draft_of, example_complete_report, make_source
 from depth.core.exceptions import AssessmentError, AuthenticationError, LLMError
 from depth.core.handlers import register_exception_handlers
-from depth.dependencies import get_assessment_records
+from depth.database.base import utcnow
+from depth.dependencies import get_complete_report_record_factory, get_complete_report_records
 from depth.routes.assessment import require_session, router
-from depth.services import assessment_service, complete_report_service
-from depth.services.assessment_record_service import AssessmentRecordService, SavedAssessment
-from depth.services.assessment_store import AssessmentStore
-from depth.schemas.complete_report_content import CompleteReportContent
-from depth.services.complete_report_validation import validate_complete_report
-from complete_report_fixture import example_complete_report
-from test_assessment import example_body, example_evaluation, example_response
+from depth.schemas.complete_report_content import Discrepancy
+from depth.schemas.complete_report_draft import DraftCompleteReport
+from depth.services import complete_report_service
+from depth.services.assessment_record_service import AssessmentRecordService
+from depth.services.complete_report_record_service import (
+    INTERRUPTED_MESSAGE, CompleteReportRecordService, LoadedReport, ReportRecord,
+)
+
+OWNER = "owner-1"
+ID = "assessment-a"
 
 
-class FakeRecords:
-    """Stands in for the PostgreSQL-backed record service; no database needed."""
+class MemoryReports:
+    """In-memory stand-in for CompleteReportRecordService, shared by requests and background jobs."""
 
-    def __init__(self, saved_rows=None, fail=False):
-        self.rows, self.fail, self.saved, self.loads = dict(saved_rows or {}), fail, [], 0
+    def __init__(self):
+        self.sources, self.rows = {}, {}
 
-    async def save_async(self, owner_id, original_input, assessment, model, seconds):
-        if not self.fail:
-            self.saved.append((owner_id, original_input, assessment, model, seconds))
-        return not self.fail
+    def add(self, source, owner=OWNER):
+        self.sources[(source.assessment.report.assessment_id, owner)] = source
+        return source
 
-    def load_owned(self, assessment_id, owner_id):
-        self.loads += 1
-        return self.rows.get((assessment_id, owner_id))
+    def load(self, assessment_id, owner_id, stale_after_seconds):
+        source = self.sources.get((assessment_id, owner_id))
+        if source is None:
+            return None
+        row = self.rows.get(assessment_id)
+        if row and row["status"] == "generating" and row["started_at"] < utcnow() - timedelta(seconds=stale_after_seconds):
+            self.fail(assessment_id, row["started_at"], INTERRUPTED_MESSAGE, None)
+        if row is None:
+            return LoadedReport(source, None)
+        return LoadedReport(source, ReportRecord(row["status"], row["report"], row["error"], row["seconds"], row["started_at"]))
 
+    def unlock(self, assessment_id, owner_id, model):
+        self.rows.setdefault(assessment_id, {"owner": owner_id, "status": "unlocked", "report": None, "error": None,
+                                             "seconds": None, "started_at": None, "model": model})
 
-def seed(store, assessment_id="assessment-a", owner="owner-1", needs_input=False):
-    payload = json.loads(assessment_service.assessment_input(example_body()))
-    payload["assessment_id"] = assessment_id
-    assessment = example_response()
-    assessment.report.assessment_id = assessment_id
-    if needs_input:
-        assessment.report.status = "needs_input"
-        assessment.report.overall_score = assessment.report.assessment_band = None
-        assessment.report.recommendation.path = None
-        assessment.diagnostic.revision_opportunity = None
-    store.save(owner, payload, assessment)
-    return payload, assessment
+    def claim(self, assessment_id, owner_id):
+        row = self.rows.get(assessment_id)
+        retryable = row and (row["status"] in ("unlocked", "failed") or (
+            row["status"] == "ready" and row["report"].report_status == "incomplete"))
+        if not retryable or row["owner"] != owner_id:
+            return None
+        started_at = utcnow()
+        row.update(status="generating", started_at=started_at, report=None, error=None, seconds=None)
+        return started_at
 
+    def _finish_run(self, assessment_id, started_at, **values):
+        row = self.rows.get(assessment_id)
+        if row is None or row["status"] != "generating" or row["started_at"] != started_at:
+            return False
+        row.update(values)
+        return True
 
-def test_cache_owns_copies_and_hides_other_users():
-    store = AssessmentStore()
-    payload, assessment = seed(store)
-    expected_payload, expected_assessment = json.loads(json.dumps(payload)), assessment.model_dump()
-    payload["statement_text"] = "edited after caching"
-    assessment.report.overall_score = 0
-    entry = store.get("assessment-a", "owner-1")
-    assert entry.original_input == expected_payload
-    assert entry.assessment.model_dump() == expected_assessment
-    entry.original_input["statement_text"] = "mutated view"
-    entry.assessment.report.overall_score = 1
-    assert store.get("assessment-a", "owner-1").original_input == expected_payload
-    assert store.get("assessment-a", "owner-1").assessment.report.overall_score == 75
-    for owner, assessment_id in [("owner-2", "assessment-a"), ("owner-1", "missing")]:
-        for action in [store.get, store.unlock, store.begin_generation]:
-            with pytest.raises(AssessmentError, match="not_found"):
-                action(assessment_id, owner)
+    def finish(self, assessment_id, started_at, report, seconds):
+        return self._finish_run(assessment_id, started_at, status="ready", report=report, error=None, seconds=seconds)
 
+    def fail(self, assessment_id, started_at, error, seconds):
+        return self._finish_run(assessment_id, started_at, status="failed", report=None, error=error, seconds=seconds)
 
-def test_cache_expiry_capacity_and_generation_pinning():
-    now = [0.0]
-    store = AssessmentStore(capacity=2, ttl_seconds=10, clock=lambda: now[0])
-    seed(store, "a")
-    seed(store, "b")
-    store.unlock("a", "owner-1")
-    store.begin_generation("a", "owner-1")
-    now[0] = 11
-    with pytest.raises(AssessmentError, match="not_found"):
-        store.get("b", "owner-1")
-    assert store.get("a", "owner-1").status == "generating"
-    seed(store, "c")
-    seed(store, "d")
-    with pytest.raises(AssessmentError, match="not_found"):
-        store.get("c", "owner-1")
-    assert store.get("a", "owner-1").status == "generating"
-    report = example_complete_report(store.get("a", "owner-1"))
-    store.finish("a", "owner-1", report, 1.25)
-    now[0] = 20
-    assert store.get("a", "owner-1").report == report
-    now[0] = 22
-    with pytest.raises(AssessmentError, match="not_found"):
-        store.get("a", "owner-1")
+    def factory(self):
+        @contextmanager
+        def reports():
+            yield self
+        return reports
 
 
-def test_has_is_owner_bound_and_respects_expiry():
-    now = [100.0]
-    store = AssessmentStore(ttl_seconds=10, clock=lambda: now[0])
-    seed(store)
-    assert store.has("assessment-a", "owner-1")
-    assert not store.has("assessment-a", "owner-2")
-    now[0] += 11
-    assert not store.has("assessment-a", "owner-1")
+def unlocked(needs_input=False):
+    reports = MemoryReports()
+    source = reports.add(make_source(ID, needs_input=needs_input))
+    if not needs_input:
+        reports.unlock(ID, OWNER, "gpt-5")
+    return reports, source
 
 
-def test_full_cache_never_evicts_a_running_report():
-    store = AssessmentStore(capacity=1)
-    seed(store)
-    store.unlock("assessment-a", "owner-1")
-    store.begin_generation("assessment-a", "owner-1")
-    with pytest.raises(AssessmentError, match="capacity"):
-        seed(store, "b")
-    assert store.get("assessment-a", "owner-1").status == "generating"
-
-
-def test_mock_unlock_is_idempotent_and_needs_a_score():
-    store = AssessmentStore()
-    _, assessment = seed(store)
-    with pytest.raises(AssessmentError, match="locked"):
-        store.begin_generation("assessment-a", "owner-1")
-    first = complete_report_service.mock_unlock("assessment-a", "owner-1", store)
-    second = complete_report_service.mock_unlock("assessment-a", "owner-1", store)
-    assert first.status == second.status == "unlocked"
-    assert second.assessment.model_dump() == assessment.model_dump()
-    seed(store, "invalid", needs_input=True)
-    for action in [store.unlock, store.begin_generation]:
-        with pytest.raises(AssessmentError, match="needs_input"):
-            action("invalid", "owner-1")
-
-
-def test_free_success_saves_the_exact_input_and_full_response(monkeypatch):
-    records = FakeRecords()
+def use_model(monkeypatch, respond):
     calls = []
     async def generate(**kwargs):
         calls.append(kwargs)
-        return example_evaluation(json.loads(kwargs["input_prompt"])).model_dump_json()
-    monkeypatch.setattr(assessment_service, "generate_text", generate)
-    body = example_body()
-    response = asyncio.run(assessment_service.run_free_assessment(
-        body, SimpleNamespace(free_assessment_max_output_tokens=4096, free_assessment_model="gpt-5", free_assessment_reasoning_effort="minimal"), owner_id="owner-1", records=records,
-    ))
-    [(owner, original_input, assessment, model, seconds)] = records.saved
-    assert owner == "owner-1" and model == "gpt-5"
-    assert original_input == json.loads(calls[0]["input_prompt"])
-    assert original_input["statement_text"] == body.statement_text
-    assert assessment.model_dump() == response.model_dump()
-    assert seconds is not None and seconds >= 0
-
-
-def test_failed_save_still_returns_the_result(monkeypatch):
-    records = FakeRecords(fail=True)
-    async def generate(**kwargs):
-        return example_evaluation(json.loads(kwargs["input_prompt"])).model_dump_json()
-    monkeypatch.setattr(assessment_service, "generate_text", generate)
-    response = asyncio.run(assessment_service.run_free_assessment(
-        example_body(), SimpleNamespace(free_assessment_max_output_tokens=4096, free_assessment_model="gpt-5", free_assessment_reasoning_effort="minimal"), owner_id="owner-1", records=records,
-    ))
-    assert response.schema_version == "free-diagnostic.v1" and records.saved == []
-
-
-def test_record_service_rolls_back_and_hides_database_errors(caplog):
-    class BrokenRepository:
-        def add(self, *args):
-            raise OperationalError("INSERT", {}, Exception("connection lost"))
-    class Session:
-        rolled_back = committed = False
-        def commit(self): self.committed = True
-        def rollback(self): self.rolled_back = True
-    session = Session()
-    _, assessment = seed(AssessmentStore(), assessment_id=str(uuid4()))
-    service = AssessmentRecordService(session, BrokenRepository())
-    assert service.save(str(uuid4()), {"statement_text": "private-statement-sentinel"}, assessment, "gpt-5", 1.5) is False
-    assert session.rolled_back and not session.committed
-    assert "private-statement-sentinel" not in caplog.text and "OperationalError" in caplog.text
-    assert service.save("not-a-uuid", {}, assessment, "gpt-5", 1.5) is False
-    assert service.load_owned("not-a-uuid", str(uuid4())) is None
-
-
-def test_complete_report_loads_the_saved_assessment_from_records():
-    store = AssessmentStore()
-    owner, assessment_id = "owner-1", str(uuid4())
-    payload, assessment = seed(AssessmentStore(), assessment_id=assessment_id)
-    records = FakeRecords({(assessment_id, owner): SavedAssessment(payload, assessment, 12.5)})
-    state = complete_report_service.complete_report_state(assessment_id, owner, store, records)
-    assert state.status == "locked" and state.assessment == assessment and state.free_generation_seconds == 12.5
-    assert complete_report_service.mock_unlock(assessment_id, owner, store, records).status == "unlocked"
-    assert records.loads == 1  # Later calls reuse the loaded workflow state.
-    for other_owner, other_id in [("owner-2", assessment_id), (owner, str(uuid4()))]:
-        with pytest.raises(AssessmentError, match="not_found"):
-            complete_report_service.complete_report_state(other_id, other_owner, store, records)
-
-
-def test_structured_generation_uses_selected_prompt_and_reuses_ready_report(monkeypatch):
-    store = AssessmentStore()
-    original, assessment = seed(store)
-    store.unlock("assessment-a", "owner-1")
-    calls = []
-    report = example_complete_report(store.get("assessment-a", "owner-1"), 12)
-    async def generate(**kwargs):
-        calls.append(kwargs)
-        return report.model_dump_json()
+        return await respond(len(calls), kwargs)
     monkeypatch.setattr(complete_report_service, "generate_text", generate)
-    first = asyncio.run(complete_report_service.generate_complete_report("assessment-a", "owner-1", store))
-    second = asyncio.run(complete_report_service.generate_complete_report("assessment-a", "owner-1", store))
-    assert first == second and first.report == report
-    assert first.generation_seconds >= 0 and len(calls) == 1
+    return calls
+
+
+async def start_and_wait(reports, assessment_id=ID, owner=OWNER):
+    """Start a run and wait for its background job, as a client polling GET would."""
+    tasks = set()
+    started = await complete_report_service.start_complete_report(assessment_id, owner, reports, reports.factory(), tasks)
+    await asyncio.gather(*tasks, return_exceptions=True)
+    return started, complete_report_service.complete_report_state(assessment_id, owner, reports)
+
+
+def test_state_unlock_and_ownership():
+    reports = MemoryReports()
+    source = reports.add(make_source(ID))
+    state = complete_report_service.complete_report_state(ID, OWNER, reports)
+    assert state.status == "locked" and state.report is None and state.free_generation_seconds == 12.5
+    assert state.assessment == source.assessment
+    for _ in range(2):  # Unlocking twice keeps one row.
+        assert complete_report_service.mock_unlock(ID, OWNER, reports).status == "unlocked"
+    assert len(reports.rows) == 1
+    for owner, assessment_id in [("owner-2", ID), (OWNER, "missing")]:
+        for action in [complete_report_service.complete_report_state, complete_report_service.mock_unlock]:
+            with pytest.raises(AssessmentError, match="not_found"):
+                action(assessment_id, owner, reports)
+
+
+def test_locked_and_needs_input_cannot_generate():
+    reports, _ = unlocked(needs_input=True)
+    with pytest.raises(AssessmentError, match="needs_input"):
+        complete_report_service.mock_unlock(ID, OWNER, reports)
+    with pytest.raises(AssessmentError, match="needs_input"):
+        asyncio.run(start_and_wait(reports))
+    locked = MemoryReports()
+    locked.add(make_source(ID))
+    with pytest.raises(AssessmentError, match="locked"):
+        asyncio.run(start_and_wait(locked))
+
+
+def test_start_returns_generating_then_saves_the_report_built_from_the_saved_assessment(monkeypatch):
+    reports, source = unlocked()
+    report = example_complete_report(source, 12)
+    async def respond(count, kwargs):
+        assert reports.rows[ID]["status"] == "generating"  # Polls see the running state.
+        return draft_of(report).model_dump_json()
+    calls = use_model(monkeypatch, respond)
+    started, finished = asyncio.run(start_and_wait(reports))
+    assert started.status == "generating" and started.report is None
+    assert finished.status == "ready" and finished.report == report and finished.generation_seconds >= 0
+    assert len(calls) == 1
     call = calls[0]
     assert call["model"] == "gpt-5" and call["reasoning_effort"] == "medium"
-    assert call["max_output_tokens"] == 32768
-    assert call["timeout_seconds"] == 270
-    assert call["output_model"] is CompleteReportContent
+    assert call["max_output_tokens"] == 32768 and call["timeout_seconds"] == 420
+    assert call["output_model"] is DraftCompleteReport
     prompt = call["system_prompt"]
     assert prompt == complete_report_service.complete_report_prompt()
     assert "Return one JSON object" in prompt and "every sentence" in prompt
     assert "four checkpoints" in prompt and "provisional baseline stays provisional" in prompt
     assert "no fixed UI quota" in prompt
     data = json.loads(call["input_prompt"])
-    assert data["original_input"] == original
-    assert data["first_assessment"] == assessment.report.model_dump()
-    assert data["first_diagnostic"] == assessment.diagnostic.model_dump()
+    assert data["original_input"] == source.original_input
+    assert data["first_assessment"] == source.assessment.report.model_dump()
+    assert data["first_diagnostic"] == source.assessment.diagnostic.model_dump()
     assert data["paragraphs"][0]["sentence_ids"] == ["s1", "s2", "s3"]
-    assert len(data["rubric_dimensions"]) == len(assessment.report.dimensions)
+    assert len(data["rubric_dimensions"]) == len(source.assessment.report.dimensions)
     assert all(len(item["checkpoints"]) == 4 for item in data["rubric_dimensions"])
-    state = complete_report_service.complete_report_state("assessment-a", "owner-1", store)
-    assert state.status == "ready" and state.report == report
-    assert state.assessment.model_dump() == assessment.model_dump()
+    # A ready report is returned as saved, without another model call.
+    again, _ = asyncio.run(start_and_wait(reports))
+    assert again == finished and len(calls) == 1
 
 
-def test_concurrent_generation_is_rejected_before_a_second_provider_call(monkeypatch):
-    store = AssessmentStore()
-    seed(store)
-    store.unlock("assessment-a", "owner-1")
-    calls = []
+def test_a_second_start_while_generating_is_rejected_before_any_model_call(monkeypatch):
+    reports, source = unlocked()
     async def scenario():
         started, release = asyncio.Event(), asyncio.Event()
-        async def generate(**kwargs):
-            calls.append(kwargs)
+        async def respond(count, kwargs):
             started.set()
             await release.wait()
-            return example_complete_report(store.get("assessment-a", "owner-1")).model_dump_json()
-        monkeypatch.setattr(complete_report_service, "generate_text", generate)
-        task = asyncio.create_task(complete_report_service.generate_complete_report("assessment-a", "owner-1", store))
+            return draft_of(example_complete_report(source)).model_dump_json()
+        calls = use_model(monkeypatch, respond)
+        tasks = set()
+        await complete_report_service.start_complete_report(ID, OWNER, reports, reports.factory(), tasks)
         await started.wait()
-        assert complete_report_service.complete_report_state("assessment-a", "owner-1", store).status == "generating"
         with pytest.raises(AssessmentError, match="generating"):
-            await complete_report_service.generate_complete_report("assessment-a", "owner-1", store)
+            await complete_report_service.start_complete_report(ID, OWNER, reports, reports.factory(), set())
         release.set()
-        await task
-    asyncio.run(scenario())
-    assert len(calls) == 1
+        await asyncio.gather(*tasks)
+        return calls
+    assert len(asyncio.run(scenario())) == 1
+
+
+def test_losing_the_atomic_claim_reports_generating(monkeypatch):
+    reports, _ = unlocked()
+    monkeypatch.setattr(reports, "claim", lambda *args: None)  # Another process won the UPDATE.
+    with pytest.raises(AssessmentError, match="generating"):
+        asyncio.run(start_and_wait(reports))
 
 
 @pytest.mark.parametrize("failure", [LLMError("private-provider-sentinel"), RuntimeError("private-provider-sentinel")])
-def test_failure_keeps_mock_unlock_and_allows_retry(monkeypatch, caplog, failure):
-    store = AssessmentStore()
-    seed(store)
-    store.unlock("assessment-a", "owner-1")
-    async def fail(**kwargs):
+def test_failure_keeps_the_unlock_and_allows_retry(monkeypatch, caplog, failure):
+    reports, source = unlocked()
+    async def fail(count, kwargs):
         raise failure
-    monkeypatch.setattr(complete_report_service, "generate_text", fail)
-    with pytest.raises(LLMError) as caught:
-        asyncio.run(complete_report_service.generate_complete_report("assessment-a", "owner-1", store))
-    state = complete_report_service.complete_report_state("assessment-a", "owner-1", store)
+    use_model(monkeypatch, fail)
+    _, state = asyncio.run(start_and_wait(reports))
     assert state.status == "failed" and state.report is None and "mock unlock is kept" in state.error
-    assert "private-provider-sentinel" not in str(caught.value) + caplog.text + state.error
-    async def succeed(**kwargs):
-        return example_complete_report(store.get("assessment-a", "owner-1")).model_dump_json()
-    monkeypatch.setattr(complete_report_service, "generate_text", succeed)
-    assert asyncio.run(complete_report_service.generate_complete_report("assessment-a", "owner-1", store)).report.report_status == "ready"
+    assert "private-provider-sentinel" not in caplog.text + state.error
+    async def succeed(count, kwargs):
+        return draft_of(example_complete_report(source)).model_dump_json()
+    use_model(monkeypatch, succeed)
+    _, state = asyncio.run(start_and_wait(reports))
+    assert state.status == "ready" and state.report.report_status == "ready"
 
 
-def test_cancellation_clears_generating_state(monkeypatch):
-    store = AssessmentStore()
-    seed(store)
-    store.unlock("assessment-a", "owner-1")
+def test_shutdown_marks_the_run_failed_and_it_can_restart(monkeypatch):
+    reports, _ = unlocked()
     async def scenario():
         started = asyncio.Event()
-        async def generate(**kwargs):
+        async def never(count, kwargs):
             started.set()
             await asyncio.Future()
-        monkeypatch.setattr(complete_report_service, "generate_text", generate)
-        task = asyncio.create_task(complete_report_service.generate_complete_report("assessment-a", "owner-1", store))
+        use_model(monkeypatch, never)
+        tasks = set()
+        await complete_report_service.start_complete_report(ID, OWNER, reports, reports.factory(), tasks)
         await started.wait()
-        task.cancel()
-        with pytest.raises(asyncio.CancelledError):
-            await task
+        for task in list(tasks):  # What the app lifespan does on shutdown.
+            task.cancel()
+        await asyncio.gather(*tasks, return_exceptions=True)
+        assert not tasks
     asyncio.run(scenario())
-    assert store.get("assessment-a", "owner-1").status == "failed"
-    assert store.begin_generation("assessment-a", "owner-1").status == "generating"
+    assert reports.rows[ID]["status"] == "failed" and "interrupted" in reports.rows[ID]["error"]
+    assert reports.claim(ID, OWNER) is not None
 
 
-def test_wall_timeout_and_empty_output_leave_retryable_state(monkeypatch):
-    store = AssessmentStore()
-    seed(store)
-    store.unlock("assessment-a", "owner-1")
-    monkeypatch.setattr(complete_report_service, "COMPLETE_REPORT_TIMEOUT_SECONDS", 0.001)
-    async def slow(**kwargs):
+def test_wall_timeout_leaves_a_retryable_failure(monkeypatch):
+    reports, _ = unlocked()
+    async def slow(count, kwargs):
         await asyncio.sleep(1)
-        return "Too late"
-    monkeypatch.setattr(complete_report_service, "generate_text", slow)
-    with pytest.raises(LLMError, match="timed out"):
-        asyncio.run(complete_report_service.generate_complete_report("assessment-a", "owner-1", store))
-    assert store.get("assessment-a", "owner-1").status == "failed"
-    async def empty(**kwargs):
-        return "  "
-    monkeypatch.setattr(complete_report_service, "generate_text", empty)
-    with pytest.raises(LLMError):
-        asyncio.run(complete_report_service.generate_complete_report("assessment-a", "owner-1", store))
-    assert store.get("assessment-a", "owner-1").status == "failed"
+    use_model(monkeypatch, slow)
+    monkeypatch.setattr(complete_report_service, "COMPLETE_REPORT_TIMEOUT_SECONDS", 0.02)
+    _, state = asyncio.run(start_and_wait(reports))
+    assert state.status == "failed" and "timed out" in state.error
 
 
-def app_for(store, owner):
-    app = FastAPI()
-    app.state.assessment_store = store
-    app.state.settings = object()
-    register_exception_handlers(app)
-    app.include_router(router)
-    app.dependency_overrides[require_session] = lambda: SimpleNamespace(user_id=owner[0])
-    app.dependency_overrides[get_assessment_records] = FakeRecords
-    return app
+def test_a_run_lost_to_a_restart_is_marked_failed_when_read_and_cannot_overwrite_a_newer_run():
+    reports, source = unlocked()
+    old_start = reports.claim(ID, OWNER) - timedelta(seconds=complete_report_service.COMPLETE_REPORT_STALE_SECONDS + 1)
+    reports.rows[ID]["started_at"] = old_start
+    state = complete_report_service.complete_report_state(ID, OWNER, reports)
+    assert state.status == "failed" and "interrupted" in state.error
+    assert reports.claim(ID, OWNER) is not None
+    # The old run finishing late is ignored; only the current run may save.
+    assert reports.finish(ID, old_start, example_complete_report(source), 1.0) is False
+    assert reports.rows[ID]["status"] == "generating"
 
 
-def test_http_state_unlock_json_headers_and_owner_enforcement(monkeypatch):
-    store, owner = AssessmentStore(), ["owner-1"]
-    _, assessment = seed(store)
-    calls = []
-    async def generate(**kwargs):
-        calls.append(kwargs)
-        return example_complete_report(store.get("assessment-a", "owner-1")).model_dump_json()
-    monkeypatch.setattr(complete_report_service, "generate_text", generate)
-    with TestClient(app_for(store, owner)) as client:
-        response = client.get("/api/assessments/assessment-a/complete")
-        assert response.status_code == 200 and response.json()["status"] == "locked"
-        assert response.headers["cache-control"] == "no-store"
-        assert client.post("/api/assessments/assessment-a/complete").status_code == 403
-        for _ in range(2):
-            response = client.post("/api/assessments/assessment-a/mock-unlock")
-            assert response.status_code == 200 and response.json()["status"] == "unlocked"
-        response = client.post("/api/assessments/assessment-a/complete")
-        assert response.status_code == 200 and response.json()["report"]["report_version"] == "complete-report.v1"
-        assert response.headers["content-type"].startswith("application/json")
-        assert response.headers["cache-control"] == "no-store"
-        assert float(response.headers["x-generation-seconds"]) >= 0
-        state = client.get("/api/assessments/assessment-a/complete").json()
-        assert state["status"] == "ready" and state["assessment"] == assessment.model_dump()
-        assert client.post("/api/assessments/assessment-a/complete").json() == response.json()
-        assert len(calls) == 1
-        owner[0] = "owner-2"
-        for method, suffix in [(client.get, "complete"), (client.post, "mock-unlock"), (client.post, "complete")]:
-            denied = method(f"/api/assessments/assessment-a/{suffix}")
-            missing = method(f"/api/assessments/missing/{suffix}")
-            assert denied.status_code == missing.status_code == 404
-            assert denied.json() == missing.json()
-
-
-def test_http_needs_input_failure_and_authentication(monkeypatch):
-    store, owner = AssessmentStore(), ["owner-1"]
-    seed(store, needs_input=True)
-    app = app_for(store, owner)
-    with TestClient(app) as client:
-        assert client.post("/api/assessments/assessment-a/mock-unlock").status_code == 422
-        assert client.post("/api/assessments/assessment-a/complete").status_code == 422
-        seed(store, "valid")
-        client.post("/api/assessments/valid/mock-unlock")
-        async def fail(**kwargs):
-            raise LLMError("private-provider-detail")
-        monkeypatch.setattr(complete_report_service, "generate_text", fail)
-        response = client.post("/api/assessments/valid/complete")
-        assert response.status_code == 502 and "private-provider-detail" not in response.text
-        assert client.get("/api/assessments/valid/complete").json()["status"] == "failed"
-        def unauthorized():
-            raise AuthenticationError()
-        app.dependency_overrides[require_session] = unauthorized
-        assert client.get("/api/assessments/valid/complete").status_code == 401
-
-
-def test_http_generation_conflict_is_409(monkeypatch):
-    store, owner = AssessmentStore(), ["owner-1"]
-    seed(store)
-    store.unlock("assessment-a", "owner-1")
-    store.begin_generation("assessment-a", "owner-1")
-    async def unexpected_call(**kwargs):
-        pytest.fail("A duplicate request must not call the provider")
-    monkeypatch.setattr(complete_report_service, "generate_text", unexpected_call)
-    with TestClient(app_for(store, owner)) as client:
-        response = client.post("/api/assessments/assessment-a/complete")
-        assert response.status_code == 409 and response.headers["cache-control"] == "no-store"
-        assert client.get("/api/assessments/assessment-a/complete").json()["status"] == "generating"
-
-
-def test_all_sections_dynamic_arrays_and_host_coverage():
-    store = AssessmentStore()
-    seed(store)
-    entry = store.get("assessment-a", "owner-1")
-    for count in [0, 1, 10, 25]:
-        report = example_complete_report(entry, count)
-        assert len(report.evidence_gaps) == count
-        assert report.coverage.expected_sentences == report.coverage.reviewed_sentences == 5
-        assert report.coverage.expected_paragraphs == report.coverage.reviewed_paragraphs == 2
-        assert report.coverage.expected_criteria == report.coverage.reviewed_criteria == 9
-        assert all(len(item.checkpoints) == 4 for item in report.criterion_details)
-    assert {"executive_summary", "criterion_details", "prompt_coverage", "sentence_reviews", "paragraph_reviews",
-            "evidence_gaps", "program_fit", "voice_and_originality", "unsupported_claims", "cut_or_expand",
-            "revision_plan"} <= CompleteReportContent.model_fields.keys()
-    schema = CompleteReportContent.model_json_schema()
-    assert "maxItems" not in json.dumps(schema)
-
-
-def test_provider_schema_rejects_empty_adjustment_explanations_before_guard():
-    store = AssessmentStore()
-    seed(store)
-    payload = example_complete_report(store.get("assessment-a", "owner-1")).model_dump()
-    for blank in ["", " \n\t"]:
-        payload["criterion_details"][0]["recorded_adjustment_explanation"] = blank
-        with pytest.raises(ValidationError, match="string_pattern_mismatch"):
-            CompleteReportContent.model_validate(payload)
-    provider_schema = CompleteReportContent.model_json_schema()
-    field = provider_schema["$defs"]["CriterionDetail"]["properties"]["recorded_adjustment_explanation"]
-    assert field["pattern"] == r"\S"
-
-
-@pytest.mark.parametrize("change,code", [
-    (lambda r: setattr(r.executive_summary, "overall_score", 1), "baseline_mismatch"),
-    (lambda r: setattr(r.criterion_details[0].baseline, "score", 1), "baseline_mismatch"),
-    (lambda r: setattr(r.criterion_details[0].checkpoints[0], "rating", 0), "baseline_mismatch"),
-    (lambda r: r.criterion_details.pop(), "missing_source_rows"),
-    (lambda r: r.sentence_reviews.pop(), "missing_source_rows"),
-    (lambda r: r.paragraph_reviews.pop(), "missing_source_rows"),
-    (lambda r: r.sentence_reviews.append(r.sentence_reviews[0]), "duplicate_source_id"),
-    (lambda r: setattr(r.sentence_reviews[0], "text", "private-source-sentinel"), "source_mismatch"),
-    (lambda r: setattr(r.paragraph_reviews[0], "text", "private-source-sentinel"), "source_mismatch"),
-    (lambda r: setattr(r.evidence_gaps[0].evidence[0], "quote", "private-source-sentinel"), "quote_mismatch"),
-    (lambda r: setattr(r.evidence_gaps[0], "criterion_ids", ["private-source-sentinel"]), "invalid_reference"),
-    (lambda r: setattr(r.prompt_coverage.requirements[0], "status", "missing"), "baseline_mismatch"),
-    (lambda r: setattr(r.prompt_coverage.limit_compliance, "max_words", 123), "baseline_mismatch"),
-    (lambda r: setattr(r.revision_plan[0], "depends_on", ["step:1"]), "dependency_order"),
-    (lambda r: setattr(r.revision_plan[0], "related_finding_ids", ["private-source-sentinel"]), "invalid_reference"),
-    (lambda r: r.evidence_gaps.append(r.evidence_gaps[0]), "duplicate_identifier"),
-    (lambda r: setattr(r.sentence_reviews[0], "action", "preserve"), "disposition_action_mismatch"),
-    (lambda r: setattr(r.criterion_details[0].checkpoints[0], "explanation", "  "), "blank_narrative"),
-])
-def test_guard_rejects_changed_baselines_missing_rows_bad_refs_and_quotes(change, code):
-    store = AssessmentStore()
-    seed(store)
-    entry = store.get("assessment-a", "owner-1")
-    report = example_complete_report(entry)
-    change(report)
-    with pytest.raises(ValueError, match=code) as caught:
-        validate_complete_report(report, entry)
-    assert "private-source-sentinel" not in str(caught.value)
-
-
-def test_incomplete_and_review_required_are_preserved_honestly():
-    store = AssessmentStore()
-    seed(store)
-    entry = store.get("assessment-a", "owner-1")
-    report = example_complete_report(entry)
-    report.report_status = "incomplete"
-    report.input_issues = ["The final sentence has not been reviewed."]
-    report.sentence_reviews.pop()
-    validated = validate_complete_report(report, entry)
-    assert validated.report_status == "incomplete"
-    assert validated.coverage.reviewed_sentences == 4
-    assert validated.coverage.unreviewed_sentence_ids == ["s5"]
-    report = example_complete_report(entry)
-    report.report_status = "review_required"
-    from depth.schemas.complete_report_content import Discrepancy
-    report.discrepancies = [Discrepancy(finding_id="discrepancy:1", baseline_field="/main_concern",
-                                      issue="The baseline finding needs human review.", evidence=[],
-                                      resolution_needed="Check the cited baseline concern.")]
-    assert validate_complete_report(report, entry).report_status == "review_required"
-    report.report_status = "ready"
-    with pytest.raises(ValueError, match="ready_has_discrepancies"):
-        validate_complete_report(report, entry)
-
-
-def test_structured_validation_repairs_once_without_logging_private_keys(monkeypatch, caplog):
-    store = AssessmentStore()
-    seed(store)
-    store.unlock("assessment-a", "owner-1")
-    report = example_complete_report(store.get("assessment-a", "owner-1"))
-    invalid = report.model_dump()
+def test_validation_repairs_once_without_logging_private_keys(monkeypatch, caplog):
+    reports, source = unlocked()
+    report = example_complete_report(source)
+    invalid = draft_of(report).model_dump()
     invalid["sentence_reviews"][0]["private-key-sentinel"] = "private-value-sentinel"
-    calls = []
-    async def generate(**kwargs):
-        calls.append(kwargs)
-        return json.dumps(invalid) if len(calls) == 1 else report.model_dump_json()
-    monkeypatch.setattr(complete_report_service, "generate_text", generate)
-    result = asyncio.run(complete_report_service.generate_complete_report("assessment-a", "owner-1", store))
-    assert result.report == report and len(calls) == 2
+    async def respond(count, kwargs):
+        return json.dumps(invalid) if count == 1 else draft_of(report).model_dump_json()
+    calls = use_model(monkeypatch, respond)
+    _, state = asyncio.run(start_and_wait(reports))
+    assert state.report == report and len(calls) == 2
     assert "unexpected_field" in calls[1]["system_prompt"]
     assert "private-key-sentinel" not in calls[1]["system_prompt"] + caplog.text
     assert "private-value-sentinel" not in calls[1]["system_prompt"] + caplog.text
 
 
-def test_generation_accepts_incomplete_content_without_claiming_ready_analysis(monkeypatch):
-    store = AssessmentStore()
-    seed(store)
-    store.unlock("assessment-a", "owner-1")
-    report = example_complete_report(store.get("assessment-a", "owner-1"))
-    report.report_status = "incomplete"
-    report.input_issues = ["The final sentence review is unfinished."]
-    report.sentence_reviews.pop()
-    async def generate(**kwargs):
-        return report.model_dump_json()
-    monkeypatch.setattr(complete_report_service, "generate_text", generate)
-    state = asyncio.run(complete_report_service.generate_complete_report("assessment-a", "owner-1", store))
-    assert state.status == "ready" and state.report.report_status == "incomplete"
-    assert state.report.coverage.unreviewed_sentence_ids == ["s5"]
+def test_a_broken_section_is_repaired_alone_without_regenerating_the_report(monkeypatch, caplog):
+    reports, source = unlocked()
+    expected = example_complete_report(source)
+    broken = draft_of(expected)
+    broken.sentence_reviews[0].action = "preserve"  # Refine with preserve breaks the disposition rule.
+    async def respond(count, kwargs):
+        if count == 1:
+            return broken.model_dump_json()
+        return json.dumps({"sentence_reviews": draft_of(expected).model_dump()["sentence_reviews"]})
+    calls = use_model(monkeypatch, respond)
+    _, state = asyncio.run(start_and_wait(reports))
+    assert state.status == "ready" and state.report == expected and len(calls) == 2
+    repair = calls[1]
+    assert repair["output_model"].__name__ == "SectionRepair_sentence_reviews"
+    assert list(repair["output_model"].model_fields) == ["sentence_reviews"]
+    assert repair["max_output_tokens"] == 16384 and repair["reasoning_effort"] == "medium"
+    data = json.loads(repair["input_prompt"])
+    assert data["repair"] == {"section": "sentence_reviews", "problem": "sentence_reviews.0.action:disposition_action_mismatch"}
+    assert data["current_report"]["sentence_reviews"][0]["action"] == "preserve"
+    assert "Return only the sentence_reviews section" in repair["system_prompt"]
+    assert "section repair" in caplog.text and "section_repairs=1" in caplog.text
 
 
-def test_criterion_review_requires_its_matching_baseline_discrepancy():
-    from depth.schemas.complete_report_content import Discrepancy
-    store = AssessmentStore()
-    seed(store)
-    entry = store.get("assessment-a", "owner-1")
-    report = example_complete_report(entry)
-    report.report_status = "review_required"
-    report.criterion_details[0].explanation_status = "review_required"
-    report.discrepancies = [Discrepancy(finding_id="discrepancy:1", baseline_field="/main_concern",
-                                      issue="This concern needs review.", evidence=[], resolution_needed="Review the actual criterion.")]
-    with pytest.raises(ValueError, match="unmatched_discrepancy"):
-        validate_complete_report(report, entry)
-    report.discrepancies[0].baseline_field = "/dimensions/0/checkpoints/0"
-    assert validate_complete_report(report, entry).report_status == "review_required"
+def test_an_unknown_id_is_repaired_in_its_section(monkeypatch):
+    reports, source = unlocked()
+    expected = example_complete_report(source)
+    broken = draft_of(expected)
+    broken.paragraph_reviews[0].paragraph_id = "p9"
+    async def respond(count, kwargs):
+        if count == 1:
+            return broken.model_dump_json()
+        return json.dumps({"paragraph_reviews": draft_of(expected).model_dump()["paragraph_reviews"]})
+    calls = use_model(monkeypatch, respond)
+    _, state = asyncio.run(start_and_wait(reports))
+    assert state.status == "ready" and state.report == expected and len(calls) == 2
+    assert calls[1]["output_model"].__name__ == "SectionRepair_paragraph_reviews"
 
 
-def test_ready_report_requires_an_actionable_revision_step():
-    store = AssessmentStore()
-    seed(store)
-    entry = store.get("assessment-a", "owner-1")
-    report = example_complete_report(entry)
-    report.revision_plan = []
-    with pytest.raises(ValueError, match="revision_plan:missing_required_steps"):
-        validate_complete_report(report, entry)
+def test_a_problem_across_sections_regenerates_the_whole_report(monkeypatch, caplog):
+    reports, source = unlocked()
+    expected = example_complete_report(source, 2)
+    broken = draft_of(expected)
+    broken.evidence_gaps[1].finding_id = broken.evidence_gaps[0].finding_id  # A duplicate ID spans the report.
+    async def respond(count, kwargs):
+        return (broken if count == 1 else draft_of(expected)).model_dump_json()
+    calls = use_model(monkeypatch, respond)
+    _, state = asyncio.run(start_and_wait(reports))
+    assert state.status == "ready" and state.report == expected and len(calls) == 2
+    assert calls[1]["output_model"] is DraftCompleteReport
+    assert "finding_ids:duplicate_identifier" in calls[1]["system_prompt"]
+    assert "section=whole_report" in caplog.text
 
 
-@pytest.mark.parametrize("field", ["criterion_details", "sentence_reviews", "paragraph_reviews", "prompt_requirements"])
-def test_source_backed_findings_require_canonical_link_ids(field):
-    store = AssessmentStore()
-    seed(store)
-    entry = store.get("assessment-a", "owner-1")
-    report = example_complete_report(entry)
-    rows = report.prompt_coverage.requirements if field == "prompt_requirements" else getattr(report, field)
-    rows[0].finding_id = "custom:private-identifier-sentinel"
-    with pytest.raises(ValueError, match="canonical_finding_id") as caught:
-        validate_complete_report(report, entry)
-    assert "private-identifier-sentinel" not in str(caught.value)
+def test_section_repairs_are_bounded_then_the_whole_report_is_regenerated(monkeypatch):
+    reports, source = unlocked()
+    expected = example_complete_report(source)
+    broken = draft_of(expected)
+    broken.sentence_reviews[0].action = "preserve"
+    still_broken = {"sentence_reviews": broken.model_dump()["sentence_reviews"]}
+    async def respond(count, kwargs):
+        if count == 1:
+            return broken.model_dump_json()
+        if count in (2, 3):
+            return json.dumps(still_broken)  # Two section repairs that do not fix it.
+        return draft_of(expected).model_dump_json()
+    calls = use_model(monkeypatch, respond)
+    _, state = asyncio.run(start_and_wait(reports))
+    assert state.status == "ready" and len(calls) == 4
+    assert [call["output_model"].__name__ for call in calls] == [
+        "DraftCompleteReport", "SectionRepair_sentence_reviews", "SectionRepair_sentence_reviews", "DraftCompleteReport"]
 
 
-@pytest.mark.parametrize("field,bad_id", [("evidence_gaps", "custom:1"), ("evidence_gaps", "gap:"),
-                                        ("cut_or_expand", "claim:1"), ("revision_plan", "step: ")])
-def test_diagnostic_findings_require_their_group_prefix_and_suffix(field, bad_id):
-    store = AssessmentStore()
-    seed(store)
-    entry = store.get("assessment-a", "owner-1")
-    report = example_complete_report(entry)
-    getattr(report, field)[0].finding_id = bad_id
-    with pytest.raises(ValueError, match="finding_id_prefix"):
-        validate_complete_report(report, entry)
+def test_lifecycle_is_logged_without_content(monkeypatch, caplog):
+    reports, source = unlocked()
+    async def respond(count, kwargs):
+        return draft_of(example_complete_report(source)).model_dump_json()
+    use_model(monkeypatch, respond)
+    with caplog.at_level("INFO", logger="depth"):
+        asyncio.run(start_and_wait(reports))
+    for line in ["Complete report generation started assessment_id=assessment-a",
+                 "Complete report checked assessment_id=assessment-a report_status=ready model_calls=1 section_repairs=0",
+                 "Complete report saved assessment_id=assessment-a status=ready report_status=ready"]:
+        assert line in caplog.text, line
+    assert source.original_input["statement_text"][:40] not in caplog.text
 
 
-def test_incomplete_can_retry_atomically_and_complete_results_stay_cached(monkeypatch):
-    store = AssessmentStore()
-    seed(store)
-    store.unlock("assessment-a", "owner-1")
-    ready = example_complete_report(store.get("assessment-a", "owner-1"))
+def test_incomplete_report_is_saved_honestly_and_can_be_retried(monkeypatch):
+    reports, source = unlocked()
+    ready = example_complete_report(source)
     partial = ready.model_copy(deep=True)
     partial.report_status = "incomplete"
     partial.input_issues = ["The final sentence review is unfinished."]
     partial.sentence_reviews.pop()
-    calls = []
-    async def generate(**kwargs):
-        calls.append(kwargs)
-        if len(calls) == 2:
-            assert store.get("assessment-a", "owner-1").status == "generating"
-            with pytest.raises(AssessmentError, match="generating"):
-                store.begin_generation("assessment-a", "owner-1")
-        return (partial if len(calls) == 1 else ready).model_dump_json()
-    monkeypatch.setattr(complete_report_service, "generate_text", generate)
-    first = asyncio.run(complete_report_service.generate_complete_report("assessment-a", "owner-1", store))
+    async def respond(count, kwargs):
+        return draft_of(partial if count == 1 else ready).model_dump_json()
+    calls = use_model(monkeypatch, respond)
+    _, first = asyncio.run(start_and_wait(reports))
     assert first.status == "ready" and first.report.report_status == "incomplete"
-    second = asyncio.run(complete_report_service.generate_complete_report("assessment-a", "owner-1", store))
-    third = asyncio.run(complete_report_service.generate_complete_report("assessment-a", "owner-1", store))
+    assert first.report.coverage.unreviewed_sentence_ids == ["s5"]
+    _, second = asyncio.run(start_and_wait(reports))
+    _, third = asyncio.run(start_and_wait(reports))
     assert second == third and second.report.report_status == "ready" and len(calls) == 2
 
 
-def test_review_required_report_is_cached_without_automatic_regeneration(monkeypatch):
-    from depth.schemas.complete_report_content import Discrepancy
-    store = AssessmentStore()
-    seed(store)
-    store.unlock("assessment-a", "owner-1")
-    report = example_complete_report(store.get("assessment-a", "owner-1"))
+def test_review_required_report_is_kept_without_automatic_regeneration(monkeypatch):
+    reports, source = unlocked()
+    report = example_complete_report(source)
     report.report_status = "review_required"
     report.discrepancies = [Discrepancy(finding_id="discrepancy:1", baseline_field="/main_concern",
                                       issue="The saved concern needs review.", evidence=[], resolution_needed="Review the concern.")]
-    calls = []
-    async def generate(**kwargs):
-        calls.append(kwargs)
-        return report.model_dump_json()
-    monkeypatch.setattr(complete_report_service, "generate_text", generate)
-    first = asyncio.run(complete_report_service.generate_complete_report("assessment-a", "owner-1", store))
-    second = asyncio.run(complete_report_service.generate_complete_report("assessment-a", "owner-1", store))
+    async def respond(count, kwargs):
+        return draft_of(report).model_dump_json()
+    calls = use_model(monkeypatch, respond)
+    _, first = asyncio.run(start_and_wait(reports))
+    _, second = asyncio.run(start_and_wait(reports))
     assert first == second and second.report.report_status == "review_required" and len(calls) == 1
 
 
-def test_cut_cannot_contradict_keep_unless_paragraph_reconstruction_is_documented():
-    store = AssessmentStore()
-    seed(store)
-    entry = store.get("assessment-a", "owner-1")
-    report = example_complete_report(entry)
-    kept_sentence = report.sentence_reviews[1]
-    assert kept_sentence.disposition == "Keep" and kept_sentence.action == "preserve"
-    edit = report.cut_or_expand[0]
-    edit.operation = "cut"
-    edit.sentence_ids = [kept_sentence.sentence_id]
-    with pytest.raises(ValueError, match="cut_or_expand.0.sentence_ids:keep_cut_conflict"):
-        validate_complete_report(report, entry)
-    paragraph = next(row for row in report.paragraph_reviews if row.number == kept_sentence.paragraph)
-    paragraph.disposition, paragraph.action = "Rebuild", "rebuild"
-    paragraph.explanation = "This paragraph requires reconstruction; preserve its useful source material in the new argument."
-    paragraph.revision_direction = "Reconstruct the paragraph's reasoning and omit material that no longer serves its role."
-    assert validate_complete_report(report, entry).report_status == "ready"
+def test_record_services_roll_back_and_hide_database_errors(caplog):
+    class Broken:
+        def __getattr__(self, name):
+            def fail(*args, **kwargs):
+                raise OperationalError("SQL", {}, Exception("connection lost"))
+            return fail
+    class Session:
+        rolled_back = committed = False
+        def commit(self): self.committed = True
+        def rollback(self): self.rolled_back = True
+    source = make_source(str(uuid4()))
+    session = Session()
+    free = AssessmentRecordService(session, Broken())
+    with pytest.raises(OperationalError):  # No row means no generation, so this reaches the caller (503).
+        free.create_pending(str(uuid4()), str(uuid4()), {"statement_text": "private-statement-sentinel"}, "gpt-5")
+    assert session.rolled_back and not session.committed
+    assert free.mark_ready(str(uuid4()), source.assessment, 1.5) is False
+    with pytest.raises(ValueError):
+        free.create_pending("not-a-uuid", str(uuid4()), {}, "gpt-5")
+    assert free.load_owned("not-a-uuid", str(uuid4())) is None
+    assert free.free_state("not-a-uuid", str(uuid4()), 280) is None
+
+    session = Session()
+    reports = CompleteReportRecordService(session, free, Broken())
+    with pytest.raises(OperationalError):
+        reports.claim(str(uuid4()), str(uuid4()))
+    assert session.rolled_back and not session.committed
+    assert reports.finish(str(uuid4()), utcnow(), example_complete_report(source), 1.0) is False
+    assert reports.fail("not-a-uuid", utcnow(), "x", None) is False
+    assert "private-statement-sentinel" not in caplog.text and "OperationalError" in caplog.text
+
+
+# ---------------------------------------------------------------- HTTP
+
+
+def app_for(reports, owner):
+    app = FastAPI()
+    app.state.settings = object()
+    app.state.background_tasks = set()
+    register_exception_handlers(app)
+    app.include_router(router)
+    app.dependency_overrides[require_session] = lambda: SimpleNamespace(user_id=owner[0])
+    app.dependency_overrides[get_complete_report_records] = lambda: reports
+    app.dependency_overrides[get_complete_report_record_factory] = reports.factory
+    return app
+
+
+def wait_for_report(client, assessment_id):
+    for _ in range(200):
+        state = client.get(f"/api/assessments/{assessment_id}/complete").json()
+        if state["status"] != "generating":
+            return state
+        time.sleep(0.01)
+    pytest.fail("Background generation did not finish")
+
+
+def test_http_flow_headers_polling_and_owner_enforcement(monkeypatch):
+    reports, owner = MemoryReports(), [OWNER]
+    source = reports.add(make_source(ID))
+    async def respond(count, kwargs):
+        return draft_of(example_complete_report(source)).model_dump_json()
+    calls = use_model(monkeypatch, respond)
+    with TestClient(app_for(reports, owner)) as client:
+        response = client.get(f"/api/assessments/{ID}/complete")
+        assert response.status_code == 200 and response.json()["status"] == "locked"
+        assert response.headers["cache-control"] == "no-store"
+        assert client.post(f"/api/assessments/{ID}/complete").status_code == 403
+        for _ in range(2):
+            response = client.post(f"/api/assessments/{ID}/mock-unlock")
+            assert response.status_code == 200 and response.json()["status"] == "unlocked"
+        started = client.post(f"/api/assessments/{ID}/complete")
+        assert started.status_code == 202 and started.json()["status"] == "generating" and started.json()["report"] is None
+        assert started.headers["content-type"].startswith("application/json")
+        assert started.headers["cache-control"] == "no-store" and "x-generation-seconds" not in started.headers
+        state = wait_for_report(client, ID)
+        assert state["status"] == "ready" and state["report"]["report_version"] == "complete-report.v1"
+        assert state["assessment"] == source.assessment.model_dump()
+        again = client.post(f"/api/assessments/{ID}/complete")
+        assert again.status_code == 200 and again.json() == state
+        assert float(again.headers["x-generation-seconds"]) >= 0
+        assert len(calls) == 1
+        owner[0] = "owner-2"
+        for method, suffix in [(client.get, "complete"), (client.post, "mock-unlock"), (client.post, "complete")]:
+            denied = method(f"/api/assessments/{ID}/{suffix}")
+            missing = method(f"/api/assessments/missing/{suffix}")
+            assert denied.status_code == missing.status_code == 404
+            assert denied.json() == missing.json()
+
+
+def test_http_needs_input_failure_conflict_and_authentication(monkeypatch):
+    reports, owner = MemoryReports(), [OWNER]
+    reports.add(make_source("needs-input", needs_input=True))
+    reports.add(make_source(ID))
+    app = app_for(reports, owner)
+    async def fail(count, kwargs):
+        raise LLMError("private-provider-detail")
+    use_model(monkeypatch, fail)
+    with TestClient(app) as client:
+        assert client.post("/api/assessments/needs-input/mock-unlock").status_code == 422
+        assert client.post("/api/assessments/needs-input/complete").status_code == 422
+        client.post(f"/api/assessments/{ID}/mock-unlock")
+        assert client.post(f"/api/assessments/{ID}/complete").status_code == 202
+        state = wait_for_report(client, ID)
+        assert state["status"] == "failed" and "private-provider-detail" not in json.dumps(state)
+        reports.claim(ID, OWNER)  # A run is already in progress.
+        response = client.post(f"/api/assessments/{ID}/complete")
+        assert response.status_code == 409 and response.headers["cache-control"] == "no-store"
+        def unauthorized():
+            raise AuthenticationError()
+        app.dependency_overrides[require_session] = unauthorized
+        assert client.get(f"/api/assessments/{ID}/complete").status_code == 401

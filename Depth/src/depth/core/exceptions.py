@@ -24,7 +24,7 @@ class LLMError(Exception):
 
 
 class AssessmentError(Exception):
-    """A temporary assessment cannot perform the requested state transition."""
+    """An assessment or its complete report cannot perform the requested state transition."""
 
     def __init__(self, code: str):
         self.code = code

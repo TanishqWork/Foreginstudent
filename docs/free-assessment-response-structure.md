@@ -6,7 +6,7 @@ The implementation uses one versioned response and one matching React page rende
 
 ## Public API envelope
 
-`POST /api/assessments/free` returns `application/json` with `Cache-Control: no-store`. Authentication is unchanged. The server supplies the version and context snapshot:
+`POST /api/assessments/free` starts the review and returns `202` with `{assessment_id, status: "generating", assessment: null, generation_seconds: null, error: null}`. The page polls `GET /api/assessments/{assessment_id}/free` every 3 seconds; when `status` is `ready`, `assessment` holds the envelope below and `generation_seconds` the measured duration. A `failed` status carries a student-safe `error`. Both return `application/json` with `Cache-Control: no-store`. Authentication is unchanged. The server supplies the version and context snapshot:
 
 ```text
 {

@@ -6,6 +6,8 @@ import { CompleteReportError, generateCompleteReport, getCompleteReport, mockUnl
 import { clearAssessmentId, readAssessmentId, rememberAssessmentId } from './session'
 import type { CompleteReportState } from './types'
 import CompleteReport from './CompleteReport'
+import JourneyLoader from './story-loader/JourneyLoader'
+import { preloadJourneyLoader } from './story-loader/preload'
 import { formatCompleteReport } from './format'
 import styles from './CompleteReportPage.module.css'
 
@@ -105,6 +107,10 @@ function CompleteReportFlow({ assessmentId, userId, returnPath }: { assessmentId
     setCheckoutOpen(true)
   }, [checkoutRequested, reportState])
   useEffect(() => () => operationRef.current?.abort(), [])
+  // Fetch the animation chunk while the student is in checkout or about to generate, so it starts instantly.
+  useEffect(() => {
+    if (checkoutOpen || serverStatus === 'unlocked' || serverStatus === 'failed') preloadJourneyLoader()
+  }, [checkoutOpen, serverStatus])
   useEffect(() => { headingRef.current?.focus({ preventScroll: true }) }, [])
 
   useEffect(() => {
@@ -225,7 +231,7 @@ function CompleteReportFlow({ assessmentId, userId, returnPath }: { assessmentId
             <div className={styles.unlockAction}><strong>{completePlan?.price ?? '$29'}</strong><span>Prototype checkout · no charge</span><button className={styles.primaryButton} type="button" onClick={() => { setError(''); setCheckoutOpen(true) }}>Try complete report</button></div>
           </div>
         ) : generating ? (
-          <div className={styles.loading} role="status" aria-live="polite"><span className={styles.spinner} aria-hidden="true" /><div><strong>Generating your complete report…</strong><p>The model is reviewing your original statement and assessment.</p><span role="timer" aria-live="off">{elapsed}s elapsed</span></div></div>
+          <JourneyLoader elapsedSeconds={elapsed} />
         ) : reportState.status === 'ready' && reportState.report !== null ? (
           <section className={styles.structuredReport} aria-labelledby="complete-report-response-heading">
             <div className={styles.reportToolbar}><div><span className={styles.label}>Complete report</span><h2 id="complete-report-response-heading">Detailed assessment</h2><div className={styles.generationTimings}>{reportState.free_generation_seconds !== null && <p>Free assessment: {reportState.free_generation_seconds.toFixed(1)} seconds</p>}{reportState.generation_seconds !== null && <p>Complete report: {reportState.generation_seconds.toFixed(1)} seconds</p>}{reportState.free_generation_seconds !== null && reportState.generation_seconds !== null && <p>Total generation time: {(reportState.free_generation_seconds + reportState.generation_seconds).toFixed(1)} seconds</p>}</div></div><button className={styles.secondaryButton} type="button" onClick={() => void copyReport()}>Copy report</button></div>
@@ -236,7 +242,7 @@ function CompleteReportFlow({ assessmentId, userId, returnPath }: { assessmentId
         ) : (
           <div className={styles.panel}><span className={styles.label}>Prototype payment confirmed</span><h2>{reportState.status === 'failed' ? 'Try generating your report again.' : 'Your complete report is unlocked.'}</h2><p>{reportState.status === 'failed' ? 'The last attempt did not finish. Your assessment remains unlocked.' : 'Generate the full review using the statement and score from your free assessment.'}</p>{reportState.status === 'failed' && reportState.generation_seconds !== null && <p>Last attempt: {reportState.generation_seconds.toFixed(1)} seconds</p>}<button className={styles.primaryButton} type="button" disabled={busy !== null} onClick={() => void generate()}>{reportState.status === 'failed' ? 'Try generating again' : 'Generate complete report'}</button></div>
         )}
-        <p className={styles.temporaryNote}>Reports are temporary in this preview. Keep a copy of the result.</p>
+        <p className={styles.temporaryNote}>Your report is saved to your account. You can leave and come back to it any time.</p>
         <p className={styles.assessmentId}>Assessment {reportState.assessment_id}</p>
         {checkoutOpen && !needsInput && <MockCheckout busy={busy === 'unlocking'} error={error} onDismiss={() => setCheckoutOpen(false)} onConfirm={() => void unlock()} />}
       </>}

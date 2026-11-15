@@ -1,0 +1,421 @@
+/*
+ * Open Margin story (~20s loop), ported from docs/brand/open-margin/loader/story.html:
+ * the student arrives → the dream college is far away → tasks surround her →
+ * the application maze → the maze becomes the logo → she walks the clear path,
+ * collecting every task → admitted.
+ *
+ * Its own module so GSAP and this scene are code-split and only downloaded when needed.
+ */
+import { gsap } from 'gsap'
+
+export type JourneyOptions = { reduced: boolean; onCaption: (index: number) => void }
+
+// When each caption in JourneyLoader.tsx starts, in seconds.
+const CAPTION_TIMES = [0, 2.0, 4.5, 7.0, 9.5, 12.0, 16.5]
+
+const P = {
+  skin: '#8d5a4a', hair: '#1f1d2b', shirt: '#5758E8', shirtShade: '#4446c4', pants: '#2f2e41',
+  pantsBack: '#3f3d56', shoe: '#1c1b29', ink: '#2f2e41', gold: '#ffb547',
+}
+
+const FACE = {
+  worried: { browL: 'M1.5 -16.4 Q3.5 -17.6 5.6 -18.8', browR: 'M8.2 -18.8 Q10.2 -17.6 12.2 -16.4', mouth: 'M4.6 -6 Q7 -7.8 9.4 -6' },
+  happy: { browL: 'M1.5 -18 Q3.5 -20 5.6 -19', browR: 'M8.2 -19 Q10.2 -20 12.2 -18', mouth: 'M3.6 -7.8 Q7 -2.4 10.4 -7.8' },
+}
+
+/* ---------------------------------------------------------------- art */
+
+// Side-view student (profile, facing right). Origin at the feet, ~150 units tall.
+function sideGirl() {
+  const leg = (fill: string) => `<rect x="-6" y="0" width="12" height="58" rx="6" fill="${fill}"/><ellipse cx="4" cy="60" rx="10" ry="5" fill="${P.shoe}"/>`
+  return `
+    <g transform="translate(-4 -64)"><g data-legb>${leg(P.pantsBack)}</g></g>
+    <g transform="translate(-2 -112)"><g data-armb>
+      <path d="M0 0 L8 18 L22 10" fill="none" stroke="${P.shirtShade}" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="22" cy="10" r="4.5" fill="${P.skin}"/>
+    </g></g>
+    <g transform="translate(4 -64)"><g data-legf>${leg(P.pants)}</g></g>
+    <path d="M-16 -62 C-19 -100 -14 -124 0 -124 C14 -124 19 -100 16 -62 Z" fill="${P.shirt}"/>
+    <rect x="0" y="-133" width="8" height="11" rx="3" fill="${P.skin}"/>
+    <g transform="translate(4 -126)"><g data-head>
+      <path d="M-12 -20 C-25 -20 -27 -3 -20 5 C-19 -6 -16 -12 -10 -14 Z" fill="${P.hair}"/>
+      <circle cx="-13" cy="-19" r="4" fill="${P.hair}"/>
+      <circle cx="0" cy="-12" r="13" fill="${P.skin}"/>
+      <path d="M-13 -10 C-15 -32 14 -32 13.5 -15 C9 -20.5 2 -21 -4 -17 C-7 -15 -10 -12 -13 -10 Z" fill="${P.hair}"/>
+      <ellipse data-blush cx="2.4" cy="-8.6" rx="2.2" ry="1.3" fill="#ff8fa3" opacity="0"/>
+      <ellipse data-blush cx="11.6" cy="-8.6" rx="1.6" ry="1.2" fill="#ff8fa3" opacity="0"/>
+      <circle cx="4" cy="-13" r="1.5" fill="${P.ink}"/><circle cx="10" cy="-13" r="1.3" fill="${P.ink}"/>
+      <path data-browl d="${FACE.worried.browL}" fill="none" stroke="${P.ink}" stroke-width="1.1" stroke-linecap="round"/>
+      <path data-browr d="${FACE.worried.browR}" fill="none" stroke="${P.ink}" stroke-width="1.1" stroke-linecap="round"/>
+      <path data-mouth d="${FACE.worried.mouth}" fill="none" stroke="${P.ink}" stroke-width="1.2" stroke-linecap="round"/>
+      <g transform="translate(13.5 -22)"><path data-sweat d="M0 0 q2.2 3.2 0 4.6 q-2.2 -1.4 0 -4.6z" fill="#8ec5ff" opacity="0"/></g>
+    </g></g>
+    <g transform="translate(13 -125)"><g data-paper>
+      <rect width="18" height="24" rx="1.6" fill="#fff" stroke="#d4d4e4" stroke-width=".8"/>
+      <rect x="3" y="4" width="10" height="2" rx="1" fill="${P.shirt}"/>
+      <rect x="3" y="9" width="12" height="1.4" rx=".7" fill="#c7c7da"/>
+      <rect x="3" y="12.5" width="11" height="1.4" rx=".7" fill="#c7c7da"/>
+      <rect x="3" y="16" width="12" height="1.4" rx=".7" fill="#c7c7da"/>
+    </g></g>
+    <g transform="translate(20 -172) rotate(10)"><g data-letter opacity="0">
+      <rect width="17" height="22" rx="1.6" fill="#fff" stroke="#e0c27a" stroke-width=".9"/>
+      <rect x="3" y="4" width="11" height="2" rx="1" fill="${P.shirt}"/>
+      <rect x="3" y="8.5" width="9" height="1.3" rx=".6" fill="#c7c7da"/>
+      <circle cx="8.5" cy="16" r="3.4" fill="${P.gold}"/>
+    </g></g>
+    <g transform="translate(6 -112)"><g data-armf>
+      <path data-armpath d="M0 0 L10 18 L24 12" fill="none" stroke="${P.shirt}" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle data-hand cx="24" cy="12" r="4.5" fill="${P.skin}"/>
+    </g></g>`
+}
+
+// Top-down student, facing +x. Feet peek out alternately while walking.
+function topGirl() {
+  return `
+    <ellipse data-foota cx="0" cy="-3.5" rx="3.2" ry="2" fill="${P.shoe}"/>
+    <ellipse data-footb cx="0" cy="3.5" rx="3.2" ry="2" fill="${P.shoe}"/>
+    <ellipse cx="0" cy="0" rx="5.6" ry="9.5" fill="${P.shirt}"/>
+    <rect x="5.5" y="-3.5" width="5.5" height="7" rx="1" fill="#fff" stroke="#d4d4e4" stroke-width=".6"/>
+    <circle cx="6" cy="-6.5" r="2.1" fill="${P.skin}"/><circle cx="6" cy="6.5" r="2.1" fill="${P.skin}"/>
+    <circle cx="0.5" cy="0" r="4.8" fill="${P.hair}"/>
+    <circle cx="-4.8" cy="0" r="2.3" fill="${P.hair}"/>`
+}
+
+type CollegeColors = { body: string; col: string; win: string; roof: string; door: string; trim: string; flag: string }
+
+// Generic campus building, origin bottom-centre, ~128 wide.
+function collegeSVG(c: CollegeColors) {
+  const cols = [-44, -24, -4, 16, 36].map((x) => `<rect x="${x}" y="-64" width="8" height="54" rx="2" fill="${c.col}"/>`).join('')
+  const wins = [-33, -13, 7, 27].map((x) => `<rect data-win x="${x}" y="-52" width="6" height="16" rx="3" fill="${c.win}"/>`).join('')
+  return `<line x1="0" y1="-100" x2="0" y2="-128" stroke="${c.trim}" stroke-width="2.5"/>
+    <path d="M0 -128 L20 -122 L0 -116 Z" fill="${c.flag}"/>
+    <rect x="-64" y="-10" width="128" height="10" rx="2" fill="${c.trim}"/>
+    <rect x="-56" y="-70" width="112" height="60" fill="${c.body}"/>
+    ${wins}${cols}<path d="M-64 -70 L0 -102 L64 -70 Z" fill="${c.roof}"/>
+    <rect x="-9" y="-34" width="18" height="24" rx="9" fill="${c.door}"/>`
+}
+
+const GLYPH: Record<string, string> = {
+  essay: '<rect x="-4.5" y="-6" width="9" height="12" rx="1" fill="none" stroke="#5758E8" stroke-width="1.3"/><path d="M-2.5 -2.5h5M-2.5 0h5M-2.5 2.5h3" stroke="#5758E8" stroke-width="1.1" stroke-linecap="round"/>',
+  deadline: '<rect x="-5.5" y="-4.5" width="11" height="10" rx="1.5" fill="none" stroke="#ff6584" stroke-width="1.3"/><rect x="-5.5" y="-4.5" width="11" height="3" fill="#ff6584"/><path d="M-3 -6.5v3M3 -6.5v3" stroke="#ff6584" stroke-width="1.3" stroke-linecap="round"/>',
+  letter: '<rect x="-6" y="-4" width="12" height="8.5" rx="1" fill="none" stroke="#5758E8" stroke-width="1.3"/><path d="M-6 -3.5 L0 1 L6 -3.5" fill="none" stroke="#5758E8" stroke-width="1.3"/>',
+  test: '<text y="2.6" text-anchor="middle" font-size="6.4" font-weight="800" fill="#2f2e41" font-family="sans-serif">SAT</text>',
+  money: '<text y="4.2" text-anchor="middle" font-size="12" font-weight="800" fill="#3f9a4a" font-family="sans-serif">$</text>',
+  visa: '<rect x="-4.5" y="-6" width="9" height="12" rx="1.2" fill="#3f3d56"/><circle cx="0" cy="-.5" r="2.5" fill="none" stroke="#ffb547" stroke-width="1"/>',
+  transcript: '<path d="M-4.5 -3.5l1.2 1.2 2-2M-4.5 0.5l1.2 1.2 2-2M-4.5 4.5l1.2 1.2 2-2" fill="none" stroke="#3f9a4a" stroke-width="1.1" stroke-linecap="round"/><path d="M0 -3h5M0 1h5M0 5h4" stroke="#8a8aa0" stroke-width="1.1" stroke-linecap="round"/>',
+  interview: '<path d="M-6 -5h7a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1 -1.5 1.5h-4l-2 2v-2h-1a1.5 1.5 0 0 1 -1.5 -1.5v-3a1.5 1.5 0 0 1 1.5 -1.5z" fill="#5758E8"/><path d="M1 0h4.5a1.3 1.3 0 0 1 1.3 1.3v2.4a1.3 1.3 0 0 1 -1.3 1.3h-.5v1.6l-1.6 -1.6h-2.4" fill="#ffb547"/>',
+}
+
+// Elements are found by data-j inside this SVG only; the two paint-server ids are prefixed to stay unique.
+const SCENE = `
+  <defs>
+    <pattern id="om-journey-lawn" width="40" height="40" patternUnits="userSpaceOnUse" patternTransform="rotate(35)">
+      <rect width="40" height="40" fill="#cfe8c0"/><rect width="20" height="40" fill="#c4e1b3"/>
+    </pattern>
+    <radialGradient id="om-journey-glow">
+      <stop offset="0" stop-color="#ffd66b" stop-opacity=".9"/><stop offset="1" stop-color="#ffd66b" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <g data-j="worldLayer"><g data-j="world">
+    <rect x="-1200" y="-800" width="3200" height="2000" fill="#f5f6fd"/>
+    <ellipse cx="220" cy="276" rx="330" ry="22" fill="#e8ecdd"/>
+    <ellipse cx="680" cy="276" rx="280" ry="20" fill="#e8ecdd"/>
+    <rect x="-1200" y="270" width="3200" height="900" fill="#eef1e6"/>
+    <line x1="-1200" y1="270" x2="2000" y2="270" stroke="#dfe3d4" stroke-width="2"/>
+    <path d="M205 470 L450 270 L470 270 L490 470 Z" fill="#e3e7d6"/>
+    <g fill="none" stroke="#cdd5bf" stroke-width="2.5" stroke-linecap="round">
+      <path d="M110 430 q-5 -16 -13 -22 M116 430 q2 -20 10 -27 M121 430 q7 -12 16 -15"/>
+      <path d="M640 410 q-5 -14 -12 -19 M646 410 q2 -17 9 -23"/>
+    </g>
+    <g data-j="collegeFar" transform="translate(460 270) scale(.75)" opacity="0"></g>
+    <g transform="translate(460 158)"><g data-j="twinkle" opacity="0">
+      <path fill="#ffb547" d="M0 -12 l4 8 l8 4 l-8 4 l-4 8 l-4 -8 l-8 -4 l8 -4 z"/>
+    </g></g>
+    <g data-j="collegeNear" transform="translate(560 425) scale(1.9)" opacity="0"></g>
+    <g data-j="student"></g>
+  </g></g>
+  <g data-j="mapLayer" opacity="0"><g data-j="mapCam">
+    <rect x="-600" y="-500" width="2000" height="1500" fill="url(#om-journey-lawn)"/>
+    <rect data-j="pale" x="-600" y="-500" width="2000" height="1500" fill="#f4f5fb" opacity="0"/>
+    <circle data-j="logoRing" cx="400" cy="230" r="150" fill="none" stroke="#5758E8" stroke-width="2" opacity="0"/>
+    <g transform="translate(400 230) scale(1.25) translate(-128 -128)">
+      <g data-j="hedges"></g>
+      <path data-j="deadEnd" d="M-4 192 H48 V148 H86 V112" fill="none" stroke="#8a8aa0" stroke-width="3" stroke-dasharray="5 6" stroke-linecap="round" opacity="0"/>
+      <g transform="translate(86 104)"><g data-j="deadX" opacity="0">
+        <path d="M-6 -6 L6 6 M6 -6 L-6 6" stroke="#ff6584" stroke-width="4" stroke-linecap="round"/>
+      </g></g>
+      <g data-j="logoA" opacity="0"><path fill="#5758E8" d="M36 24 H220 A12 12 0 0 1 232 36 V48 H112 C16 48 16 144 112 144 H144 C194 144 194 176 144 176 H24 V36 A12 12 0 0 1 36 24 Z"/></g>
+      <g data-j="logoB" opacity="0"><path fill="#5758E8" d="M24 208 H144 C240 208 240 112 144 112 H112 C62 112 62 80 112 80 H232 V220 A12 12 0 0 1 220 232 H36 A12 12 0 0 1 24 220 Z"/></g>
+      <circle data-j="mapGlow" cx="272" cy="48" r="48" fill="url(#om-journey-glow)" opacity="0"/>
+      <g data-j="collegeMap" transform="translate(272 74) scale(.42)"></g>
+      <path data-j="trail" d="M-6 192 H144 C217 192 217 128 144 128 H112 C40 128 40 64 112 64 H252" fill="none" stroke="#ffb547" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path data-j="walkPath" d="M-6 192 H144 C217 192 217 128 144 128 H112 C40 128 40 64 112 64 H252" fill="none" stroke="none"/>
+      <g data-j="topGirl"></g>
+      <g data-j="huhPos"><g data-j="huh" opacity="0">
+        <circle r="10" fill="#fff" stroke="#d4d4e4" stroke-width="1.5"/>
+        <text y="4.5" text-anchor="middle" font-size="14" font-weight="800" fill="#2f2e41" font-family="-apple-system, sans-serif">?</text>
+      </g></g>
+    </g>
+  </g></g>
+  <g data-j="icons"></g>
+  <g transform="translate(700 26)"><g data-j="counter" opacity="0">
+    <rect x="-54" y="-15" width="108" height="30" rx="15" fill="#fff" stroke="#e0e0ee" stroke-width="1.5"/>
+    <circle cx="-34" cy="0" r="9" fill="#ffb547"/>
+    <path d="M-38 0.2 L-35.4 3 L-30.4 -2.6" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <text data-j="counterText" x="8" y="5" text-anchor="middle" font-size="14" font-weight="800" fill="#2f2e41" font-family="-apple-system, sans-serif">0 / 8</text>
+  </g></g>
+  <g data-j="confetti"></g>
+  <rect data-j="white" x="0" y="0" width="800" height="450" fill="#f5f6fd" opacity="0"/>`
+
+const NS = 'http://www.w3.org/2000/svg'
+
+/* Maze walls → logo rectangles (logo coords 24..232). The first 10 walls slide into the logo; the rest vanish. */
+const WALLS = [[24, 24, 208, 12], [24, 220, 208, 12], [24, 24, 12, 150], [24, 210, 12, 22], [220, 84, 12, 148], [60, 60, 12, 90], [60, 60, 110, 12],
+  [100, 96, 12, 84], [100, 180, 90, 12], [140, 100, 12, 56], [140, 100, 56, 12], [184, 124, 12, 56], [36, 168, 36, 12], [184, 36, 12, 30]]
+const TARGETS = [[24, 24, 208, 24], [24, 208, 208, 24], [24, 72, 16, 104], [24, 120, 40, 24], [216, 80, 16, 104],
+  [24, 48, 40, 24], [82, 80, 150, 32], [24, 144, 150, 32], [192, 184, 40, 24], [192, 112, 40, 24]]
+
+// [glyph, shot-3 x, y, scale, tilt (scattered semicircle round her head), maze spot (logo coords), path fraction]
+const TASKS: [string, number, number, number, number, [number, number], number][] = [
+  ['transcript', 100, 165, 1.9, -12, [48, 110], 0.10],
+  ['essay', 165, 250, 2.2, 6, [86, 132], 0.21],
+  ['deadline', 200, 115, 2.3, -6, [124, 136], 0.32],
+  ['letter', 285, 65, 2.0, 10, [168, 150], 0.44],
+  ['test', 385, 85, 2.2, -8, [208, 160], 0.56],
+  ['money', 490, 125, 1.95, 12, [120, 48], 0.67],
+  ['visa', 535, 210, 2.25, -10, [150, 206], 0.78],
+  ['interview', 620, 140, 2.0, 6, [140, 86], 0.89],
+]
+const WALK_START = 12.2
+const WALK_DUR = 3.8
+
+export function startJourney(svg: SVGSVGElement, { reduced, onCaption }: JourneyOptions): () => void {
+  svg.innerHTML = SCENE
+  const el = <T extends Element = SVGGElement>(name: string) => svg.querySelector(`[data-j="${name}"]`) as T
+  const part = <T extends Element = SVGElement>(root: Element, key: string) => root.querySelector(`[data-${key}]`) as T
+
+  el('student').innerHTML = sideGirl()
+  el('topGirl').innerHTML = topGirl()
+  el('collegeFar').innerHTML = collegeSVG({ body: '#dcdce6', col: '#e9e9f0', win: '#c9c9d6', roof: '#c9c9d6', door: '#c2c2d0', trim: '#c9c9d6', flag: '#c9c9d6' })
+  el('collegeNear').innerHTML = collegeSVG({ body: '#e8e8f3', col: '#ffffff', win: '#ffd66b', roof: '#5758E8', door: '#2f2e41', trim: '#3f3d56', flag: '#ff6584' })
+  el('collegeMap').innerHTML = collegeSVG({ body: '#e8e8f3', col: '#ffffff', win: '#3f3d56', roof: '#5758E8', door: '#2f2e41', trim: '#3f3d56', flag: '#ff6584' })
+
+  const stu = el('student'), top = el('topGirl')
+  const S = {
+    paper: part(stu, 'paper'), letter: part(stu, 'letter'), browL: part(stu, 'browl'), browR: part(stu, 'browr'),
+    mouth: part(stu, 'mouth'), sweat: part(stu, 'sweat'), blush: stu.querySelectorAll('[data-blush]'),
+    armPath: part(stu, 'armpath'), hand: part(stu, 'hand'),
+  }
+  const limbs = { legF: part(stu, 'legf'), legB: part(stu, 'legb'), armF: part(stu, 'armf'), armB: part(stu, 'armb'), head: part(stu, 'head') }
+  const feet = { a: part(top, 'foota'), b: part(top, 'footb') }
+  const world = el('world'), mapCamEl = el('mapCam'), huhPos = el('huhPos'), counterText = el<SVGTextElement>('counterText')
+
+  const hedges = WALLS.map(([x, y, w, h]) => {
+    const g = document.createElementNS(NS, 'g')
+    g.innerHTML = `<rect data-sh x="${x}" y="${y}" width="${w}" height="${h + 5}" rx="6" fill="#4a8f41"/>
+                   <rect data-top x="${x}" y="${y}" width="${w}" height="${h}" rx="6" fill="#77c26a"/>`
+    el('hedges').appendChild(g)
+    return { g, sh: part(g, 'sh'), top: part(g, 'top') }
+  })
+
+  /* Logo coords → stage coords (map camera at rest). */
+  const toStage = (x: number, y: number): [number, number] => [400 + (x - 128) * 1.25, 230 + (y - 128) * 1.25]
+  const walkPath = el<SVGPathElement>('walkPath'), walkLen = walkPath.getTotalLength()
+  const onPath = (f: number) => { const q = walkPath.getPointAtLength(walkLen * f); return toStage(q.x, q.y) }
+
+  const tasks = TASKS.map(([key, sx, sy, sc, tilt, spot, f]) => {
+    const g = document.createElementNS(NS, 'g')
+    g.innerHTML = `<circle r="11" fill="#fff" stroke="#e0e0ee" stroke-width="1.2"/>${GLYPH[key]}`
+    const reward = document.createElementNS(NS, 'g')
+    reward.innerHTML = `
+      <g data-burst stroke="${P.gold}" stroke-width="2.4" stroke-linecap="round" opacity="0">
+        ${[0, 45, 90, 135, 180, 225, 270, 315].map((a) => `<line x1="0" y1="-14" x2="0" y2="-20" transform="rotate(${a})"/>`).join('')}
+      </g>
+      <g data-check opacity="0"><circle r="9" fill="${P.gold}"/>
+        <path d="M-4 0.3 L-1.2 3.2 L4.2 -2.8" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></g>
+      <text data-plus x="10" y="-12" font-size="13" font-weight="800" fill="${P.gold}" font-family="-apple-system, sans-serif" opacity="0">+1</text>`
+    el('icons').appendChild(reward)
+    el('icons').appendChild(g)
+    const [mx, my] = toStage(...spot), [px, py] = onPath(f)
+    gsap.set(g, { x: sx, y: sy, scale: 0, rotation: tilt, transformOrigin: '50% 50%' })
+    gsap.set(reward, { x: px, y: py })
+    return { g, burst: part(reward, 'burst'), check: part(reward, 'check'), plus: part(reward, 'plus'), sy, sc, mx, my, px, py, collectAt: WALK_START + f * WALK_DUR }
+  })
+
+  /* Confetti with a fixed seed, so every loop looks the same. */
+  let seed = 11
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647)
+  const confetti = Array.from({ length: 40 }, (_, i) => {
+    const r = document.createElementNS(NS, 'rect')
+    r.setAttribute('width', '7'); r.setAttribute('height', '12'); r.setAttribute('rx', '1.5')
+    r.setAttribute('fill', ['#5758E8', '#ff6584', '#ffb547', '#77c26a', '#8ec5ff'][i % 5])
+    el('confetti').appendChild(r)
+    const o = { el: r, x: 40 + rnd() * 720, drift: (rnd() - 0.5) * 90, rot: (rnd() - 0.5) * 720, delay: rnd() * 0.8, dur: 2 + rnd() * 0.9 }
+    gsap.set(r, { x: o.x, y: -24, opacity: 0, transformOrigin: '50% 50%' })
+    return o
+  })
+
+  /* State rendered every frame. */
+  const cam = { s: 1.9, cx: 300, cy: 250 } // side-view camera (medium shot)
+  const mapCam = { s: 1, cx: 400, cy: 225 } // overhead camera
+  const st = { x: 110, walk: 0, armF: 0, armB: 0, head: 0 }
+  const tg = { d: 0 } // overhead walk progress 0..1
+  const trail = el<SVGPathElement>('trail')
+  trail.style.strokeDasharray = String(walkLen); trail.style.strokeDashoffset = String(walkLen)
+  const deadEnd = el<SVGPathElement>('deadEnd'), deadLen = deadEnd.getTotalLength()
+  deadEnd.style.strokeDasharray = String(deadLen); deadEnd.style.strokeDashoffset = String(deadLen)
+
+  const camT = (c: typeof cam) => `translate(400 225) scale(${c.s}) translate(${-c.cx} ${-c.cy})`
+  const rot = (node: Element, a: number) => node.setAttribute('transform', `rotate(${a})`)
+
+  function render() {
+    world.setAttribute('transform', camT(cam))
+    mapCamEl.setAttribute('transform', camT(mapCam))
+    stu.setAttribute('transform', `translate(${st.x} 425) scale(1.8)`)
+    const w = Math.sin(st.walk)
+    rot(limbs.legF, -20 * w); rot(limbs.legB, 20 * w)
+    rot(limbs.armF, st.armF); rot(limbs.armB, st.armB)
+    rot(limbs.head, st.head)
+
+    const d = tg.d * walkLen
+    const p = walkPath.getPointAtLength(d)
+    const a = walkPath.getPointAtLength(Math.min(walkLen, d + 1.5)), b = walkPath.getPointAtLength(Math.max(0, d - 1.5))
+    const ang = Math.atan2(a.y - b.y, a.x - b.x) * 180 / Math.PI
+    top.setAttribute('transform', `translate(${p.x} ${p.y}) rotate(${ang}) scale(2)`)
+    const fw = tg.d > 0 && tg.d < 1 ? Math.sin(d * 0.35) * 4 : 0
+    feet.a.setAttribute('cx', String(fw))
+    feet.b.setAttribute('cx', String(-fw))
+    huhPos.setAttribute('transform', `translate(${p.x + 8} ${p.y - 22})`)
+  }
+
+  /* Captions and the task counter follow the timeline. */
+  let captionIndex: number | null = null
+  let collected = -1
+  function sync(t: number) {
+    let i = 0
+    CAPTION_TIMES.forEach((at, j) => { if (t >= at) i = j })
+    if (t > 19.4) i = -1
+    if (i !== captionIndex) { captionIndex = i; onCaption(i) }
+    const count = tasks.filter((k) => t >= k.collectAt).length
+    if (count !== collected) { collected = count; counterText.textContent = `${count} / 8` }
+  }
+
+  /* Timeline (20s, loops). */
+  const tl = gsap.timeline({ repeat: -1, paused: true, defaults: { ease: 'sine.inOut' }, onUpdate: () => sync(tl.time()) })
+  const NO = { immediateRender: false }
+
+  tl.fromTo(el('white'), { opacity: 1 }, { opacity: 0, duration: 0.5 }, 0)
+
+  /* 1 · She arrives (0 – 2.0): medium shot, walks in from the left, stops worried. */
+  tl.to(st, { x: 320, walk: Math.PI * 4, duration: 1.5, ease: 'power1.out' }, 0.1)
+    .to(st, { head: 10, duration: 0.5 }, 1.5)
+    .fromTo(S.sweat, { y: 0, opacity: 1 }, { y: 7, opacity: 0, duration: 1.2, ease: 'power1.in', ...NO }, 1.4)
+
+  /* 2 · The dream, far away (2.0 – 4.5): pull back, college directly behind her. */
+  tl.to(cam, { s: 1, cx: 400, cy: 225, duration: 1.9, ease: 'power2.inOut' }, 2.0)
+    .to(el('collegeFar'), { opacity: 1, duration: 1.0 }, 2.5)
+    .to(st, { head: -4, duration: 0.6 }, 3.0)
+    .to(el('twinkle'), { opacity: 1, duration: 0.3 }, 3.6)
+    .fromTo(el('twinkle'), { scale: 0.6, transformOrigin: '50% 50%' }, { scale: 1.3, duration: 0.45, yoyo: true, repeat: 1, ...NO }, 3.6)
+    .to(el('twinkle'), { opacity: 0, duration: 0.3 }, 4.4)
+
+  /* 3 · Tasks surround her (4.5 – 7.0). */
+  tasks.forEach((k, i) => {
+    tl.to(k.g, { scale: k.sc, duration: 0.45, ease: 'back.out(2.2)' }, 4.6 + i * 0.16)
+      .to(k.g, { y: k.sy - 8, duration: 0.6, yoyo: true, repeat: 1 }, 5.9 + i * 0.03)
+  })
+  tl.to(st, { head: 8, duration: 0.6 }, 5.3)
+
+  /* 4 · Overhead: lost in the maze (7.0 – 9.5). */
+  tl.to(cam, { s: 1.35, cy: 120, duration: 1.0, ease: 'power2.in' }, 7.1)
+    .to(el('worldLayer'), { opacity: 0, duration: 0.55 }, 7.45)
+    .to(el('mapLayer'), { opacity: 1, duration: 0.55 }, 7.45)
+    .fromTo(mapCam, { s: 1.35 }, { s: 1, duration: 1.0, ease: 'power2.out', ...NO }, 7.45)
+  tasks.forEach((k, i) => {
+    tl.to(k.g, { x: k.mx, y: k.my, scale: 1.4, rotation: 0, duration: 1.0, ease: 'power2.inOut' }, 7.3 + i * 0.03)
+  })
+  tl.to(el('huh'), { opacity: 1, duration: 0.25 }, 8.5)
+    .fromTo(el('huh'), { scale: 0.4, transformOrigin: '50% 50%' }, { scale: 1, duration: 0.4, ease: 'back.out(3)', ...NO }, 8.5)
+    .to(deadEnd, { opacity: 1, duration: 0.1 }, 8.6)
+    .to(deadEnd, { strokeDashoffset: 0, duration: 0.7, ease: 'power1.inOut' }, 8.6)
+    .to(el('deadX'), { opacity: 1, duration: 0.15 }, 9.25)
+    .fromTo(el('deadX'), { scale: 0.3, transformOrigin: '50% 50%' }, { scale: 1, duration: 0.3, ease: 'back.out(3)', ...NO }, 9.25)
+
+  /* 5 · The maze becomes the logo (9.5 – 12.0). */
+  tl.to([deadEnd, el('deadX'), el('huh')], { opacity: 0, duration: 0.3 }, 9.6)
+  hedges.forEach((h, i) => {
+    if (i >= TARGETS.length) {
+      tl.to(h.g, { scale: 0, transformOrigin: '50% 50%', duration: 0.4, ease: 'back.in(2)' }, 9.7)
+      return
+    }
+    const [x, y, w, hh] = TARGETS[i], at = 9.85 + i * 0.03
+    tl.to(h.top, { attr: { x, y, width: w, height: hh, rx: 4 }, fill: '#5758E8', duration: 1.0, ease: 'power3.inOut' }, at)
+      .to(h.sh, { attr: { x, y, width: w, height: hh, rx: 4 }, opacity: 0, duration: 1.0, ease: 'power3.inOut' }, at)
+  })
+  tasks.forEach((k, i) => {
+    tl.to(k.g, { x: k.px, y: k.py, scale: 1.35, duration: 1.0, ease: 'power3.inOut' }, 9.95 + i * 0.03)
+  })
+  tl.to(el('pale'), { opacity: 1, duration: 1.0 }, 10.0)
+    .to([el('logoA'), el('logoB')], { opacity: 1, duration: 0.3 }, 10.9)
+    .to(el('hedges'), { opacity: 0, duration: 0.3 }, 11.05)
+    .fromTo(el('logoRing'), { attr: { r: 150 }, opacity: 0.5 }, { attr: { r: 205 }, opacity: 0, duration: 1.0, ease: 'power1.out', ...NO }, 11.1)
+    .to(el('counter'), { opacity: 1, duration: 0.4 }, 11.6)
+
+  /* 6 · She walks and collects every task (12.0 – 16.5). */
+  tl.to(tg, { d: 1, duration: WALK_DUR, ease: 'none' }, WALK_START)
+    .to(trail, { strokeDashoffset: 0, duration: WALK_DUR, ease: 'none' }, WALK_START)
+  tasks.forEach((k) => {
+    const t = k.collectAt
+    tl.to(k.g, { scale: 2.1, opacity: 0, duration: 0.25, ease: 'power2.out' }, t)
+      .fromTo(k.check, { scale: 0, opacity: 1, transformOrigin: '50% 50%' }, { scale: 1.15, duration: 0.25, ease: 'back.out(3)', ...NO }, t)
+      .to(k.check, { scale: 0.7, duration: 0.3 }, t + 0.3)
+      .fromTo(k.burst, { scale: 0.6, opacity: 1, transformOrigin: '50% 50%' }, { scale: 1.4, opacity: 0, duration: 0.45, ease: 'power2.out', ...NO }, t)
+      .fromTo(k.plus, { y: 0, opacity: 1 }, { y: -16, opacity: 0, duration: 0.7, ease: 'power1.out', ...NO }, t)
+      .fromTo(el('counter'), { scale: 1, transformOrigin: '50% 50%' }, { scale: 1.12, duration: 0.12, yoyo: true, repeat: 1, ...NO }, t)
+  })
+  tl.to(el('collegeMap').querySelectorAll('[data-win]'), { fill: '#ffd66b', duration: 0.35, stagger: 0.05 }, 15.9)
+    .to(el('mapGlow'), { opacity: 1, duration: 0.5 }, 15.9)
+    .to(mapCam, { s: 2.6, cx: 580, cy: 132, duration: 0.8, ease: 'power2.in' }, 16.2)
+    .to([el('icons'), el('counter')], { opacity: 0, duration: 0.3 }, 16.2)
+    .to(el('mapLayer'), { opacity: 0, duration: 0.4 }, 16.6)
+
+  /* 7 · Admitted (16.5 – 20.0): at the college gate, letter up, confetti, happy close-up. */
+  tl.set(cam, { s: 1.25, cx: 450, cy: 285 }, 16.9)
+    .set(st, { head: 0, armF: 0, armB: 0 }, 16.9)
+    .set(S.paper, { opacity: 0 }, 16.9)
+    .set(el('collegeFar'), { opacity: 0 }, 16.9)
+    .set(el('collegeNear'), { opacity: 1 }, 16.9)
+    .to(el('worldLayer'), { opacity: 1, duration: 0.4 }, 16.9)
+    .to(S.armPath, { attr: { d: 'M0 0 L12 -16 L17 -36' }, duration: 0.5, ease: 'back.out(2)' }, 17.3)
+    .to(S.hand, { attr: { cx: 17, cy: -36 }, duration: 0.5, ease: 'back.out(2)' }, 17.3)
+    .to(st, { armB: 30, duration: 0.5 }, 17.3)
+    .set(S.letter, { opacity: 1 }, 17.3)
+    .fromTo(S.letter, { y: 14, scale: 0.6, transformOrigin: '50% 100%' }, { y: 0, scale: 1, duration: 0.5, ease: 'back.out(2)', ...NO }, 17.3)
+    .to(S.browL, { attr: { d: FACE.happy.browL }, duration: 0.4 }, 17.3)
+    .to(S.browR, { attr: { d: FACE.happy.browR }, duration: 0.4 }, 17.3)
+    .to(S.mouth, { attr: { d: FACE.happy.mouth }, duration: 0.4 }, 17.3)
+    .to(S.blush, { opacity: 0.8, duration: 0.4 }, 17.4)
+  confetti.forEach((c) => {
+    tl.fromTo(c.el, { y: -24, x: c.x, rotation: 0, opacity: 1 },
+      { y: 470, x: c.x + c.drift, rotation: c.rot, duration: c.dur, ease: 'power1.in', ...NO }, 17.4 + c.delay)
+  })
+  tl.to(cam, { s: 3.0, cx: 352, cy: 178, duration: 1.3, ease: 'power2.inOut' }, 17.9)
+    .to(st, { head: -5, duration: 0.35, yoyo: true, repeat: 1 }, 18.9)
+    .to(el('white'), { opacity: 1, duration: 0.6 }, 19.4)
+    .to({}, { duration: 0.001 }, 19.999)
+
+  if (reduced) {
+    // A calm still frame: the clear path, with every task collected.
+    tl.pause(16.0); render(); sync(16.0)
+    return () => { tl.kill(); svg.innerHTML = '' }
+  }
+
+  gsap.ticker.add(render)
+  tl.play(0)
+  render()
+  return () => {
+    gsap.ticker.remove(render)
+    tl.kill()
+    svg.innerHTML = ''
+  }
+}
