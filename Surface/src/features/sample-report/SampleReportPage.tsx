@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router'
+import { brandLogoPath, brandName } from '../../brand'
 import SiteHeader from '../landing-page/components/SiteHeader'
 import SiteFooter from '../landing-page/components/SiteFooter'
 import { ui } from '../landing-page/ui'
@@ -97,14 +98,14 @@ export default function SampleReportPage() {
         <section className="rounded-panel border border-[rgba(183,120,66,.35)] bg-surface p-11 shadow-card max-[760px]:p-6" aria-label="Fictional sample assessment report">
           <div className="flex items-center gap-3 border-b border-line pb-6 max-[760px]:flex-wrap">
             <img
-              src={`${import.meta.env.BASE_URL}assets/statement-lab-mark.svg`}
+              src={brandLogoPath}
               alt=""
-              className="size-11 shrink-0"
+              className="size-11 shrink-0 rounded-[8px]"
               width="44"
               height="44"
             />
             <div className="grid min-w-0">
-              <span>Statement Studio</span>
+              <span>{brandName}</span>
               <strong className="font-bold">Admissions assessment system</strong>
             </div>
             <em className="ml-auto text-[.65rem] tracking-[.1em] text-accent-dark uppercase not-italic max-[760px]:ml-0 max-[760px]:w-full">Fictional sample</em>

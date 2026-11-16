@@ -6,6 +6,14 @@ const findings = [
   { title: 'Where confidence drops', quote: 'The program’s rigorous curriculum and global community make it the ideal place for my goals.', explanation: 'This line could be sent to almost any school. Name the training, faculty, or practicum that changes the applicant’s next step.', border: 'before:bg-coral' },
 ] as const
 
+const outcomeSchools = [
+  { name: 'Stanford', src: 'stanford.svg', className: 'max-h-[34px]' },
+  { name: 'Harvard', src: 'harvard.svg', className: 'max-h-[34px]' },
+  { name: 'Johns Hopkins', src: 'johns-hopkins.svg', className: 'max-h-[38px]' },
+  { name: 'Columbia', src: 'columbia.svg', className: 'max-h-[34px]' },
+  { name: 'Cambridge', src: 'cambridge.png', className: 'max-h-[36px]' },
+] as const
+
 export default function HeroSection() {
   return (
     <>
@@ -60,10 +68,19 @@ export default function HeroSection() {
         </aside>
       </div>
       <div className="mx-auto mt-3.5 w-[calc(100%_-_34px)] max-w-[1400px] overflow-hidden rounded-[22px] bg-navy bg-[radial-gradient(circle_at_88%_0%,rgba(87,88,232,.28),transparent_26rem)] max-[720px]:mt-[9px] max-[720px]:w-[calc(100%_-_18px)] max-[720px]:rounded-[19px]">
-        <div className="grid min-h-36 grid-cols-[minmax(190px,.54fr)_minmax(0,1.46fr)] items-center gap-[42px] px-[clamp(28px,5vw,72px)] py-[30px] max-[940px]:grid-cols-1 max-[940px]:gap-[22px] max-[720px]:px-[22px] max-[720px]:py-[26px]">
-          <div className="border-r border-white/15 pr-[34px] max-[940px]:border-r-0 max-[940px]:border-b max-[940px]:pr-0 max-[940px]:pb-[18px]"><span className="block text-[.95rem] font-bold text-white">Mentorship outcomes include</span><small className="mt-[5px] block text-[.78rem] text-white/75">Complete applicant profiles shaped each result.</small></div>
-          <div className="grid grid-cols-5 items-center justify-between gap-[26px] max-[720px]:grid-cols-2 max-[720px]:gap-x-[22px] max-[720px]:gap-y-[15px]" aria-label="Universities in the supplied mentorship outcomes">
-            {['Stanford', 'Harvard', 'Johns Hopkins', 'Columbia', 'Cambridge'].map((school) => <strong className="font-display text-[clamp(1.05rem,1.6vw,1.45rem)] font-normal text-white/90 max-[720px]:last:col-span-2" key={school}>{school}</strong>)}
+        <div className="grid min-h-32 grid-cols-[minmax(220px,.52fr)_minmax(0,1.48fr)] items-center gap-[clamp(24px,4vw,54px)] px-[clamp(24px,4.2vw,58px)] py-[24px] max-[940px]:grid-cols-1 max-[940px]:gap-[20px] max-[720px]:px-[18px] max-[720px]:py-[22px]">
+          <div className="border-r border-white/15 pr-[clamp(24px,3vw,38px)] max-[940px]:border-r-0 max-[940px]:border-b max-[940px]:pr-0 max-[940px]:pb-[18px]"><span className="block text-[.95rem] font-bold text-white">Mentorship outcomes include</span><small className="mt-[5px] block text-[.78rem] text-white/75">Complete applicant profiles shaped each result.</small></div>
+          <div className="grid grid-cols-5 items-center gap-[clamp(18px,3vw,46px)] rounded-[18px] bg-white/[.92] px-[clamp(18px,2.4vw,34px)] py-[18px] shadow-[inset_0_1px_0_rgba(255,255,255,.65)] max-[940px]:grid-cols-3 max-[720px]:grid-cols-2 max-[720px]:gap-x-[22px] max-[720px]:gap-y-[20px] max-[720px]:px-4" aria-label="Universities in the supplied mentorship outcomes">
+            {outcomeSchools.map((school) => (
+              <img
+                key={school.name}
+                className={`h-auto w-full object-contain opacity-95 max-[720px]:mx-auto max-[720px]:max-w-[160px] max-[720px]:last:col-span-2 ${school.className}`}
+                src={`${import.meta.env.BASE_URL}assets/university-logos/${school.src}`}
+                alt={school.name}
+                loading="lazy"
+                decoding="async"
+              />
+            ))}
           </div>
         </div>
       </div>

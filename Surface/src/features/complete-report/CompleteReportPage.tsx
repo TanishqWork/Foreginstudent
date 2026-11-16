@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router'
 import { useAuth } from '../account/auth-context'
 import { pricingPlans } from '../pricing/data'
+import StatementLoader from '../shared/StatementLoader'
 import { CompleteReportError, generateCompleteReport, getCompleteReport, mockUnlockCompleteReport } from './api'
 import { clearAssessmentId, readAssessmentId, rememberAssessmentId } from './session'
 import type { CompleteReportState } from './types'
@@ -115,7 +116,12 @@ function CompleteReportFlow({ assessmentId, userId, returnPath }: { assessmentId
   useEffect(() => {
     if (checkoutOpen || serverStatus === 'unlocked' || serverStatus === 'failed') preloadJourneyLoader()
   }, [checkoutOpen, serverStatus])
-  useEffect(() => { headingRef.current?.focus({ preventScroll: true }) }, [])
+  useEffect(() => {
+    if (generating || serverStatus === 'ready') {
+      window.scrollTo({ top: 0, behavior: 'instant' })
+      headingRef.current?.focus({ preventScroll: true })
+    }
+  }, [generating, serverStatus])
 
   useEffect(() => {
     if (!generating) return
@@ -212,6 +218,19 @@ function CompleteReportFlow({ assessmentId, userId, returnPath }: { assessmentId
   const context = reportState?.assessment.context
   const needsInput = baseline?.status === 'needs_input'
 
+  if (generating) return (
+    <section className={`${styles.page} ${styles.generatingPage}`} aria-labelledby="complete-report-heading">
+      <title>Preparing your report | Statement Studio</title>
+      <Link className={styles.backLink} to="/dashboard/assessment">← Free assessment</Link>
+      <div className={styles.generationFocus}>
+        <h1 id="complete-report-heading" className={styles.generationHeading} ref={headingRef} tabIndex={-1}>Preparing your complete report</h1>
+        <p className={styles.generationContext}>{[context?.degree, context?.target_institution].filter(Boolean).join(' · ')}</p>
+        <JourneyLoader elapsedSeconds={elapsed} />
+        {error && <p className={styles.error} role="alert">{error}</p>}
+      </div>
+    </section>
+  )
+
   return (
     <section className={styles.page} aria-labelledby="complete-report-heading" aria-busy={loading || generating}>
       <title>Complete report | Statement Studio</title>
@@ -219,7 +238,7 @@ function CompleteReportFlow({ assessmentId, userId, returnPath }: { assessmentId
       <p className={styles.eyebrow}>Complete assessment · Prototype</p>
       <h1 id="complete-report-heading" ref={headingRef} tabIndex={-1}>Your complete report.</h1>
       <p className={styles.intro}>A closer review of the statement from your free assessment.</p>
-      {loading ? <div className={styles.loading} role="status"><span className={styles.spinner} aria-hidden="true" />Opening your assessment…</div> : !reportState ? (
+      {loading ? <div className={styles.loading} role="status"><StatementLoader/>Opening your assessment…</div> : !reportState ? (
         <div className={styles.panel}>
           {error && <p className={styles.error} role="alert">{error}</p>}
           <button className={styles.primaryButton} type="button" onClick={() => { setLoading(true); setError(''); setReload((value) => value + 1) }}>Try again</button>
@@ -238,8 +257,6 @@ function CompleteReportFlow({ assessmentId, userId, returnPath }: { assessmentId
             <div><span className={styles.label}>One complete report</span><h2>Follow the argument, sentence by sentence.</h2><p>Unlock a more detailed review of your existing statement and its revision priorities.</p><ul className={styles.features}><li>Sentence, paragraph, evidence, and revision feedback</li><li>Your original score and findings preserved</li><li>The full response to read and copy</li></ul></div>
             <div className={styles.unlockAction}><strong>{completePlan?.price ?? '$29'}</strong><span>Prototype checkout · no charge</span><button className={styles.primaryButton} type="button" onClick={() => { setError(''); setCheckoutOpen(true) }}>Try complete report</button></div>
           </div>
-        ) : generating ? (
-          <JourneyLoader elapsedSeconds={elapsed} />
         ) : reportState.status === 'ready' && reportState.report !== null ? (
           <section className={styles.structuredReport} aria-labelledby="complete-report-response-heading">
             <div className={styles.reportToolbar}><div><span className={styles.label}>Complete report</span><h2 id="complete-report-response-heading">Detailed assessment</h2><div className={styles.generationTimings}>{reportState.free_generation_seconds !== null && <p>Free assessment: {reportState.free_generation_seconds.toFixed(1)} seconds</p>}{reportState.generation_seconds !== null && <p>Complete report: {reportState.generation_seconds.toFixed(1)} seconds</p>}{reportState.free_generation_seconds !== null && reportState.generation_seconds !== null && <p>Total generation time: {(reportState.free_generation_seconds + reportState.generation_seconds).toFixed(1)} seconds</p>}</div></div><button className={styles.secondaryButton} type="button" onClick={() => void copyReport()}>Copy report</button></div>
@@ -267,7 +284,7 @@ export default function CompleteReportPage() {
   const returnParams = new URLSearchParams(location.search)
   if (assessmentId) returnParams.set('assessment', assessmentId)
   const returnPath = `${location.pathname}${returnParams.size ? `?${returnParams.toString()}` : ''}`
-  if (loading) return <div className={styles.loading} role="status">Opening your account…</div>
+  if (loading) return <div className={styles.loading} role="status"><StatementLoader/>Opening your account…</div>
   if (!userId) return <section className={styles.page}><h1>Sign in to open your report.</h1><Link className={styles.primaryButton} to={`/account?next=${encodeURIComponent(returnPath)}`}>Sign in</Link></section>
   if (!assessmentId) return <EmptyReport message="Run a free assessment first, then open its complete report from the results page." />
   return <CompleteReportFlow key={`${userId}:${assessmentId}`} assessmentId={assessmentId} userId={userId} returnPath={returnPath} />

@@ -174,7 +174,7 @@ export default function AccountPage() {
               {error && <p className="m-0 text-[.8rem] text-red-700" role="alert">{error}</p>}
               {sessionError && !loading && <p className="m-0 text-[.8rem] text-red-700" role="alert">{sessionError} <button className={`${ui.focus} min-h-11 cursor-pointer font-bold underline underline-offset-4`} type="button" disabled={pending} onClick={() => void refresh()}>Try again</button></p>}
               <p className="m-0 min-h-5 text-[.65rem] leading-[1.7] text-muted" id="account-login-status" role="status" aria-live="polite">{status}</p>
-              <Link className="mt-3 text-center text-sm font-semibold text-accent underline underline-offset-4" to="/workspace">Explore the sample student workspace</Link>
+              <Link className="mt-3 text-center text-sm font-semibold text-accent underline underline-offset-4" to="/dashboard">Open your dashboard</Link>
             </div>
           </section>
         </div>

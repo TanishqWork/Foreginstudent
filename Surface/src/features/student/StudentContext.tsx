@@ -1,6 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import { initialEssays } from './data'
 import type { Essay, StudentProfile } from './data'
 
 interface StudentState {
@@ -25,9 +24,9 @@ const StudentContext = createContext<StudentContextValue | null>(null)
 
 function readState(key: string, name: string): StudentState {
   const fallback: StudentState = {
-    profile: { name, discipline: 'Environmental studies', level: 'Undergraduate', goals: ['Build stronger arguments', 'Write with confidence'], onboarded: false },
-    essays: initialEssays,
-    activeEssayId: initialEssays[0].id,
+    profile: { name, discipline: '', level: '', goals: [], onboarded: false },
+    essays: [],
+    activeEssayId: '',
     completedLessons: [],
   }
   try {
@@ -45,7 +44,7 @@ export function useStudent() {
   return context
 }
 
-export function StudentProvider({ children, basePath, identity = 'sample', name = 'Maya' }: { children: ReactNode; basePath: string; identity?: string; name?: string }) {
+export function StudentProvider({ children, basePath, identity = 'account', name = 'Student' }: { children: ReactNode; basePath: string; identity?: string; name?: string }) {
   const storageKey = `statement-studio:student:v1:${identity}`
   const [state, setState] = useState(() => readState(storageKey, name))
   const [toast, setToast] = useState('')

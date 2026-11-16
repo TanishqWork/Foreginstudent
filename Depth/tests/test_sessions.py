@@ -131,7 +131,11 @@ def test_originless_cli_requests_can_sign_in_and_out(auth_context: AuthTestConte
     auth_context.client.headers.pop("origin", None)
     response = auth_context.sign_in()
     assert "origin" not in response.request.headers
-    assert auth_context.client.get("/api/auth/me").status_code == 200
+    me = auth_context.client.get("/api/auth/me")
+    assert me.status_code == 200
+    assert "auth_db;dur=" in me.headers["server-timing"]
+    assert "auth_provider;dur=" in me.headers["server-timing"]
+    assert "auth_total;dur=" in me.headers["server-timing"]
     assert auth_context.client.post("/api/auth/logout").status_code == 204
 
 

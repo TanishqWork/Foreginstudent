@@ -20,8 +20,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
-        # In the background, so the API starts at once and requests never wait on the warm-up.
-        warm_up = asyncio.create_task(asyncio.to_thread(warm_pool, engine))
+        # Warm the pool before accepting traffic. A cold Supabase Postgres connection can take
+        # several seconds; letting the first dashboard /me request pay that cost makes the loader
+        # appear broken even though auth is only waiting on connection setup.
+        await asyncio.to_thread(warm_pool, engine)
         try:
             yield
         finally:
@@ -29,7 +31,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             for task in list(app.state.background_tasks):
                 task.cancel()
             await asyncio.gather(*app.state.background_tasks, return_exceptions=True)
-            await asyncio.gather(warm_up, return_exceptions=True)
             await close_client()
             engine.dispose()
 

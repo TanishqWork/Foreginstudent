@@ -119,6 +119,10 @@ def require_session(request: Request, response: Response, service: AuthService) 
         request.cookies.get(SESSION_COOKIE), request.cookies.get(REFRESH_COOKIE),
         request.cookies.get(SESSION_PROOF_COOKIE),
     )
+    if result.timings_ms:
+        response.headers["Server-Timing"] = ", ".join(
+            f"auth_{name};dur={milliseconds:.1f}" for name, milliseconds in result.timings_ms.items()
+        )
     if result.refreshed_tokens is not None:
         _set_tokens(response, result.refreshed_tokens, result.session, service)
     return result.session

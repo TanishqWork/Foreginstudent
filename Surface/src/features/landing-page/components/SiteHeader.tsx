@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link, useLocation } from 'react-router'
+import { brandLogoPath } from '../../../brand'
 import { useAuth } from '../../account/auth-context'
 
 const navigationItems = [
-  { label: 'Workspace', to: '/workspace', description: 'Explore your student writing space' },
+  { label: 'Dashboard', to: '/dashboard', description: 'Open your assessment dashboard' },
   { label: 'Pathways', to: '/#pathways', description: 'Choose the right review track' },
   { label: 'How it works', to: '/methodology', description: 'See how each finding is supported' },
   { label: 'Sample report', to: '/sample-report', description: 'Explore a complete assessment example' },
@@ -91,14 +92,14 @@ export default function SiteHeader() {
           }}
         >
           <img
-            src={`${import.meta.env.BASE_URL}assets/statement-lab-mark.svg`}
+            src={brandLogoPath}
             alt=""
-            className="size-10 shrink-0 rounded-[10px] drop-shadow-[0_8px_17px_rgba(17,19,27,.14)]"
+            className="size-10 shrink-0 rounded-[8px] drop-shadow-[0_8px_17px_rgba(17,19,27,.14)]"
             width="40"
             height="40"
           />
           <span className="flex flex-col leading-[1.05]">
-            <span className="whitespace-nowrap text-[.98rem] font-extrabold tracking-[-.03em] text-ink max-[359px]:text-[.9rem]">Statement Studio</span>
+            <span className="whitespace-nowrap text-[.98rem] font-extrabold tracking-[-.03em] text-ink lowercase max-[359px]:text-[.9rem]">statement<span className="font-medium">studio</span></span>
             <span className="mt-1 hidden text-[.65rem] font-bold tracking-[.17em] text-slate uppercase min-[761px]:block">Admissions intelligence</span>
           </span>
         </Link>

@@ -98,9 +98,9 @@
 .formSection legend span { margin-right: 10px; color: var(--color-accent-dark); font-size: .68rem; }
 .shell .sectionIntro { margin: -3px 0 24px; color: var(--color-slate); font-size: .78rem; }
 .pathways { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-.pathways label { position: relative; cursor: pointer; }
+.pathways label { position: relative; display: flex; cursor: pointer; }
 .pathways input { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
-.pathways label > span { position: relative; display: block; min-height: 132px; padding: 24px; border: 1px solid var(--color-line); border-radius: 12px; background: var(--color-canvas); transition: border-color 200ms, background 200ms, box-shadow 200ms; }
+.pathways label > span { position: relative; display: block; width: 100%; min-height: 132px; padding: 24px; border: 1px solid var(--color-line); border-radius: 12px; background: var(--color-canvas); transition: border-color 200ms, background 200ms, box-shadow 200ms; }
 .pathways input:checked + span { border-color: var(--color-accent); background: #f0efff; box-shadow: inset 0 0 0 1px var(--color-accent); }
 .pathways input:focus-visible + span { outline: 3px solid var(--color-accent); outline-offset: 3px; }
 .pathways b { display: grid; place-items: center; width: 28px; height: 28px; margin-bottom: 18px; border: 1px solid rgba(11, 28, 45, .12); border-radius: 50%; color: var(--color-accent-dark); font-size: .64rem; font-weight: 700; }
@@ -110,6 +110,9 @@
 
 .fieldGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
 .field { display: grid; min-width: 0; gap: 8px; }
+.fieldGrid .field { align-content: start; grid-template-rows: auto 48px; }
+.fieldGrid .field > span { min-height: 20px; }
+.fieldGrid .field :is(input, select) { height: 48px; padding: 10px 14px; line-height: 1.5; }
 .field > span { display: flex; justify-content: space-between; gap: 10px; align-items: center; color: var(--color-navy); font-size: .75rem; font-weight: 700; }
 .field > small { color: var(--color-muted); font-size: .64rem; line-height: 1.45; }
 .field .optional, .optional { color: var(--color-muted); font-size: .58rem; font-style: normal; font-weight: 750; letter-spacing: .07em; text-transform: uppercase; }
@@ -127,10 +130,6 @@
 .preflight span { display: block; margin-bottom: 10px; color: var(--color-accent-dark); font-size: .58rem; font-weight: 800; letter-spacing: .08em; }
 .preflight strong { display: block; color: var(--color-navy); font-size: .76rem; font-weight: 700; }
 .preflight small { display: block; margin-top: 6px; color: var(--color-slate); font-size: .66rem; line-height: 1.5; }
-.samples { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 22px 0 14px; }
-.samples span { color: var(--color-slate); font-size: .78rem; }
-.samples button { padding: 7px 10px; border: 1px solid var(--color-line); border-radius: 999px; background: var(--color-canvas); color: var(--color-ink); font: inherit; font-size: .7rem; cursor: pointer; }
-.samples button:hover { border-color: var(--color-accent); color: var(--color-accent-dark); }
 .pasteWorkspace { overflow: hidden; border: 1px solid rgba(11, 28, 45, .15); border-radius: 20px; background: white; box-shadow: 0 22px 65px rgba(11, 28, 45, .07); }
 .pasteToolbar { display: flex; justify-content: space-between; gap: 18px; align-items: center; padding: 16px 18px; border-bottom: 1px solid var(--color-line); background: linear-gradient(180deg, #fffdf9, #f9f2ea); }
 .pasteToolbar strong { display: block; color: var(--color-navy); font-size: .76rem; font-weight: 700; }
@@ -139,7 +138,7 @@
 .pasteToolbar button { padding: 8px 10px; border: 1px solid rgba(11, 28, 45, .13); border-radius: 9px; background: white; color: var(--color-navy); font: inherit; font-size: .62rem; font-weight: 750; cursor: pointer; transition: transform 160ms, border-color 160ms, color 160ms; }
 .pasteToolbar button:hover { transform: translateY(-1px); border-color: var(--color-accent); color: var(--color-accent-dark); }
 .document { display: grid; gap: 0; }
-.document textarea { min-height: 460px; padding: 34px 42px; border: 0; border-radius: 0; background: #fffefa; font-family: var(--font-sans); font-size: .96rem; line-height: 1.82; box-shadow: none; }
+.document textarea { min-height: 320px; padding: 34px 42px; border: 0; border-radius: 0; background: #fffefa; font-family: var(--font-sans); font-size: .96rem; line-height: 1.82; box-shadow: none; }
 .document textarea:focus { border: 0; box-shadow: inset 4px 0 0 var(--color-accent); }
 .document textarea:focus-visible { outline-offset: -3px; }
 .document > small, .wordCount { display: flex; justify-content: space-between; padding: 12px 18px; border-top: 1px solid var(--color-line); background: #fbf6ef; color: var(--color-muted); font-size: .64rem; }
@@ -212,7 +211,7 @@
   .pasteToolbar { align-items: flex-start; flex-direction: column; }
   .pasteToolbar > div:last-child { width: 100%; }
   .pasteToolbar button { flex: 1; }
-  .document textarea { min-height: 420px; padding: 26px 20px; }
+  .document textarea { min-height: 300px; padding: 26px 20px; }
   .healthHead, .submit { align-items: flex-start; flex-direction: column; }
   .submit > div { text-align: left; }
   .submit > button { width: 100%; }
@@ -222,4 +221,26 @@
 @media (prefers-reduced-motion: reduce) {
   .pathways label > span, .field input, .field textarea, .field select, .pasteToolbar button { transition: none; }
   .pasteToolbar button:hover { transform: none; }
+}
+
+/* The dashboard already supplies navigation and page gutters. */
+.page.embedded { min-height: auto; background: transparent; }
+.page.embedded .shell { padding-block: 4px 32px; }
+.page.embedded .workspace { margin-top: 28px; }
+.page.embedded .intro h1 { margin: 8px 0 12px; font-size: clamp(1.7rem, 2.5vw, 2.15rem); line-height: 1.2; }
+.page.embedded .intro > p:last-child { max-width: 850px; margin-bottom: 0; font-size: .9rem; line-height: 1.6; }
+.page.embedded .overline { margin-bottom: 8px; }
+.page.embedded .formSection { margin-bottom: 22px; }
+.page.embedded .document textarea { height: 340px; min-height: 280px; padding: 22px 24px; }
+.optionalHead > div { flex-wrap: wrap; }
+.optionalHead span { flex-shrink: 0; }
+@media (max-width: 720px) {
+  .page.embedded .pathways { grid-template-columns: 1fr; }
+  .page.embedded .pathways label > span { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 4px 12px; min-height: 0; padding: 16px; }
+  .page.embedded .pathways b { grid-row: 1 / span 2; margin: 0; }
+  .page.embedded .pathways small { grid-column: 2; margin-top: 0; }
+  .page.embedded .fieldGrid { grid-template-columns: 1fr; }
+  .page.embedded .workspace { margin-top: 22px; }
+  .page.embedded .document textarea { height: 320px; padding: 18px; }
+  .page.embedded .optionalHead > div { align-items: flex-start; flex-direction: column; gap: 8px; }
 }

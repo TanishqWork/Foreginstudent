@@ -1,5 +1,5 @@
 import { lazy, Suspense, useLayoutEffect } from 'react'
-import { Link, Route, Routes, useLocation } from 'react-router'
+import { Link, Navigate, Route, Routes, useLocation } from 'react-router'
 import HomePage from './features/landing-page/HomePage'
 import MethodologyPage from './features/methodology/MethodologyPage'
 import SampleReportPage from './features/sample-report/SampleReportPage'
@@ -33,8 +33,8 @@ export default function App() {
 
   return (
     <Routes>
-      <Route path="/workspace/*" element={<Suspense fallback={<main className="grid min-h-svh place-content-center text-slate">Opening your writing space…</main>}><StudentWorkspace demo /></Suspense>} />
-      <Route path="/dashboard/*" element={<Suspense fallback={<main className="grid min-h-svh place-content-center text-slate">Opening your writing space…</main>}><StudentWorkspace /></Suspense>} />
+      <Route path="/workspace/*" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/dashboard/*" element={<Suspense fallback={<main className="grid min-h-svh place-content-center text-slate">Opening your dashboard...</main>}><StudentWorkspace /></Suspense>} />
       <Route path="/" element={<HomePage />} />
       <Route path="/methodology" element={<MethodologyPage />} />
       <Route path="/sample-report" element={<SampleReportPage />} />

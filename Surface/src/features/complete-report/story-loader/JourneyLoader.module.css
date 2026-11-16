@@ -1,12 +1,5 @@
-.frame {
-  width: min(100%, 720px);
-  margin: 14px 0 6px;
-  overflow: hidden;
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius-card);
-  background: #f5f6fd;
-}
-
+.loader { display: flex; flex-direction: column; align-items: center; width: 100%; text-align: center; }
+.frame { width: min(100%, 680px, 88dvh); margin: 4px 0; }
 .stage {
   display: block;
   width: 100%;
@@ -14,7 +7,13 @@
   aspect-ratio: 16 / 9;
   opacity: 0;
   transition: opacity .3s ease;
+  mask-image: radial-gradient(ellipse closest-side, #000 68%, transparent 100%);
 }
-
-/* Shown once the first frame has been drawn, so nothing flashes at the origin. */
+/* The story's looping collection counter is decorative, not report progress. */
+.stage [data-j="counter"] { display: none; }
 .ready { opacity: 1; }
+.loader .caption { min-height: 1.75em; margin: 0; color: var(--color-ink); font-size: .95rem; font-weight: 600; }
+.loader .status { max-width: 430px; margin: 8px 0 0; color: var(--color-slate); font-size: .82rem; line-height: 1.6; }
+.loader .timer { margin: 10px 0 0; color: var(--color-muted); font-size: .72rem; font-variant-numeric: tabular-nums; }
+@media (max-height: 700px) { .frame { width: min(100%, 52dvh); } }
+@media (prefers-reduced-motion: reduce) { .stage { transition: none; } }

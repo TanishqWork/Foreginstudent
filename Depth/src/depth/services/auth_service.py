@@ -2,7 +2,9 @@ from base64 import urlsafe_b64encode
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from hashlib import sha256
+import logging
 from secrets import token_urlsafe
+from time import perf_counter
 
 from sqlalchemy.orm import Session
 
@@ -17,6 +19,8 @@ from depth.repositories.sessions import SessionRepository
 from depth.repositories.users import UserRepository
 from depth.security.tokens import access_token_expired, token_hash
 from depth.services.rate_limit_service import RateLimitService
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -35,6 +39,7 @@ class PendingLogin:
 class AuthenticatedSession:
     session: AuthSession
     refreshed_tokens: ProviderTokens | None = field(default=None, repr=False)
+    timings_ms: dict[str, float] = field(default_factory=dict, repr=False)
 
 
 class AuthService:
@@ -119,18 +124,27 @@ class AuthService:
     ) -> AuthenticatedSession:
         if not token or not proof:
             raise AuthenticationError()
+        total_started = perf_counter()
+        db_started = perf_counter()
         found = self.sessions.find_for_request(token_hash(proof))
+        db_ms = (perf_counter() - db_started) * 1000
         session, provider_active = found if found is not None else (None, False)
         now = datetime.now(timezone.utc)
         if session is None or session.revoked_at is not None or session.expires_at <= now:
             raise AuthenticationError()
         refreshed = None
+        provider_ms = 0.0
+        refresh_ms = 0.0
         try:
+            provider_started = perf_counter()
             _, identity = self.provider.authenticate(token)
+            provider_ms = (perf_counter() - provider_started) * 1000
         except AuthenticationError:
             if not refresh_token or not access_token_expired(token):
                 raise
+            refresh_started = perf_counter()
             replacement = self.provider.refresh(refresh_token)
+            refresh_ms = (perf_counter() - refresh_started) * 1000
             identity = replacement.identity
             refreshed = replacement.tokens
         if (
@@ -139,7 +153,19 @@ class AuthService:
             or not provider_active
         ):
             raise AuthenticationError()
-        return AuthenticatedSession(session, refreshed)
+        total_ms = (perf_counter() - total_started) * 1000
+        timings = {
+            "db": db_ms,
+            "provider": provider_ms,
+            "refresh": refresh_ms,
+            "total": total_ms,
+        }
+        if total_ms >= 1000:
+            logger.warning(
+                "Slow auth session check total_ms=%.1f db_ms=%.1f provider_ms=%.1f refresh_ms=%.1f",
+                total_ms, db_ms, provider_ms, refresh_ms,
+            )
+        return AuthenticatedSession(session, refreshed, timings)
 
     def logout(self, token: str | None, proof: str | None, recovery_token: str | None) -> None:
         now = datetime.now(timezone.utc)

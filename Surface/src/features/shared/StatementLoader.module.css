@@ -1,0 +1,17 @@
+.loader {
+  display: block;
+  width: 74px;
+  height: 74px;
+  overflow: visible;
+  opacity: 0;
+}
+
+.linePrimary {
+  stroke: #5758e8;
+  stroke-width: 7;
+}
+
+.line {
+  stroke: #cfcfea;
+  stroke-width: 5;
+}

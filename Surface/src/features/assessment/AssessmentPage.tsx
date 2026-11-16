@@ -4,8 +4,8 @@ import { Link, useNavigate, useSearchParams } from 'react-router'
 import SiteHeader from '../landing-page/components/SiteHeader'
 import SiteFooter from '../landing-page/components/SiteFooter'
 import { ui } from '../landing-page/ui'
-import { assessmentPathways, assessmentSamples, statementTypes } from './data'
-import type { AssessmentSample, PathwayId } from './data'
+import { assessmentPathways, statementTypes } from './data'
+import type { PathwayId } from './data'
 import styles from './AssessmentPage.module.css'
 import { useAuth } from '../account/auth-context'
 import { readAssessmentDraft, saveAssessmentDraft } from './draft'
@@ -121,22 +121,6 @@ function AssessmentScreen({ initialPathway, embedded = false }: { initialPathway
     }))
   }
 
-  function loadSample(sample: AssessmentSample) {
-    setContext((current) => ({
-      ...current,
-      pathway: sample.pathway,
-      degree: sample.degree,
-      statementType: sample.statementType,
-      field: sample.field,
-      institution: sample.institution,
-      program: sample.program,
-      wordLimit: String(sample.wordLimit),
-      reviewGoal: sample.reviewGoal,
-    }))
-    setPrompt(sample.prompt)
-    setStatement(sample.statement)
-  }
-
   async function runAssessment(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
     if (pending || !event.currentTarget.reportValidity()) return
@@ -178,7 +162,7 @@ function AssessmentScreen({ initialPathway, embedded = false }: { initialPathway
 
   if (result) {
     return (
-      <div className={styles.page}>
+      <div className={`${styles.page} ${embedded ? styles.embedded : ''}`}>
         <title>Diagnostic findings | Statement Studio</title>
         {!embedded && <SiteHeader />}
         <main className={styles.shell} id="main" aria-labelledby="diagnostic-heading">
@@ -194,7 +178,7 @@ function AssessmentScreen({ initialPathway, embedded = false }: { initialPathway
 
   if (pending) {
     return (
-      <div className={styles.page}>
+      <div className={`${styles.page} ${embedded ? styles.embedded : ''}`}>
         <title>Reviewing your statement | Statement Studio</title>
         {!embedded && <SiteHeader />}
         <main className={`${styles.shell} ${styles.pendingMain}`} id="main" aria-labelledby="review-loader-heading">
@@ -206,7 +190,7 @@ function AssessmentScreen({ initialPathway, embedded = false }: { initialPathway
   }
 
   return (
-    <div className={styles.page}>
+    <div className={`${styles.page} ${embedded ? styles.embedded : ''}`}>
       <title>Free assessment | Statement Studio</title>
       <meta name="description" content="Set your application context and paste your statement, then sign in to continue with Statement Studio." />
       {!embedded && <SiteHeader />}
@@ -281,10 +265,6 @@ function AssessmentScreen({ initialPathway, embedded = false }: { initialPathway
               <div className={styles.preflight}>
                 {preflightSteps.map(([title, copy], index) => <div key={title}><span>{String(index + 1).padStart(2, '0')}</span><strong>{title}</strong><small>{copy}</small></div>)}
               </div>
-              <div className={styles.samples}>
-                <span>Load a fictional sample:</span>
-                {assessmentSamples.map((sample) => <button key={sample.id} type="button" onClick={() => loadSample(sample)}>{sample.label}</button>)}
-              </div>
               <div className={styles.pasteWorkspace}>
                 <div className={styles.pasteToolbar}>
                   <div><strong>Statement document</strong><small>Paragraph boundaries will be preserved during paste.</small></div>
@@ -295,7 +275,7 @@ function AssessmentScreen({ initialPathway, embedded = false }: { initialPathway
                 </div>
                 <label className={`${styles.field} ${styles.document}`}>
                   <span className="sr-only">Statement</span>
-                  <textarea ref={statementRef} id="statement" rows={20} placeholder="Paste the statement here. Copying directly from Word or Google Docs is recommended." value={statement} onChange={(event) => setStatement(event.target.value)} aria-describedby="word-count" required />
+                  <textarea ref={statementRef} id="statement" rows={12} placeholder="Paste the statement here. Copying directly from Word or Google Docs is recommended." value={statement} onChange={(event) => setStatement(event.target.value)} aria-describedby="word-count" required />
                   <small className={styles.wordCount}><span id="word-count">{wordCount} {wordCount === 1 ? 'word' : 'words'}</span><span>{context.wordLimit ? `Word limit: ${context.wordLimit}` : ''}</span></small>
                 </label>
               </div>
