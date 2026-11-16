@@ -10,7 +10,7 @@ const outcomeSchools = [
   { name: 'Stanford', src: 'stanford.svg', className: 'max-h-[34px]' },
   { name: 'Harvard', src: 'harvard.svg', className: 'max-h-[34px]' },
   { name: 'Johns Hopkins', src: 'johns-hopkins.svg', className: 'max-h-[38px]' },
-  { name: 'Columbia', src: 'columbia.svg', className: 'max-h-[34px]' },
+  { name: 'Oxford University', src: 'oxford-university.svg', className: 'max-h-[34px]' },
   { name: 'Cambridge', src: 'cambridge.png', className: 'max-h-[36px]' },
 ] as const
 

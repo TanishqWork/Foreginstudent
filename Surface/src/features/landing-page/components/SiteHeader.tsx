@@ -101,7 +101,7 @@ export default function SiteHeader() {
             height="40"
           />
           <span className="flex flex-col leading-[1.05]">
-            <span className="whitespace-nowrap text-[.98rem] font-extrabold tracking-[-.03em] text-ink lowercase max-[359px]:text-[.9rem]">statement<span className="font-medium">studio</span></span>
+            <span className="whitespace-nowrap text-[.98rem] font-extrabold tracking-[-.03em] text-ink lowercase max-[359px]:text-[.9rem]">statement <span className="font-medium">studio</span></span>
             <span className="mt-1 hidden text-[.65rem] font-bold tracking-[.17em] text-slate uppercase min-[761px]:block">Admissions intelligence</span>
           </span>
         </Link>
