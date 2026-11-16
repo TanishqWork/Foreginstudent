@@ -136,7 +136,10 @@ export default function AccountPage() {
                 </>
               ) : (
                 <form className="grid gap-3" id="account-login-form" method="post" onSubmit={(event) => void handleSignIn(event)}>
-                  <button className={`${ui.button} min-h-[52px] w-full cursor-pointer border-navy/20 bg-white px-6 text-navy hover:bg-canvas disabled:cursor-wait disabled:opacity-60`} type="button" disabled={pending} onClick={handleGoogleSignIn}>Continue with Google</button>
+                  <button className={`${ui.button} min-h-[52px] w-full cursor-pointer border-navy/20 bg-white px-6 text-navy hover:bg-canvas disabled:cursor-wait disabled:opacity-60`} type="button" disabled={pending} onClick={handleGoogleSignIn}>
+                    <img src={`${import.meta.env.BASE_URL}assets/google-signin-g.svg`} alt="" width="20" height="20" className="size-5 shrink-0" aria-hidden="true" />
+                    <span>Continue with Google</span>
+                  </button>
                   <div className="my-1 flex items-center gap-3 text-[.7rem] text-muted"><span className="h-px flex-1 bg-navy/10" /><span>or use your email</span><span className="h-px flex-1 bg-navy/10" /></div>
                   <label className={labelClasses} htmlFor="account-email">Email address</label>
                   <input

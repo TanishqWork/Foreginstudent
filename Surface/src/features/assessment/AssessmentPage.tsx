@@ -11,9 +11,10 @@ import { useAuth } from '../account/auth-context'
 import { readAssessmentDraft, saveAssessmentDraft } from './draft'
 import DiagnosticResult from './diagnostic/DiagnosticResult'
 import { DiagnosticResponseError } from './diagnostic/response'
-import { FreeAssessmentError, startFreeAssessment, waitForFreeAssessment } from './api'
+import { FreeAssessmentError, getFreeAssessment, startFreeAssessment, waitForFreeAssessment } from './api'
 import type { DiagnosticResponse } from './diagnostic/types'
 import { rememberAssessmentId } from '../complete-report/session'
+import RecentAssessments from '../history/RecentAssessments'
 import ReviewLoader from './review-loader/ReviewLoader'
 import { preloadReviewLoader } from './review-loader/preload'
 
@@ -35,6 +36,7 @@ function AssessmentScreen({ initialPathway, embedded = false }: { initialPathway
   const navigate = useNavigate()
   const { session } = useAuth()
   const [searchParams] = useSearchParams()
+  const savedAssessmentId = searchParams.get('assessment')
   const headingRef = useRef<HTMLHeadingElement>(null)
   const statementRef = useRef<HTMLTextAreaElement>(null)
   const confirmationRef = useRef<HTMLDivElement>(null)
@@ -106,6 +108,27 @@ function AssessmentScreen({ initialPathway, embedded = false }: { initialPathway
     })
     return () => cancelAnimationFrame(frame)
   }, [embedded, searchParams])
+
+  useEffect(() => {
+    if (!embedded || !session || !savedAssessmentId) return
+    const controller = new AbortController()
+    void getFreeAssessment(savedAssessmentId, controller.signal).then((state) => {
+      if (controller.signal.aborted) return
+      setError('')
+      if (state.status === 'ready' && state.assessment) {
+        setGenerationSeconds(state.generation_seconds)
+        rememberAssessmentId(session.user.id, state.assessment_id)
+        setResult(state.assessment)
+      } else if (state.status === 'failed') {
+        setError(state.error ?? 'This saved assessment could not finish. You can run it again.')
+      } else {
+        setError('This assessment is still being reviewed. Check history again shortly.')
+      }
+    }).catch((cause: unknown) => {
+      if (!controller.signal.aborted) setError(cause instanceof Error ? cause.message : 'This saved assessment could not be opened.')
+    })
+    return () => controller.abort()
+  }, [embedded, savedAssessmentId, session])
 
   function updateContext(name: Exclude<keyof typeof context, 'pathway'>, value: string) {
     setContext((current) => ({ ...current, [name]: value }))
@@ -195,6 +218,7 @@ function AssessmentScreen({ initialPathway, embedded = false }: { initialPathway
       <meta name="description" content="Set your application context and paste your statement, then sign in to continue with Statement Studio." />
       {!embedded && <SiteHeader />}
       <main className={styles.shell} id="main" aria-labelledby="assessment-heading">
+          {embedded && <RecentAssessments />}
         <div className={styles.hero}>
           <div className={styles.intro}>
             <Link className={styles.back} to="/">Return to product overview</Link>

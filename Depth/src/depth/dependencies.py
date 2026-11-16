@@ -18,6 +18,7 @@ from depth.services.assessment_record_service import AssessmentRecordService
 from depth.services.auth_service import AuthService
 from depth.services.complete_report_record_service import CompleteReportRecordService
 from depth.services.health_service import HealthService
+from depth.services.history_service import HistoryService
 from depth.services.rate_limit_service import RateLimitService
 
 Db = Annotated[Session, Depends(get_db)]
@@ -58,6 +59,10 @@ def _complete_reports(db: Session) -> CompleteReportRecordService:
 
 def get_complete_report_records(db: Db) -> CompleteReportRecordService:
     return _complete_reports(db)
+
+
+def get_history_service(db: Db) -> HistoryService:
+    return HistoryService(db, AssessmentRepository(db), CompleteReportRepository(db))
 
 
 def get_complete_report_record_factory(request: Request):

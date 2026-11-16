@@ -49,6 +49,7 @@
 .reportToolbar { display: flex; justify-content: space-between; align-items: center; gap: 24px; padding: 28px 32px 20px; }
 .reportToolbar h2 { margin-bottom: 0; }
 .reportToolbar p { margin-top: 8px; color: var(--color-muted); font-size: .75rem; }
+.toolbarActions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 12px; }
 .page .copyStatus { min-height: 22px; padding: 0 32px 12px; color: var(--color-positive); font-size: .75rem; }
 .rawText { max-height: 72vh; margin: 0; padding: 32px; overflow: auto; border-top: 1px solid var(--color-line); background: var(--color-subtle); color: var(--color-ink); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: .8rem; line-height: 1.85; white-space: pre-wrap; overflow-wrap: anywhere; tab-size: 2; }
 .page .temporaryNote { margin-top: 24px; color: var(--color-muted); font-size: .78rem; }
@@ -71,6 +72,7 @@
   .panel, .unlockPanel { padding: 24px; }
   .unlockAction { padding: 24px; }
   .reportToolbar { align-items: flex-start; flex-direction: column; padding: 24px; }
+  .toolbarActions { justify-content: flex-start; width: 100%; }
   .page .copyStatus { padding-inline: 24px; }
   .rawText { padding: 24px; }
   .loading { padding: 24px; }

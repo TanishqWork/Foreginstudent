@@ -1,9 +1,10 @@
+from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session, defer
 
 from depth.models.assessment import Assessment
@@ -11,6 +12,38 @@ from depth.models.assessment import Assessment
 
 def _seconds(value: float | None) -> Decimal | None:
     return None if value is None else Decimal(str(value))
+
+
+@dataclass(frozen=True)
+class AssessmentHistoryRow:
+    id: UUID
+    status: str
+    created_at: datetime
+    generation_seconds: Decimal | None
+    error: str | None
+    overall_score: int | None
+    assessment_band: str | None
+    statement_type: str | None
+    degree: str | None
+    field: str | None
+    target_program: str | None
+    target_institution: str | None
+
+
+def _result_report_text(key: str):
+    return Assessment.result["report"][key].as_string()
+
+
+def _result_report_int(key: str):
+    return Assessment.result["report"][key].as_integer()
+
+
+def _result_context_text(key: str):
+    return Assessment.result["context"][key].as_string()
+
+
+def _input_text(key: str):
+    return Assessment.input[key].as_string()
 
 
 class AssessmentRepository:
@@ -56,3 +89,29 @@ class AssessmentRepository:
         return list(self.db.scalars(
             select(Assessment).where(Assessment.user_id == user_id).order_by(Assessment.created_at.desc()).limit(limit)
         ))
+
+    def list_history_for_user(self, user_id: UUID, limit: int = 50) -> list[AssessmentHistoryRow]:
+        rows = self.db.execute(
+            select(
+                Assessment.id,
+                Assessment.status,
+                Assessment.created_at,
+                Assessment.generation_seconds,
+                Assessment.error,
+                _result_report_int("overall_score").label("overall_score"),
+                _result_report_text("assessment_band").label("assessment_band"),
+                func.coalesce(
+                    _result_report_text("statement_type"),
+                    _result_context_text("statement_type"),
+                    _input_text("statement_type"),
+                ).label("statement_type"),
+                func.coalesce(_result_context_text("degree"), _input_text("degree")).label("degree"),
+                func.coalesce(_result_context_text("field"), _input_text("field")).label("field"),
+                func.coalesce(_result_context_text("target_program"), _input_text("target_program")).label("target_program"),
+                func.coalesce(_result_context_text("target_institution"), _input_text("target_institution")).label("target_institution"),
+            )
+            .where(Assessment.user_id == user_id)
+            .order_by(Assessment.created_at.desc())
+            .limit(limit)
+        )
+        return [AssessmentHistoryRow(*row) for row in rows]

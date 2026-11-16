@@ -4,8 +4,8 @@ import {
   CompleteReportError,
   generateCompleteReport,
   getCompleteReport,
-  mockUnlockCompleteReport,
   parseCompleteReportState,
+  purchaseCompleteReport,
 } from '../src/features/complete-report/api.ts'
 import { CompleteContentError, parseCompleteReportContent } from '../src/features/complete-report/response.ts'
 import { formatCompleteReport } from '../src/features/complete-report/format.ts'
@@ -31,6 +31,7 @@ test('parses every cached workflow state and preserves its canonical assessment'
     assert.equal(parsed.assessment.report.overall_score, completeFixture.assessment.report.overall_score)
     assert.equal(parsed.report?.report_version ?? null, state.report?.report_version ?? null)
     assert.equal(parsed.free_generation_seconds, 2.5)
+    assert.equal(parsed.remaining_successful_runs, state.remaining_successful_runs)
   }
 })
 
@@ -55,6 +56,13 @@ test('rejects invalid free and complete generation durations', () => {
       assert.throws(() => parseCompleteReportState({ ...cachedCompleteState(), [field]: duration }))
     }
   }
+})
+
+test('rejects invalid paid generation counts', () => {
+  for (const changes of [
+    { remaining_successful_runs: -1 }, { remaining_successful_runs: 1.5 }, { remaining_successful_runs: '1' },
+    { successful_runs: -1 }, { max_successful_runs: 0 }, { max_successful_runs: '2' },
+  ]) assert.throws(() => parseCompleteReportState({ ...cachedCompleteState(), ...changes }))
 })
 
 test('the structured report includes all eleven required analytical groups', () => {
@@ -205,15 +213,15 @@ test('fetches encoded assessment IDs using the existing signed-in credentials', 
   assert.equal(calls[0].options.cache, 'no-store')
 })
 
-test('mock unlock POST returns the same structured metadata envelope', async (t) => {
+test('purchase POST returns the same structured metadata envelope', async (t) => {
   const id = 'assessment/with space'
   t.mock.method(globalThis, 'fetch', async (url, options) => {
-    assert.equal(url, `/api/assessments/${encodeURIComponent(id)}/mock-unlock`)
+    assert.equal(url, `/api/assessments/${encodeURIComponent(id)}/complete/purchase`)
     assert.equal(options.method, 'POST')
     assert.equal(options.credentials, 'include')
     return jsonResponse(cachedCompleteState('unlocked', id))
   })
-  assert.equal((await mockUnlockCompleteReport(id)).status, 'unlocked')
+  assert.equal((await purchaseCompleteReport(id)).status, 'unlocked')
 })
 
 for (const status of [401, 403, 404, 409, 422, 502]) {

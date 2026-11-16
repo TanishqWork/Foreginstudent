@@ -5,7 +5,6 @@ import { brandLogoPath } from '../../../brand'
 import { useAuth } from '../../account/auth-context'
 
 const navigationItems = [
-  { label: 'Dashboard', to: '/dashboard', description: 'Open your assessment dashboard' },
   { label: 'Pathways', to: '/#pathways', description: 'Choose the right review track' },
   { label: 'How it works', to: '/methodology', description: 'See how each finding is supported' },
   { label: 'Sample report', to: '/sample-report', description: 'Explore a complete assessment example' },
@@ -78,6 +77,9 @@ export default function SiteHeader() {
   const currentSection = `${location.pathname}${location.hash}`
   const isCurrentSection = (to: string) => currentSection === to ||
     (to === '/sample-report' && location.pathname.startsWith('/sample-report/'))
+  const accountAction = session
+    ? { label: 'Dashboard', to: '/dashboard' }
+    : { label: 'Sign in', to: '/account' }
 
   return (
     <>
@@ -110,7 +112,7 @@ export default function SiteHeader() {
               {item.label}
             </Link>
           ))}
-          <Link className={desktopLinkClasses} to="/account" aria-current={isCurrentSection('/account') ? 'location' : undefined}>{session ? 'My account' : 'Sign in'}</Link>
+          <Link className={desktopLinkClasses} to={accountAction.to} aria-current={isCurrentSection(accountAction.to) ? 'location' : undefined}>{accountAction.label}</Link>
         </nav>
 
         <div className="flex items-center justify-end gap-3">
@@ -168,7 +170,7 @@ export default function SiteHeader() {
           </div>
           <div className="grid grid-cols-2 gap-2">
             <Link className={utilityLinkClasses} to="/pricing" onClick={() => closeMenu()}>Expert review</Link>
-            <Link className={utilityLinkClasses} to="/account" aria-current={isCurrentSection('/account') ? 'location' : undefined} onClick={() => closeMenu()}>{session ? 'My account' : 'Sign in'}</Link>
+            <Link className={utilityLinkClasses} to={accountAction.to} aria-current={isCurrentSection(accountAction.to) ? 'location' : undefined} onClick={() => closeMenu()}>{accountAction.label}</Link>
           </div>
           <Link className={`flex min-h-[54px] items-center justify-between rounded-2xl bg-accent px-[18px] text-[.88rem] font-bold text-white no-underline shadow-action transition-colors hover:bg-accent-dark ${focusClasses}`} to="/assessment" onClick={() => closeMenu()}>
             <span>Review my draft free</span><i className="text-base not-italic" aria-hidden="true">↗</i>

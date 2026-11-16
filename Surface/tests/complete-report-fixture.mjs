@@ -10,6 +10,9 @@ export function cachedCompleteState(status = 'ready', id = completeFixture.asses
   value.report = status === 'ready' ? value.report : null
   value.generation_seconds = status === 'ready' ? 1.25 : null
   value.free_generation_seconds = 2.5
+  value.remaining_successful_runs = status === 'locked' ? 0 : 1
+  value.successful_runs = status === 'ready' ? 1 : 0
+  value.max_successful_runs = status === 'locked' ? null : 2
   value.error = status === 'failed' ? 'The report could not finish.' : null
   return value
 }

@@ -39,6 +39,12 @@ export function parseCompleteReportState(value: unknown, expectedAssessmentId?: 
   let assessment
   try { assessment = parseDiagnosticResponse(row.assessment) } catch { invalidResponse() }
   if (assessment.report.assessment_id !== row.assessment_id) invalidResponse()
+  const remaining = row.remaining_successful_runs
+  const successful = row.successful_runs
+  const max = row.max_successful_runs
+  if (typeof remaining !== 'number' || !Number.isInteger(remaining) || remaining < 0) invalidResponse()
+  if (typeof successful !== 'number' || !Number.isInteger(successful) || successful < 0) invalidResponse()
+  if (max !== null && (typeof max !== 'number' || !Number.isInteger(max) || max < 1)) invalidResponse()
   return {
     assessment_id: row.assessment_id,
     status,
@@ -46,6 +52,9 @@ export function parseCompleteReportState(value: unknown, expectedAssessmentId?: 
     report,
     generation_seconds: optionalSeconds(row.generation_seconds),
     free_generation_seconds: optionalSeconds(row.free_generation_seconds),
+    remaining_successful_runs: remaining,
+    successful_runs: successful,
+    max_successful_runs: max,
     error: row.error,
   }
 }
@@ -54,7 +63,7 @@ function requestFailure(status: number): CompleteReportError {
   const message = status === 401 ? 'Sign in to continue with your report.'
     : status === 404 ? 'This assessment is no longer available. Run a free assessment to start again.'
       : status === 409 ? 'Your complete report is already being generated.'
-        : status === 403 ? 'Unlock this assessment before generating its complete report.'
+        : status === 403 ? 'Purchase this assessment before generating its complete report, or use an existing paid generation.'
           : status === 422 ? 'This assessment needs more information before a complete report can be generated.'
             : 'The complete report could not finish. Please try again.'
   return new CompleteReportError(message, status)
@@ -90,8 +99,8 @@ export async function getCompleteReport(assessmentId: string, signal?: AbortSign
   return stateResponse(await request(assessmentId, 'complete', 'GET', signal), assessmentId)
 }
 
-export async function mockUnlockCompleteReport(assessmentId: string, signal?: AbortSignal): Promise<CompleteReportState> {
-  return stateResponse(await request(assessmentId, 'mock-unlock', 'POST', signal), assessmentId)
+export async function purchaseCompleteReport(assessmentId: string, signal?: AbortSignal): Promise<CompleteReportState> {
+  return stateResponse(await request(assessmentId, 'complete/purchase', 'POST', signal), assessmentId)
 }
 
 export async function generateCompleteReport(assessmentId: string, signal?: AbortSignal): Promise<CompleteReportState> {

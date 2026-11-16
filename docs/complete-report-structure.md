@@ -1,15 +1,17 @@
 # Structured complete report
 
-The flow is **free assessment → complete report → mock checkout → generate report**.
-Checkout is simulated and charges no money. The free assessment is loaded from
-`public.assessments`; unlock, generation status, and the report are stored in
-`public.complete_reports` (see Timing and saved state).
+The flow is **free assessment → complete report purchase → generate report**.
+For now the purchase endpoint marks a $29 paid entitlement; payment-provider
+verification is the next integration step. The free assessment is loaded from
+`public.assessments`; purchase metadata, paid access, generation attempts, and
+successful reports are stored in `public.purchases`,
+`public.complete_report_entitlements`, and `public.complete_report_attempts`.
 
 ## Response contract
 
-All complete-report GET, unlock, and generation endpoints return the same JSON
+All complete-report GET, purchase, and generation endpoints return the same JSON
 state: `assessment_id`, lifecycle `status`, canonical free `assessment`, nullable
-structured `report`, `generation_seconds`, `free_generation_seconds`, and `error`.
+structured `report`, generation durations, remaining paid generations, and `error`.
 The model returns report content only. The backend supplies the saved assessment
 and measured durations. Scores, nulls, exclusions, prompt verdicts, confidence,
 and the provisional assessment status remain tied to that original baseline.
@@ -56,7 +58,7 @@ Every statement in the dialog comes from the student's own result: score,
 weakest category, and riskiest sentence (or main concern). There is no
 countdown: free assessments are saved, so a deletion deadline would be untrue.
 The call to action opens `/dashboard/complete-report?assessment=<id>&checkout=1`,
-which opens the mock checkout once while the assessment is locked. After the
+which opens the purchase dialog once while the assessment is locked. After the
 dialog is closed, a small floating link stays visible until the locked-preview
 section is on screen.
 
@@ -96,17 +98,17 @@ with the existing state when the report is already ready). The page then polls
 `GET /complete` every 4 seconds until the status is `ready` or `failed`. Each OpenAI
 call may take 420 seconds and the whole job, including one repair, 600 seconds.
 Stopping the API cancels running jobs and marks them failed. Errors preserve the
-mock unlock for a retry.
-Ready results are reused without another model request. API responses disable
-HTTP caching. Each report is one `public.complete_reports` row (no row = locked;
-`unlocked` → `generating` → `ready` | `failed`). Starting a run is one atomic
-UPDATE, so duplicate clicks and several API processes start a single run; a run
-saves its result only while its `started_at` still matches. A row left
-`generating` for 660 seconds (after a crash or restart) is marked failed on the
-next read. Reports survive restarts and reopen from the database.
-Failed attempts retain the unlock and show their measured duration. An explicitly
-incomplete report has a Retry full report action, and baseline-review notices
-remain explicit.
+paid access for a retry.
+API responses disable HTTP caching. Paid access is split across
+`public.purchases`, `public.complete_report_entitlements`, and
+`public.complete_report_attempts`: one purchase creates one entitlement with two
+successful detailed generations, and each AI run is stored as its own attempt.
+Failed attempts keep safe error metadata and do not count against the limit.
+Successful ready attempts store the detailed report JSON once. A generating
+attempt left running for 660 seconds (after a crash or restart) is marked failed
+on the next read. Reports survive restarts and reopen from the database.
+An explicitly incomplete report has a Retry full report action without consuming
+paid access, and baseline-review notices remain explicit.
 
 ## Checks
 
@@ -132,7 +134,7 @@ from the sum of server generation times; checkout and navigation add overhead.
 Final checks passed: 98 focused backend tests, 49 frontend tests, frontend lint,
 the production build, and `git diff --check`.
 
-The corrected build completed the full signed-in form, mock checkout, structured
+The corrected build completed the full signed-in form, purchase dialog, structured
 generation, Copy report, and sidebar reopening flow using the fictional MPH
 sample (285 words, 15 sentences, five paragraphs).
 
@@ -142,7 +144,7 @@ sample (285 words, 15 sentences, five paragraphs).
 | Free endpoint processing header | 134.241 seconds |
 | Structured complete report | 192.2 seconds |
 | Combined generation time shown in the report | 326.3 seconds (5 minutes 26 seconds) |
-| Approximate form submission to result, including test navigation and mock checkout | 369.7 seconds (6 minutes 10 seconds) |
+| Approximate form submission to result, including test navigation and purchase dialog | 369.7 seconds (6 minutes 10 seconds) |
 
 The form-to-result estimate uses browser submission/button timestamps plus the
 server's final generation duration, excluding the later copy/reopen checks.
@@ -164,5 +166,6 @@ literal markup as text. No injected markup element appeared.
 An earlier timing trial found a blank adjustment explanation and a dropped
 connection during repair (146.0 seconds for free; 178.0 seconds for the failed
 report attempt). The provider schema and runtime prompt now prevent that empty
-field. Failure preserved the original score and mock unlock and displayed its
-duration. The successful timings above come from the corrected fresh run.
+field. Failure preserved the original score and paid access and displayed its
+duration without consuming one of the two successful generations. The successful
+timings above come from the corrected fresh run.

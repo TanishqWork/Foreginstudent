@@ -73,5 +73,7 @@ export type CompleteReportContent = {
 export type CompleteReportStatus = 'locked' | 'unlocked' | 'generating' | 'ready' | 'failed'
 export type CompleteReportState = {
   assessment_id: string; status: CompleteReportStatus; assessment: DiagnosticResponse; report: CompleteReportContent | null
-  generation_seconds: number | null; free_generation_seconds: number | null; error: string | null
+  generation_seconds: number | null; free_generation_seconds: number | null
+  remaining_successful_runs: number; successful_runs: number; max_successful_runs: number | null
+  error: string | null
 }

@@ -39,6 +39,8 @@ class MemoryReports:
 
     def __init__(self):
         self.sources, self.rows = {}, {}
+        self.max_runs = {}
+        self.successful_counts = {}
 
     def add(self, source, owner=OWNER):
         self.sources[(source.assessment.report.assessment_id, owner)] = source
@@ -51,37 +53,52 @@ class MemoryReports:
             return None
         row = self.rows.get(assessment_id)
         if row and row["status"] == "generating" and row["started_at"] < utcnow() - timedelta(seconds=stale_after_seconds):
-            self.fail(assessment_id, row["started_at"], INTERRUPTED_MESSAGE, None)
+            self.fail(row["attempt_id"], row["started_at"], INTERRUPTED_MESSAGE, None, "interrupted")
+        successful = self.successful_counts.get(assessment_id, 0)
+        max_runs = self.max_runs.get(assessment_id)
+        remaining = 0 if max_runs is None else max(max_runs - successful, 0)
         if row is None:
-            return LoadedReport(source, None)
-        return LoadedReport(source, ReportRecord(row["status"], row["report"], row["error"], row["seconds"], row["started_at"]))
+            return LoadedReport(source, None, remaining, successful, max_runs)
+        return LoadedReport(source, ReportRecord(
+            row["status"], row.get("attempt_id"), row["report"], row["error"], row.get("failure_kind"), row["seconds"], row["started_at"],
+        ), remaining, successful, max_runs)
 
-    def unlock(self, assessment_id, owner_id, model):
+    def mark_paid(self, assessment_id, owner_id):
+        self.max_runs.setdefault(assessment_id, 2)
         self.rows.setdefault(assessment_id, {"owner": owner_id, "status": "unlocked", "report": None, "error": None,
-                                             "seconds": None, "started_at": None, "model": model})
+                                             "failure_kind": None, "seconds": None, "started_at": None, "model": "gpt-5",
+                                             "counts": False, "attempt_id": None, "assessment_id": assessment_id})
 
-    def claim(self, assessment_id, owner_id):
+    def claim(self, assessment_id, owner_id, model):
         row = self.rows.get(assessment_id)
-        retryable = row and (row["status"] in ("unlocked", "failed") or (
-            row["status"] == "ready" and row["report"].report_status == "incomplete"))
+        successful = self.successful_counts.get(assessment_id, 0)
+        retryable = row and row["status"] in ("unlocked", "failed", "ready") and successful < self.max_runs.get(assessment_id, 0)
         if not retryable or row["owner"] != owner_id:
             return None
         started_at = utcnow()
-        row.update(status="generating", started_at=started_at, report=None, error=None, seconds=None)
-        return started_at
+        attempt_id = str(uuid4())
+        row.update(status="generating", started_at=started_at, report=None, error=None, failure_kind=None, seconds=None,
+                   attempt_id=attempt_id, counts=False, model=model)
+        return attempt_id, started_at
 
-    def _finish_run(self, assessment_id, started_at, **values):
-        row = self.rows.get(assessment_id)
+    def _finish_run(self, attempt_id, started_at, **values):
+        row = next((item for item in self.rows.values() if item.get("attempt_id") == attempt_id), None)
         if row is None or row["status"] != "generating" or row["started_at"] != started_at:
             return False
         row.update(values)
         return True
 
-    def finish(self, assessment_id, started_at, report, seconds):
-        return self._finish_run(assessment_id, started_at, status="ready", report=report, error=None, seconds=seconds)
+    def finish(self, attempt_id, started_at, report, seconds):
+        row = next((item for item in self.rows.values() if item.get("attempt_id") == attempt_id), None)
+        changed = self._finish_run(attempt_id, started_at, status="ready", report=report, error=None, failure_kind=None,
+                                   seconds=seconds, counts=report.report_status != "incomplete")
+        if changed and row is not None and report.report_status != "incomplete":
+            self.successful_counts[row["assessment_id"]] = self.successful_counts.get(row["assessment_id"], 0) + 1
+        return changed
 
-    def fail(self, assessment_id, started_at, error, seconds):
-        return self._finish_run(assessment_id, started_at, status="failed", report=None, error=error, seconds=seconds)
+    def fail(self, attempt_id, started_at, error, seconds, failure_kind):
+        return self._finish_run(attempt_id, started_at, status="failed", report=None, error=error,
+                                failure_kind=failure_kind, seconds=seconds, counts=False)
 
     def factory(self):
         @contextmanager
@@ -94,7 +111,7 @@ def unlocked(needs_input=False):
     reports = MemoryReports()
     source = reports.add(make_source(ID, needs_input=needs_input))
     if not needs_input:
-        reports.unlock(ID, OWNER, "gpt-5")
+        reports.mark_paid(ID, OWNER)
     return reports, source
 
 
@@ -121,11 +138,11 @@ def test_state_unlock_and_ownership():
     state = complete_report_service.complete_report_state(ID, OWNER, reports)
     assert state.status == "locked" and state.report is None and state.free_generation_seconds == 12.5
     assert state.assessment == source.assessment
-    for _ in range(2):  # Unlocking twice keeps one row.
-        assert complete_report_service.mock_unlock(ID, OWNER, reports).status == "unlocked"
+    for _ in range(2):  # Paying twice keeps one entitlement.
+        assert complete_report_service.mark_paid(ID, OWNER, reports).status == "unlocked"
     assert len(reports.rows) == 1
     for owner, assessment_id in [("owner-2", ID), (OWNER, "missing")]:
-        for action in [complete_report_service.complete_report_state, complete_report_service.mock_unlock]:
+        for action in [complete_report_service.complete_report_state, complete_report_service.mark_paid]:
             with pytest.raises(AssessmentError, match="not_found"):
                 action(assessment_id, owner, reports)
 
@@ -148,7 +165,7 @@ def test_only_starting_a_report_loads_the_statement(monkeypatch):
 def test_locked_and_needs_input_cannot_generate():
     reports, _ = unlocked(needs_input=True)
     with pytest.raises(AssessmentError, match="needs_input"):
-        complete_report_service.mock_unlock(ID, OWNER, reports)
+        complete_report_service.mark_paid(ID, OWNER, reports)
     with pytest.raises(AssessmentError, match="needs_input"):
         asyncio.run(start_and_wait(reports))
     locked = MemoryReports()
@@ -184,9 +201,11 @@ def test_start_returns_generating_then_saves_the_report_built_from_the_saved_ass
     assert data["paragraphs"][0]["sentence_ids"] == ["s1", "s2", "s3"]
     assert len(data["rubric_dimensions"]) == len(source.assessment.report.dimensions)
     assert all(len(item["checkpoints"]) == 4 for item in data["rubric_dimensions"])
-    # A ready report is returned as saved, without another model call.
-    again, _ = asyncio.run(start_and_wait(reports))
-    assert again == finished and len(calls) == 1
+    assert finished.remaining_successful_runs == 1
+    _, second = asyncio.run(start_and_wait(reports))
+    assert second.status == "ready" and second.remaining_successful_runs == 0 and len(calls) == 2
+    with pytest.raises(AssessmentError, match="exhausted"):
+        asyncio.run(start_and_wait(reports))
 
 
 def test_a_second_start_while_generating_is_rejected_before_any_model_call(monkeypatch):
@@ -223,7 +242,7 @@ def test_failure_keeps_the_unlock_and_allows_retry(monkeypatch, caplog, failure)
         raise failure
     use_model(monkeypatch, fail)
     _, state = asyncio.run(start_and_wait(reports))
-    assert state.status == "failed" and state.report is None and "mock unlock is kept" in state.error
+    assert state.status == "failed" and state.report is None and "paid access was not used" in state.error
     assert "private-provider-sentinel" not in caplog.text + state.error
     async def succeed(count, kwargs):
         return draft_of(example_complete_report(source)).model_dump_json()
@@ -249,7 +268,7 @@ def test_shutdown_marks_the_run_failed_and_it_can_restart(monkeypatch):
         assert not tasks
     asyncio.run(scenario())
     assert reports.rows[ID]["status"] == "failed" and "interrupted" in reports.rows[ID]["error"]
-    assert reports.claim(ID, OWNER) is not None
+    assert reports.claim(ID, OWNER, "gpt-5") is not None
 
 
 def test_wall_timeout_leaves_a_retryable_failure(monkeypatch):
@@ -264,13 +283,14 @@ def test_wall_timeout_leaves_a_retryable_failure(monkeypatch):
 
 def test_a_run_lost_to_a_restart_is_marked_failed_when_read_and_cannot_overwrite_a_newer_run():
     reports, source = unlocked()
-    old_start = reports.claim(ID, OWNER) - timedelta(seconds=complete_report_service.COMPLETE_REPORT_STALE_SECONDS + 1)
+    old_attempt, started = reports.claim(ID, OWNER, "gpt-5")
+    old_start = started - timedelta(seconds=complete_report_service.COMPLETE_REPORT_STALE_SECONDS + 1)
     reports.rows[ID]["started_at"] = old_start
     state = complete_report_service.complete_report_state(ID, OWNER, reports)
     assert state.status == "failed" and "interrupted" in state.error
-    assert reports.claim(ID, OWNER) is not None
+    assert reports.claim(ID, OWNER, "gpt-5") is not None
     # The old run finishing late is ignored; only the current run may save.
-    assert reports.finish(ID, old_start, example_complete_report(source), 1.0) is False
+    assert reports.finish(old_attempt, old_start, example_complete_report(source), 1.0) is False
     assert reports.rows[ID]["status"] == "generating"
 
 
@@ -390,10 +410,11 @@ def test_incomplete_report_is_saved_honestly_and_can_be_retried(monkeypatch):
     assert first.report.coverage.unreviewed_sentence_ids == ["s5"]
     _, second = asyncio.run(start_and_wait(reports))
     _, third = asyncio.run(start_and_wait(reports))
-    assert second == third and second.report.report_status == "ready" and len(calls) == 2
+    assert second.report.report_status == "ready" and third.report.report_status == "ready"
+    assert third.remaining_successful_runs == 0 and len(calls) == 3
 
 
-def test_review_required_report_is_kept_without_automatic_regeneration(monkeypatch):
+def test_review_required_report_counts_as_a_successful_generation(monkeypatch):
     reports, source = unlocked()
     report = example_complete_report(source)
     report.report_status = "review_required"
@@ -404,7 +425,9 @@ def test_review_required_report_is_kept_without_automatic_regeneration(monkeypat
     calls = use_model(monkeypatch, respond)
     _, first = asyncio.run(start_and_wait(reports))
     _, second = asyncio.run(start_and_wait(reports))
-    assert first == second and second.report.report_status == "review_required" and len(calls) == 1
+    assert first.report.report_status == "review_required"
+    assert second.report.report_status == "review_required"
+    assert second.remaining_successful_runs == 0 and len(calls) == 2
 
 
 def test_record_services_roll_back_and_hide_database_errors(caplog):
@@ -432,10 +455,10 @@ def test_record_services_roll_back_and_hide_database_errors(caplog):
     session = Session()
     reports = CompleteReportRecordService(session, Broken())
     with pytest.raises(OperationalError):
-        reports.claim(str(uuid4()), str(uuid4()))
+        reports.claim(str(uuid4()), str(uuid4()), "gpt-5")
     assert session.rolled_back and not session.committed
     assert reports.finish(str(uuid4()), utcnow(), example_complete_report(source), 1.0) is False
-    assert reports.fail("not-a-uuid", utcnow(), "x", None) is False
+    assert reports.fail("not-a-uuid", utcnow(), "x", None, "ai_error") is False
     assert "private-statement-sentinel" not in caplog.text and "OperationalError" in caplog.text
 
 
@@ -444,7 +467,7 @@ def test_record_services_roll_back_and_hide_database_errors(caplog):
 
 def app_for(reports, owner):
     app = FastAPI()
-    app.state.settings = object()
+    app.state.settings = SimpleNamespace()
     app.state.background_tasks = set()
     register_exception_handlers(app)
     app.include_router(router)
@@ -475,7 +498,7 @@ def test_http_flow_headers_polling_and_owner_enforcement(monkeypatch):
         assert response.headers["cache-control"] == "no-store"
         assert client.post(f"/api/assessments/{ID}/complete").status_code == 403
         for _ in range(2):
-            response = client.post(f"/api/assessments/{ID}/mock-unlock")
+            response = client.post(f"/api/assessments/{ID}/complete/purchase")
             assert response.status_code == 200 and response.json()["status"] == "unlocked"
         started = client.post(f"/api/assessments/{ID}/complete")
         assert started.status_code == 202 and started.json()["status"] == "generating" and started.json()["report"] is None
@@ -483,13 +506,17 @@ def test_http_flow_headers_polling_and_owner_enforcement(monkeypatch):
         assert started.headers["cache-control"] == "no-store" and "x-generation-seconds" not in started.headers
         state = wait_for_report(client, ID)
         assert state["status"] == "ready" and state["report"]["report_version"] == "complete-report.v1"
+        assert state["remaining_successful_runs"] == 1
         assert state["assessment"] == source.assessment.model_dump()
         again = client.post(f"/api/assessments/{ID}/complete")
-        assert again.status_code == 200 and again.json() == state
-        assert float(again.headers["x-generation-seconds"]) >= 0
-        assert len(calls) == 1
+        assert again.status_code == 202 and again.json()["status"] == "generating"
+        second = wait_for_report(client, ID)
+        assert second["remaining_successful_runs"] == 0
+        exhausted = client.post(f"/api/assessments/{ID}/complete")
+        assert exhausted.status_code == 403
+        assert len(calls) == 2
         owner[0] = "owner-2"
-        for method, suffix in [(client.get, "complete"), (client.post, "mock-unlock"), (client.post, "complete")]:
+        for method, suffix in [(client.get, "complete"), (client.post, "complete/purchase"), (client.post, "complete")]:
             denied = method(f"/api/assessments/{ID}/{suffix}")
             missing = method(f"/api/assessments/missing/{suffix}")
             assert denied.status_code == missing.status_code == 404
@@ -505,13 +532,13 @@ def test_http_needs_input_failure_conflict_and_authentication(monkeypatch):
         raise LLMError("private-provider-detail")
     use_model(monkeypatch, fail)
     with TestClient(app) as client:
-        assert client.post("/api/assessments/needs-input/mock-unlock").status_code == 422
+        assert client.post("/api/assessments/needs-input/complete/purchase").status_code == 422
         assert client.post("/api/assessments/needs-input/complete").status_code == 422
-        client.post(f"/api/assessments/{ID}/mock-unlock")
+        client.post(f"/api/assessments/{ID}/complete/purchase")
         assert client.post(f"/api/assessments/{ID}/complete").status_code == 202
         state = wait_for_report(client, ID)
         assert state["status"] == "failed" and "private-provider-detail" not in json.dumps(state)
-        reports.claim(ID, OWNER)  # A run is already in progress.
+        reports.claim(ID, OWNER, "gpt-5")  # A run is already in progress.
         response = client.post(f"/api/assessments/{ID}/complete")
         assert response.status_code == 409 and response.headers["cache-control"] == "no-store"
         def unauthorized():

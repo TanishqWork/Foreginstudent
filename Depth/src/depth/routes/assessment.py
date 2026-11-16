@@ -6,15 +6,17 @@ from fastapi import APIRouter, Depends, Request, Response
 from depth.controllers import assessment_controller, auth_controller, complete_report_controller
 from depth.dependencies import (
     get_assessment_record_factory, get_assessment_records, get_auth_service, get_background_tasks,
-    get_complete_report_record_factory, get_complete_report_records,
+    get_complete_report_record_factory, get_complete_report_records, get_history_service,
 )
 from depth.models.auth_session import AuthSession
 from depth.schemas.assessment import AssessmentRequest
 from depth.schemas.free_assessment import FreeAssessmentState
 from depth.schemas.complete_report import CompleteReportState
+from depth.schemas.history import AssessmentHistoryResponse, CompleteReportHistoryResponse
 from depth.services.assessment_record_service import AssessmentRecordService
 from depth.services.auth_service import AuthService
 from depth.services.complete_report_record_service import CompleteReportRecordService
+from depth.services.history_service import HistoryService
 
 router = APIRouter(prefix="/api/assessments", tags=["assessments"])
 
@@ -29,6 +31,7 @@ RunningTasks = Annotated[set[asyncio.Task], Depends(get_background_tasks)]
 RecordFactory = Annotated[object, Depends(get_assessment_record_factory)]
 Reports = Annotated[CompleteReportRecordService, Depends(get_complete_report_records)]
 ReportFactory = Annotated[object, Depends(get_complete_report_record_factory)]
+History = Annotated[HistoryService, Depends(get_history_service)]
 
 
 @router.post("/free", response_model=FreeAssessmentState, status_code=202)
@@ -39,6 +42,18 @@ async def start_free(
     """Saves a `generating` assessment, starts the model, and returns at once; poll GET /{id}/free for the result."""
     response.headers["Cache-Control"] = "no-store"
     return await assessment_controller.start(body, request.app.state.settings, str(session.user_id), records, record_factory, tasks)
+
+
+@router.get("/history", response_model=AssessmentHistoryResponse)
+def assessment_history(response: Response, session: CurrentSession, history: History) -> AssessmentHistoryResponse:
+    response.headers["Cache-Control"] = "no-store"
+    return history.assessments_history(str(session.user_id))
+
+
+@router.get("/complete/history", response_model=CompleteReportHistoryResponse)
+def complete_report_history(response: Response, session: CurrentSession, history: History) -> CompleteReportHistoryResponse:
+    response.headers["Cache-Control"] = "no-store"
+    return history.complete_reports_history(str(session.user_id))
 
 
 @router.get("/{assessment_id}/free", response_model=FreeAssessmentState)
@@ -53,10 +68,10 @@ def complete_state(assessment_id: str, response: Response, session: CurrentSessi
     return complete_report_controller.get(assessment_id, str(session.user_id), reports)
 
 
-@router.post("/{assessment_id}/mock-unlock", response_model=CompleteReportState)
-def mock_unlock(assessment_id: str, response: Response, session: CurrentSession, reports: Reports) -> CompleteReportState:
+@router.post("/{assessment_id}/complete/purchase", response_model=CompleteReportState)
+def purchase_complete_report(assessment_id: str, response: Response, session: CurrentSession, reports: Reports) -> CompleteReportState:
     response.headers["Cache-Control"] = "no-store"
-    return complete_report_controller.unlock(assessment_id, str(session.user_id), reports)
+    return complete_report_controller.mark_paid(assessment_id, str(session.user_id), reports)
 
 
 @router.post("/{assessment_id}/complete", response_model=CompleteReportState)

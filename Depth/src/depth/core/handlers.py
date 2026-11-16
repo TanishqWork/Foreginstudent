@@ -26,9 +26,11 @@ def register_exception_handlers(app: FastAPI) -> None:
     async def assessment_error(request: Request, error: AssessmentError):
         errors = {
             "not_found": (404, "This assessment is unavailable. Run a new free assessment."),
-            "locked": (403, "Use the mock unlock before generating this report."),
+            "locked": (403, "Purchase this complete report before generating it."),
             "generating": (409, "This report is already generating. Wait for it to finish."),
             "needs_input": (422, "Complete the free assessment inputs before unlocking a report."),
+            "exhausted": (403, "This purchase has no complete report generations remaining."),
+            "already_unlocked": (409, "This complete report is already unlocked."),
         }
         code, detail = errors[error.code]
         return JSONResponse(status_code=code, content={"detail": detail}, headers={"Cache-Control": "no-store"})

@@ -273,33 +273,35 @@ Focused provider-mocked tests need no database:
 .venv\Scripts\python.exe -m pytest tests/test_assessment.py tests/test_complete_report.py tests/test_complete_report_validation.py tests/test_llm.py -q -p no:cacheprovider
 ```
 
-## Complete report prototype
+## Complete report
 
 The authenticated complete-report endpoints load the owner's saved free
-assessment from `public.assessments`; other users receive 404. Mock unlock charges no money. Generation uses GPT-5 and the adapted
-`src/depth/prompts/complete-report-structured.md` prompt. GET, unlock, and generation
-return one JSON state with the canonical free assessment and a typed report.
+assessment from `public.assessments`; other users receive 404. A $29 complete-report
+purchase creates paid access for two successful detailed generations on that
+assessment. Generation uses GPT-5 and the adapted
+`src/depth/prompts/complete-report-structured.md` prompt. GET, purchase, and
+generation return one JSON state with the canonical free assessment, remaining
+paid generations, and a typed report when available.
 All eleven analytical groups use reusable rows without fixed finding counts.
 Validation checks baseline consistency, exact source references, and completeness.
 The model writes only the analysis, in the `DraftCompleteReport` schema (`schemas/complete_report_draft.py`). Fields that would only repeat the saved free assessment or the statement (baseline scores, labels, checkpoint ratings, prompt-requirement text and verdicts, limit compliance, sentence and paragraph text, coverage, report_version) are not requested; `services/complete_report_assembly.py` fills them from saved data, and an evidence quote that is not in its cited sentence becomes the whole sentence. Validation then checks the analysis: row coverage and order, references, quotes, finding IDs, dispositions, and completeness. A failure inside one section is repaired by regenerating only that section (up to two section repairs, with the rest of the report as context); the whole report is regenerated once only when the draft is unusable or a problem spans sections.
 Responses include measured free and complete generation durations.
 
-Report state is stored in `public.complete_reports` (migration `0008_complete_reports`),
-one row per unlocked assessment: `assessment_id` (primary key and foreign key to
-`assessments`), `user_id`, `status`, `report` (JSONB), `error`, `model`,
-`started_at`, `generation_seconds`, `created_at`, and `updated_at`. No row means
-locked; mock unlock inserts an `unlocked` row (idempotent). `POST /complete`
-claims the row with one atomic UPDATE (`unlocked`, `failed`, or an incomplete
-`ready` report becomes `generating`), so double clicks or several API processes
-start a single run. It returns `202` at once; the model runs in a background task
-that saves `ready` with the report or `failed` with a safe message through its own
-database session, and clients poll `GET /complete`. A run's result is saved only
-if `started_at` still matches, so a late run can never overwrite a newer one.
-Stopping the API marks running reports failed; a row still `generating` 660
-seconds after it started (the 600-second job deadline plus margin) is marked
-failed on the next read. The unlock is always kept, so a failed run is retried
-without paying again. Each run reads the statement and free assessment from the
-owner's `ready` row in `public.assessments` and validates the report against it.
+Paid state is stored in `public.purchases`, `public.complete_report_entitlements`,
+and `public.complete_report_attempts` (migration
+`0009_paid_complete_report_attempts`). `purchases` holds generic payment metadata,
+`complete_report_entitlements` points one paid purchase at one assessment with
+`max_successful_runs = 2`, and `complete_report_attempts` stores each AI generation
+try. Failed attempts store only safe error metadata and do not count against the
+paid limit; successful ready reports store the report JSON once on the attempt.
+`POST /complete/purchase` marks the paid entitlement for now, and `POST /complete`
+creates a `generating` attempt only when paid access remains. Clients poll
+`GET /complete`. A run's result is saved only if its attempt id and `started_at`
+still match, so a late run can never overwrite a newer one. Stopping the API marks
+running attempts failed; an attempt still `generating` 660 seconds after it started
+(the 600-second job deadline plus margin) is marked failed on the next read. Each
+run reads the statement and free assessment from the owner's `ready` row in
+`public.assessments` and validates the report against it.
 The API prints its own INFO logs without statement or report text: each stage of
 a free assessment and complete report (`generation started`, `OpenAI response` with
 `elapsed_seconds`, `output_tokens`, and `reasoning_tokens`, `check failed` with a

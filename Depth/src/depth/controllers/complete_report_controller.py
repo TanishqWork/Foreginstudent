@@ -10,8 +10,8 @@ def get(assessment_id: str, owner_id: str, reports: CompleteReportRecordService)
     return complete_report_service.complete_report_state(assessment_id, owner_id, reports)
 
 
-def unlock(assessment_id: str, owner_id: str, reports: CompleteReportRecordService) -> CompleteReportState:
-    return complete_report_service.mock_unlock(assessment_id, owner_id, reports)
+def mark_paid(assessment_id: str, owner_id: str, reports: CompleteReportRecordService) -> CompleteReportState:
+    return complete_report_service.mark_paid(assessment_id, owner_id, reports)
 
 
 async def start(

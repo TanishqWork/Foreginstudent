@@ -19,4 +19,7 @@ class CompleteReportState(BaseModel):
     report: CompleteReportContent | None
     generation_seconds: float | None
     free_generation_seconds: float | None
+    remaining_successful_runs: int
+    successful_runs: int
+    max_successful_runs: int | None
     error: str | None

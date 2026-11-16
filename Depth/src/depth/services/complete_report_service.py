@@ -1,4 +1,4 @@
-"""Unlock and generate complete reports. Status and content live in `public.complete_reports`."""
+"""Purchase and generate complete reports. Payment access and attempts are persisted."""
 
 import asyncio
 import json
@@ -60,8 +60,19 @@ def _state(source: SavedAssessment, record: ReportRecord | None) -> CompleteRepo
         report=None if record is None else record.report,
         generation_seconds=None if record is None else record.generation_seconds,
         free_generation_seconds=source.generation_seconds,
+        remaining_successful_runs=0,
+        successful_runs=0,
+        max_successful_runs=None,
         error=None if record is None else record.error,
     )
+
+
+def _loaded_state(loaded: LoadedReport) -> CompleteReportState:
+    state = _state(loaded.source, loaded.record)
+    state.remaining_successful_runs = loaded.remaining_successful_runs
+    state.successful_runs = loaded.successful_runs
+    state.max_successful_runs = loaded.max_successful_runs
+    return state
 
 
 def _retryable_ready(record: ReportRecord) -> bool:
@@ -70,16 +81,16 @@ def _retryable_ready(record: ReportRecord) -> bool:
 
 def complete_report_state(assessment_id: str, owner_id: str, reports: CompleteReportRecordService) -> CompleteReportState:
     loaded = _load(reports, assessment_id, owner_id)
-    return _state(loaded.source, loaded.record)
+    return _loaded_state(loaded)
 
 
-def mock_unlock(assessment_id: str, owner_id: str, reports: CompleteReportRecordService) -> CompleteReportState:
+def mark_paid(assessment_id: str, owner_id: str, reports: CompleteReportRecordService) -> CompleteReportState:
     loaded = _load(reports, assessment_id, owner_id)
     _require_score(loaded.source)
     if loaded.record is None:
-        reports.unlock(assessment_id, owner_id, COMPLETE_REPORT_MODEL)
+        reports.mark_paid(assessment_id, owner_id)
         loaded = _load(reports, assessment_id, owner_id)
-    return _state(loaded.source, loaded.record)
+    return _loaded_state(loaded)
 
 
 async def start_complete_report(
@@ -94,41 +105,54 @@ async def start_complete_report(
         raise AssessmentError("locked")
     if record.status == "generating":
         raise AssessmentError("generating")
-    if record.status == "ready" and not _retryable_ready(record):
-        return _state(source, record)
+    if loaded.remaining_successful_runs <= 0 and not _retryable_ready(record):
+        raise AssessmentError("exhausted")
     # One atomic UPDATE decides the winner, so double clicks or several API processes start one run.
-    started_at = await asyncio.to_thread(reports.claim, assessment_id, owner_id)
-    if started_at is None:
+    claimed = await asyncio.to_thread(reports.claim, assessment_id, owner_id, COMPLETE_REPORT_MODEL)
+    if claimed is None:
         raise AssessmentError("generating")
-    spawn(_run_generation(assessment_id, started_at, source, report_factory), tasks)
-    return _state(source, ReportRecord("generating", None, None, None, started_at))
+    attempt_id, started_at = claimed
+    spawn(_run_generation(assessment_id, attempt_id, started_at, source, report_factory), tasks)
+    return _loaded_state(LoadedReport(
+        source,
+        ReportRecord("generating", attempt_id, None, None, None, None, started_at),
+        loaded.remaining_successful_runs,
+        loaded.successful_runs,
+        loaded.max_successful_runs,
+    ))
 
 
-async def _run_generation(assessment_id: str, started_at: datetime, source: SavedAssessment, report_factory: ReportFactory) -> None:
+async def _run_generation(
+    assessment_id: str, attempt_id: str, started_at: datetime, source: SavedAssessment, report_factory: ReportFactory,
+) -> None:
     started = perf_counter()
     logger.info("Complete report generation started assessment_id=%s", assessment_id)
 
-    async def fail(message: str) -> None:
+    async def fail(message: str, failure_kind: str) -> None:
         seconds = round(perf_counter() - started, 3)
-        saved = await asyncio.to_thread(write_with, report_factory, lambda reports: reports.fail(assessment_id, started_at, message, seconds))
+        saved = await asyncio.to_thread(
+            write_with, report_factory,
+            lambda reports: reports.fail(attempt_id, started_at, message, seconds, failure_kind),
+        )
         logger.info("Complete report saved assessment_id=%s status=failed seconds=%.1f stored=%s", assessment_id, seconds, saved)
 
     try:
         async with asyncio.timeout(COMPLETE_REPORT_TIMEOUT_SECONDS):
             report = await _generate_validated_report(source, assessment_id)
     except asyncio.CancelledError:
-        await fail("Generation was interrupted. Your mock unlock is kept; try again.")
+        await fail("Generation was interrupted. Your paid access was not used; try again.", "interrupted")
         raise
     except TimeoutError:
         logger.warning("Complete report generation failed type=TimeoutError")
-        await fail("Generation timed out. Your mock unlock is kept; try again.")
+        await fail("Generation timed out. Your paid access was not used; try again.", "timeout")
         raise LLMError("Complete report generation timed out.") from None
     except Exception as error:
         logger.warning("Complete report generation failed type=%s", type(error).__name__)
-        await fail("The report could not finish. Your mock unlock is kept; try again.")
+        failure_kind = "validation_error" if isinstance(error, LLMError) else "ai_error"
+        await fail("The report could not finish. Your paid access was not used; try again.", failure_kind)
         raise LLMError("Complete report generation failed.") from None
     seconds = round(perf_counter() - started, 3)
-    saved = await asyncio.to_thread(write_with, report_factory, lambda reports: reports.finish(assessment_id, started_at, report, seconds))
+    saved = await asyncio.to_thread(write_with, report_factory, lambda reports: reports.finish(attempt_id, started_at, report, seconds))
     if saved:
         logger.info("Complete report saved assessment_id=%s status=ready report_status=%s seconds=%.1f",
                     assessment_id, report.report_status, seconds)
