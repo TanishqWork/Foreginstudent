@@ -5,6 +5,7 @@ import { useAuth } from '../account/auth-context'
 import AssessmentPage from '../assessment/AssessmentPage'
 import CompleteReportPage from '../complete-report/CompleteReportPage'
 import HistoryPage from '../history/HistoryPage'
+import PaymentHistoryPage from '../payments/PaymentHistoryPage'
 import { Icon } from './ui'
 import './student.css'
 
@@ -12,13 +13,14 @@ const navigation = [
   { path: '/assessment', label: 'Free assessment', icon: 'checkCircle' },
   { path: '/complete-report', label: 'Complete report', icon: 'file' },
   { path: '/history', label: 'History', icon: 'clock' },
+  { path: '/payments', label: 'Payment history', icon: 'card' },
 ] as const
 
 function WorkspaceShell() {
   const { session, logout } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
-  const currentTitle = location.pathname.includes('/complete-report') ? 'Complete report' : location.pathname.includes('/history') ? 'History' : 'Free assessment'
+  const currentTitle = location.pathname.includes('/complete-report') ? 'Complete report' : location.pathname.includes('/history') ? 'History' : location.pathname.includes('/payments') ? 'Payment history' : 'Free assessment'
   const profileName = session?.user.email.split('@')[0].split(/[._-]/u)[0] || 'Account'
   const initial = profileName.slice(0, 1).toUpperCase()
 
@@ -51,6 +53,7 @@ function WorkspaceShell() {
         <Route path="assessment" element={<div className="st-embedded-assessment"><AssessmentPage embedded/></div>}/>
         <Route path="complete-report" element={<CompleteReportPage/>}/>
         <Route path="history" element={<HistoryPage/>}/>
+        <Route path="payments" element={<PaymentHistoryPage/>}/>
         <Route path="*" element={<Navigate to="/dashboard/assessment" replace/>}/>
       </Routes></main>
     </div>

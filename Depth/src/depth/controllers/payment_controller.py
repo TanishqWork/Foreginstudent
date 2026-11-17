@@ -1,7 +1,8 @@
 from fastapi import Request
 
-from depth.schemas.payments import CheckoutSessionResponse, WebhookResponse
+from depth.schemas.payments import CheckoutSessionResponse, PaymentHistoryResponse, WebhookResponse
 from depth.services.complete_report_record_service import CompleteReportRecordService
+from depth.services.payment_history_service import PaymentHistoryService
 from depth.services.payment_service import create_complete_report_checkout, fulfill_stripe_webhook
 
 
@@ -19,3 +20,7 @@ async def stripe_webhook(request: Request, reports: CompleteReportRecordService)
     return fulfill_stripe_webhook(
         payload, request.headers.get("stripe-signature"), reports, request.app.state.settings,
     )
+
+
+def history(owner_id: str, service: PaymentHistoryService) -> PaymentHistoryResponse:
+    return service.history(owner_id)

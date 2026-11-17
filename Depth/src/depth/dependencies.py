@@ -11,6 +11,7 @@ from depth.integrations.supabase_auth import SupabaseAuthProvider
 from depth.repositories.assessments import AssessmentRepository
 from depth.repositories.complete_reports import CompleteReportRepository
 from depth.repositories.health import HealthRepository
+from depth.repositories.payments import PaymentRepository
 from depth.repositories.rate_limits import RateLimitRepository
 from depth.repositories.sessions import SessionRepository
 from depth.repositories.users import UserRepository
@@ -19,6 +20,7 @@ from depth.services.auth_service import AuthService
 from depth.services.complete_report_record_service import CompleteReportRecordService
 from depth.services.health_service import HealthService
 from depth.services.history_service import HistoryService
+from depth.services.payment_history_service import PaymentHistoryService
 from depth.services.rate_limit_service import RateLimitService
 
 Db = Annotated[Session, Depends(get_db)]
@@ -63,6 +65,10 @@ def get_complete_report_records(db: Db) -> CompleteReportRecordService:
 
 def get_history_service(db: Db) -> HistoryService:
     return HistoryService(db, AssessmentRepository(db), CompleteReportRepository(db))
+
+
+def get_payment_history_service(db: Db) -> PaymentHistoryService:
+    return PaymentHistoryService(PaymentRepository(db))
 
 
 def get_complete_report_record_factory(request: Request):

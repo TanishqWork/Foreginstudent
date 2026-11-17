@@ -41,6 +41,7 @@ const iconPaths: Record<string, ReactNode> = {
   external: <><path d="M14 3h7v7m0-7L10 14M10 3H3v18h18v-7"/></>,
   globe: <><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c5 5 5 13 0 18-5-5-5-13 0-18Z"/></>,
   calendar: <><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4m10-4v4M3 11h18"/></>,
+  card: <><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h3m4 0h3"/></>,
 }
 
 export function Icon({ name, size = 20, className = '' }: { name: string; size?: number; className?: string }) {
