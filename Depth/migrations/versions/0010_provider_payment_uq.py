@@ -2,8 +2,8 @@
 from alembic import op
 import sqlalchemy as sa
 
-revision = "0010_unique_provider_payments"
-down_revision = "0009_paid_complete_report_attempts"
+revision = "0010_provider_payment_uq"
+down_revision = "0009_paid_reports"
 branch_labels = None
 depends_on = None
 
