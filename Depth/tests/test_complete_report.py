@@ -63,7 +63,7 @@ class MemoryReports:
             row["status"], row.get("attempt_id"), row["report"], row["error"], row.get("failure_kind"), row["seconds"], row["started_at"],
         ), remaining, successful, max_runs)
 
-    def mark_paid(self, assessment_id, owner_id):
+    def mark_paid(self, assessment_id, owner_id, **kwargs):
         self.max_runs.setdefault(assessment_id, 2)
         self.rows.setdefault(assessment_id, {"owner": owner_id, "status": "unlocked", "report": None, "error": None,
                                              "failure_kind": None, "seconds": None, "started_at": None, "model": "gpt-5",

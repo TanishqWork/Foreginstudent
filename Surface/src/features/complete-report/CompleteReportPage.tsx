@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate, useSearchParams } from 'react-router'
 import { useAuth } from '../account/auth-context'
 import { pricingPlans } from '../pricing/data'
 import StatementLoader from '../shared/StatementLoader'
-import { CompleteReportError, generateCompleteReport, getCompleteReport, purchaseCompleteReport } from './api'
+import { CompleteReportError, createCompleteReportCheckout, generateCompleteReport, getCompleteReport } from './api'
 import { clearAssessmentId, readAssessmentId, rememberAssessmentId } from './session'
 import type { CompleteReportState } from './types'
 import CompleteReport from './CompleteReport'
@@ -42,10 +42,10 @@ function MockCheckout({ busy, error, onDismiss, onConfirm }: { busy: boolean; er
       }}>
       <p className={styles.eyebrow}>Complete report access</p>
       <div className={styles.checkoutHeading}><h2 id="complete-checkout-heading">Complete report</h2><strong>{completePlan?.price ?? '$29'}</strong></div>
-      <p id="complete-checkout-description">This purchase unlocks two successful complete report generations for this assessment.</p>
+      <p id="complete-checkout-description">Stripe test checkout unlocks two successful complete report generations for this assessment.</p>
       <ul className={styles.features}><li>Two successful detailed reports for this statement</li><li>Failed AI attempts do not use paid access</li><li>The original assessment and score kept alongside each report</li></ul>
       {error && <p className={styles.error} role="alert">{error}</p>}
-      <button className={styles.primaryButton} disabled={busy} type="button" onClick={onConfirm}>{busy ? 'Confirming…' : `Confirm ${completePlan?.price ?? '$29'} purchase`}</button>
+      <button className={styles.primaryButton} disabled={busy} type="button" onClick={onConfirm}>{busy ? 'Opening checkout…' : `Continue to secure checkout · ${completePlan?.price ?? '$29'}`}</button>
       <button className={styles.textButton} disabled={busy} type="button" onClick={onDismiss}>Return to report</button>
     </dialog>
   )
@@ -106,12 +106,19 @@ function CompleteReportFlow({ assessmentId, userId, returnPath }: { assessmentId
   // The free-result unlock prompt links here with checkout=1; open checkout once, only while locked.
   const [searchParams] = useSearchParams()
   const checkoutRequested = searchParams.get('checkout') === '1'
+  const checkoutSuccess = searchParams.get('checkout') === 'success'
+  const checkoutCancelled = searchParams.get('checkout') === 'cancelled'
   const autoCheckoutRef = useRef(false)
   useEffect(() => {
     if (!checkoutRequested || autoCheckoutRef.current || reportState?.status !== 'locked' || reportState.assessment.report.status === 'needs_input') return
     autoCheckoutRef.current = true
     setCheckoutOpen(true)
   }, [checkoutRequested, reportState])
+  useEffect(() => {
+    if (!checkoutSuccess || !reportState || reportState.status !== 'locked') return
+    const timer = window.setTimeout(() => setReload((value) => value + 1), 2500)
+    return () => window.clearTimeout(timer)
+  }, [checkoutSuccess, reportState])
   useEffect(() => () => operationRef.current?.abort(), [])
   // Fetch the animation chunk while the student is in checkout or about to generate, so it starts instantly.
   useEffect(() => {
@@ -165,8 +172,8 @@ function CompleteReportFlow({ assessmentId, userId, returnPath }: { assessmentId
     setBusy('unlocking')
     setError('')
     try {
-      const state = await purchaseCompleteReport(assessmentId, controller.signal)
-      if (!controller.signal.aborted) { setReportState(state); setCheckoutOpen(false) }
+      const checkoutUrl = await createCompleteReportCheckout(assessmentId, controller.signal)
+      if (!controller.signal.aborted) window.location.assign(checkoutUrl)
     } catch (cause) {
       if (!controller.signal.aborted) handleFailure(cause)
     } finally {
@@ -220,6 +227,10 @@ function CompleteReportFlow({ assessmentId, userId, returnPath }: { assessmentId
   const baseline = reportState?.assessment.report
   const context = reportState?.assessment.context
   const needsInput = baseline?.status === 'needs_input'
+  const checkoutNotice = checkoutCancelled ? 'Checkout was cancelled. You can restart it when you are ready.'
+    : checkoutSuccess && reportState?.status === 'locked' ? 'Payment is being confirmed. This page will refresh shortly.'
+      : ''
+  const displayedError = error || checkoutNotice
 
   if (generating) return (
     <section className={`${styles.page} ${styles.generatingPage}`} aria-labelledby="complete-report-heading">
@@ -229,7 +240,7 @@ function CompleteReportFlow({ assessmentId, userId, returnPath }: { assessmentId
         <h1 id="complete-report-heading" className={styles.generationHeading} ref={headingRef} tabIndex={-1}>Preparing your complete report</h1>
         <p className={styles.generationContext}>{[context?.degree, context?.target_institution].filter(Boolean).join(' · ')}</p>
         <JourneyLoader elapsedSeconds={elapsed} />
-        {error && <p className={styles.error} role="alert">{error}</p>}
+        {displayedError && <p className={styles.error} role="alert">{displayedError}</p>}
       </div>
     </section>
   )
@@ -243,7 +254,7 @@ function CompleteReportFlow({ assessmentId, userId, returnPath }: { assessmentId
       <p className={styles.intro}>A closer review of the statement from your free assessment.</p>
       {loading ? <div className={styles.loading} role="status"><StatementLoader/>Opening your assessment…</div> : !reportState ? (
         <div className={styles.panel}>
-          {error && <p className={styles.error} role="alert">{error}</p>}
+          {displayedError && <p className={styles.error} role="alert">{displayedError}</p>}
           <button className={styles.primaryButton} type="button" onClick={() => { setLoading(true); setError(''); setReload((value) => value + 1) }}>Try again</button>
         </div>
       ) : <>
@@ -252,7 +263,7 @@ function CompleteReportFlow({ assessmentId, userId, returnPath }: { assessmentId
           <div className={styles.baselineScore}><strong>{baseline?.overall_score ?? '—'}<small>{baseline?.overall_score === null ? '' : '/100'}</small></strong><span>{baseline?.assessment_band ?? 'More input needed'}</span><small>{baseline?.recommendation.path ? `${baseline.recommendation.path} path` : 'Revision path unavailable'}{baseline?.status === 'provisional' ? ' · provisional' : ''}</small></div>
         </div>
         {baseline?.status === 'provisional' && <p className={styles.notice}>Your original assessment is provisional. The complete report keeps those same limitations.</p>}
-        {error && <p className={styles.error} role="alert">{error}</p>}
+        {displayedError && <p className={styles.error} role="alert">{displayedError}</p>}
         {needsInput ? (
           <div className={styles.panel}><h2>Complete the assessment context first.</h2><p>A complete report needs a usable first assessment. Add the missing information and run the free assessment again.</p><Link className={styles.primaryButton} to="/dashboard/assessment">Return to free assessment</Link></div>
         ) : reportState.status === 'locked' ? (

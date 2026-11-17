@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, Integer, String, Uuid
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, Integer, String, Uuid, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from depth.database.base import Base, utcnow
@@ -13,6 +13,10 @@ class Purchase(Base):
     __tablename__ = "purchases"
     __table_args__ = (
         Index("ix_purchases_user_id_created_at", "user_id", "created_at", postgresql_ops={"created_at": "DESC"}),
+        Index(
+            "uq_purchases_provider_payment_id", "provider", "provider_payment_id", unique=True,
+            postgresql_where=text("provider_payment_id IS NOT NULL"),
+        ),
         CheckConstraint("status IN ('pending', 'paid', 'failed', 'refunded')", name="ck_purchases_status"),
         CheckConstraint("amount_cents >= 0", name="ck_purchases_amount_nonnegative"),
         CheckConstraint("currency = upper(currency) AND length(currency) = 3", name="ck_purchases_currency"),

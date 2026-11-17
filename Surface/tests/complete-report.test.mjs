@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import {
   CompleteReportError,
+  createCompleteReportCheckout,
   generateCompleteReport,
   getCompleteReport,
   parseCompleteReportState,
@@ -222,6 +223,24 @@ test('purchase POST returns the same structured metadata envelope', async (t) =>
     return jsonResponse(cachedCompleteState('unlocked', id))
   })
   assert.equal((await purchaseCompleteReport(id)).status, 'unlocked')
+})
+
+test('checkout POST returns a hosted Stripe checkout URL', async (t) => {
+  const id = 'assessment/with space'
+  t.mock.method(globalThis, 'fetch', async (url, options) => {
+    assert.equal(url, `/api/assessments/${encodeURIComponent(id)}/complete/checkout`)
+    assert.equal(options.method, 'POST')
+    assert.equal(options.credentials, 'include')
+    return jsonResponse({ url: 'https://checkout.stripe.com/c/session-test' })
+  })
+  assert.equal(await createCompleteReportCheckout(id), 'https://checkout.stripe.com/c/session-test')
+})
+
+test('checkout rejects malformed or unsafe checkout URLs', async (t) => {
+  for (const value of [{}, { url: '/relative-checkout' }, { url: 'http://checkout.test/session' }]) {
+    t.mock.method(globalThis, 'fetch', async () => jsonResponse(value))
+    await assert.rejects(createCompleteReportCheckout('fictional-id'))
+  }
 })
 
 for (const status of [401, 403, 404, 409, 422, 502]) {

@@ -3,7 +3,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Request, Response
 
-from depth.controllers import assessment_controller, auth_controller, complete_report_controller
+from depth.controllers import assessment_controller, auth_controller, complete_report_controller, payment_controller
 from depth.dependencies import (
     get_assessment_record_factory, get_assessment_records, get_auth_service, get_background_tasks,
     get_complete_report_record_factory, get_complete_report_records, get_history_service,
@@ -13,6 +13,7 @@ from depth.schemas.assessment import AssessmentRequest
 from depth.schemas.free_assessment import FreeAssessmentState
 from depth.schemas.complete_report import CompleteReportState
 from depth.schemas.history import AssessmentHistoryResponse, CompleteReportHistoryResponse
+from depth.schemas.payments import CheckoutSessionResponse
 from depth.services.assessment_record_service import AssessmentRecordService
 from depth.services.auth_service import AuthService
 from depth.services.complete_report_record_service import CompleteReportRecordService
@@ -72,6 +73,14 @@ def complete_state(assessment_id: str, response: Response, session: CurrentSessi
 def purchase_complete_report(assessment_id: str, response: Response, session: CurrentSession, reports: Reports) -> CompleteReportState:
     response.headers["Cache-Control"] = "no-store"
     return complete_report_controller.mark_paid(assessment_id, str(session.user_id), reports)
+
+
+@router.post("/{assessment_id}/complete/checkout", response_model=CheckoutSessionResponse)
+def checkout_complete_report(
+    assessment_id: str, request: Request, response: Response, session: CurrentSession, reports: Reports,
+) -> CheckoutSessionResponse:
+    response.headers["Cache-Control"] = "no-store"
+    return payment_controller.checkout(assessment_id, str(session.user_id), session.user.email, reports, request)
 
 
 @router.post("/{assessment_id}/complete", response_model=CompleteReportState)

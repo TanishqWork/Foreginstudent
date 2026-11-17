@@ -7,7 +7,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from depth.core.exceptions import (
     AssessmentError, AuthenticationError, AuthInputError, AuthProviderUnavailableError,
-    LLMError, RateLimitError,
+    LLMError, PaymentError, RateLimitError,
 )
 
 logger = logging.getLogger(__name__)
@@ -31,6 +31,16 @@ def register_exception_handlers(app: FastAPI) -> None:
             "needs_input": (422, "Complete the free assessment inputs before unlocking a report."),
             "exhausted": (403, "This purchase has no complete report generations remaining."),
             "already_unlocked": (409, "This complete report is already unlocked."),
+        }
+        code, detail = errors[error.code]
+        return JSONResponse(status_code=code, content={"detail": detail}, headers={"Cache-Control": "no-store"})
+
+    @app.exception_handler(PaymentError)
+    async def payment_error(request: Request, error: PaymentError):
+        errors = {
+            "not_configured": (503, "Payments are not configured. Please try again later."),
+            "provider_unavailable": (502, "Checkout is unavailable. Please try again later."),
+            "invalid_webhook": (400, "Invalid payment event."),
         }
         code, detail = errors[error.code]
         return JSONResponse(status_code=code, content={"detail": detail}, headers={"Cache-Control": "no-store"})

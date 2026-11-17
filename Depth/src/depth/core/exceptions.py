@@ -31,6 +31,14 @@ class AssessmentError(Exception):
         super().__init__(code)
 
 
+class PaymentError(Exception):
+    """Payment setup or verification failed without exposing provider payloads."""
+
+    def __init__(self, code: str):
+        self.code = code
+        super().__init__(code)
+
+
 class RateLimitError(Exception):
     def __init__(self, retry_after: int):
         self.retry_after = retry_after

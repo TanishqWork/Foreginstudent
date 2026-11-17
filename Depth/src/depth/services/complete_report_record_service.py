@@ -79,9 +79,15 @@ class CompleteReportRecordService:
         )
         return LoadedReport(source, record, remaining, successful_runs, max_runs)
 
-    def mark_paid(self, assessment_id: str, owner_id: str) -> None:
+    def mark_paid(
+        self, assessment_id: str, owner_id: str, *, provider: str = "mock",
+        provider_payment_id: str | None = None, amount_cents: int = 2900, currency: str = "USD",
+    ) -> None:
         try:
-            self.repository.add_paid_entitlement(UUID(assessment_id), UUID(owner_id))
+            self.repository.add_paid_entitlement(
+                UUID(assessment_id), UUID(owner_id), provider=provider,
+                provider_payment_id=provider_payment_id, amount_cents=amount_cents, currency=currency,
+            )
             self.db.commit()
         except SQLAlchemyError:
             self.db.rollback()

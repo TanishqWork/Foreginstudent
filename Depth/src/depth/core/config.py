@@ -34,6 +34,10 @@ class Settings(BaseSettings):
     api_url: str = "http://localhost:8000"
     cookie_secure: bool = False
     openai_api_key: SecretStr | None = Field(default=None, repr=False)
+    payments_mode: Literal["mock", "stripe_test"] = "mock"
+    stripe_secret_key: SecretStr | None = Field(default=None, repr=False)
+    stripe_complete_report_price_id: str | None = None
+    stripe_webhook_secret: SecretStr | None = Field(default=None, repr=False)
     free_assessment_max_output_tokens: int = Field(default=16384, gt=0)
     free_assessment_model: str = Field(default="gpt-5", min_length=1)
     # "minimal" is the lowest effort gpt-5 accepts; gpt-5.1 also accepts "none".

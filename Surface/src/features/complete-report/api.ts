@@ -12,6 +12,16 @@ export class CompleteReportError extends Error {
   }
 }
 
+export class CheckoutError extends Error {
+  readonly status: number
+
+  constructor(message: string, status = 0) {
+    super(message)
+    this.name = 'CheckoutError'
+    this.status = status
+  }
+}
+
 function invalidResponse(): never {
   throw new CompleteReportError('The report response could not be displayed. Please try again.')
 }
@@ -62,9 +72,10 @@ export function parseCompleteReportState(value: unknown, expectedAssessmentId?: 
 function requestFailure(status: number): CompleteReportError {
   const message = status === 401 ? 'Sign in to continue with your report.'
     : status === 404 ? 'This assessment is no longer available. Run a free assessment to start again.'
-      : status === 409 ? 'Your complete report is already being generated.'
+      : status === 409 ? 'Your complete report is already unlocked or being generated.'
         : status === 403 ? 'Purchase this assessment before generating its complete report, or use an existing paid generation.'
           : status === 422 ? 'This assessment needs more information before a complete report can be generated.'
+            : status === 503 ? 'Checkout is not configured yet. Please try again later.'
             : 'The complete report could not finish. Please try again.'
   return new CompleteReportError(message, status)
 }
@@ -101,6 +112,23 @@ export async function getCompleteReport(assessmentId: string, signal?: AbortSign
 
 export async function purchaseCompleteReport(assessmentId: string, signal?: AbortSignal): Promise<CompleteReportState> {
   return stateResponse(await request(assessmentId, 'complete/purchase', 'POST', signal), assessmentId)
+}
+
+export async function createCompleteReportCheckout(assessmentId: string, signal?: AbortSignal): Promise<string> {
+  const response = await request(assessmentId, 'complete/checkout', 'POST', signal)
+  if (!response.headers.get('content-type')?.toLowerCase().includes('application/json')) {
+    throw new CheckoutError('Checkout could not be opened. Please try again.')
+  }
+  let value: unknown
+  try { value = await response.json() } catch { throw new CheckoutError('Checkout could not be opened. Please try again.') }
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+    throw new CheckoutError('Checkout could not be opened. Please try again.')
+  }
+  const url = (value as Record<string, unknown>).url
+  if (typeof url !== 'string' || !url.startsWith('https://')) {
+    throw new CheckoutError('Checkout could not be opened. Please try again.')
+  }
+  return url
 }
 
 export async function generateCompleteReport(assessmentId: string, signal?: AbortSignal): Promise<CompleteReportState> {
