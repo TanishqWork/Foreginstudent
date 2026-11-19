@@ -25,37 +25,6 @@ export default function HomeDialogs() {
     </button>
   )
 
-  if (panel === 'outcomes') {
-    return (
-      <Dialog
-        key={panel}
-        title="Outcomes gallery layout preview."
-        eyebrow="Private preview"
-        size="wide"
-        onDismiss={dismiss}
-      >
-        <p className="mb-6 text-sm leading-relaxed text-slate">
-          No verified offer documents are included in this preview. The examples
-          below demonstrate the gallery layout only. Statement review does not
-          guarantee admission, funding, or scholarship selection.
-        </p>
-        <div className="mb-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }, (_, index) => (
-            <figure key={index} className="m-0 min-w-0">
-              <div className="flex min-h-56 flex-col justify-center gap-5 rounded-card border border-line bg-white px-6 py-9 text-ink shadow-soft">
-                <strong className="text-sm tracking-[0.12em]">FICTIONAL EXAMPLE</strong>
-                <p className="m-0">Sample admission document</p>
-                <small className="text-xs leading-relaxed text-muted">No applicant data is included in this preview.</small>
-              </div>
-              <figcaption className="mt-2 text-xs text-muted">Synthetic layout placeholder</figcaption>
-            </figure>
-          ))}
-        </div>
-        {returnButton}
-      </Dialog>
-    )
-  }
-
   if (panel === 'checkout') {
     const planId = searchParams.get('plan')
     const plan = plans.find((item) => item.id === planId && item.id !== 'free')

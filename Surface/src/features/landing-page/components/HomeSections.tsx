@@ -140,21 +140,7 @@ export function OutcomesSection() {
         <div className="mt-[18px] grid grid-cols-3 gap-[18px] max-[900px]:grid-cols-1">
           {applicantStories.map((story) => <article className={`${testimonialCard} p-7`} key={story.name}><p className="mb-6 text-base leading-[1.65]">“{story.quote}”</p><footer className={attribution}><strong>{story.name}</strong><span>{story.role}</span></footer></article>)}
         </div>
-        <div className={`${ui.darkPanel} mt-14 grid grid-cols-[1.05fr_.95fr] items-center gap-11 rounded-[30px] p-[clamp(36px,6vw,68px)] shadow-[0_28px_70px_rgba(11,22,40,.16)] max-[900px]:grid-cols-1 max-[720px]:rounded-[22px]`}>
-          <div>
-            <p className={`${ui.overline} mb-[18px] text-[#c5cbff]`}>Applicant outcomes</p><h3 className="mt-1.5 mb-4 font-display text-[clamp(1.8rem,3.4vw,3.3rem)] font-normal leading-[1.05] tracking-[-.025em]">Real statements. Selective admissions. Documented outcomes.</h3>
-            <p className="mb-4 max-w-[620px] leading-[1.7] text-white/80">Explore the supplied outcomes gallery layout. Admission and scholarship documents are fictional placeholders in this preview.</p>
-            <div className="mb-5 flex flex-wrap gap-2" aria-label="Outcome highlights">
-              {['Harvard presidential scholarship', 'Fully funded PhD offers', 'Cambridge scholarship', 'MPH/MBA admissions'].map((highlight) => <span className="rounded-full border border-white/20 px-3 py-1.5 text-[.78rem] text-white/90" key={highlight}>{highlight}</span>)}
-            </div>
-            <div className="flex flex-wrap items-center gap-4"><Link className={`${ui.button} min-h-13 bg-white px-6 text-ink hover:bg-parchment`} to="/?panel=outcomes">View selected outcomes</Link><small className="max-w-[260px] text-[.78rem] leading-normal text-white/80">Gallery preview. No university affiliation or endorsement.</small></div>
-          </div>
-          <div className="grid gap-px overflow-hidden rounded-2xl bg-white/15" aria-label="Selected outcomes">
-            {[['Ivy League and Oxbridge', 'Admissions and major scholarships'], ['Fully funded doctoral offers', 'Public health and epidemiology'], ['Combined degree admissions', 'MPH/MBA and related programs']].map(([title, description], index) => (
-              <article className="grid grid-cols-[32px_1fr] gap-3 bg-[#090a0f]/50 px-6 py-[22px]" key={title}><span className="text-[.78rem] text-accent-soft">{String(index + 1).padStart(2, '0')}</span><div><strong className="block text-base">{title}</strong><small className="mt-1 block text-[.8rem] text-white/80">{description}</small></div></article>
-            ))}
-          </div>
-        </div>
+        
       </div>
     </section>
   )
