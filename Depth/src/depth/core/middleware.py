@@ -9,7 +9,9 @@ class AuthMiddleware(BaseHTTPMiddleware):
         self.allowed_origins = frozenset(allowed_origins)
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
-        if not request.url.path.startswith(("/api/auth", "/api/assessments")):
+        if not request.url.path.startswith(("/api/auth", "/api/assessments", "/api/payments")):
+            return await call_next(request)
+        if request.url.path == "/api/payments/stripe/webhook":
             return await call_next(request)
         origin = request.headers.get("origin")
         if request.method not in ("GET", "HEAD", "OPTIONS") and origin and origin not in self.allowed_origins:

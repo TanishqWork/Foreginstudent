@@ -22,6 +22,7 @@ class AssessmentHistoryItem(BaseModel):
     has_complete_report_access: bool
     complete_report_remaining_runs: int
     complete_report_max_runs: int | None
+    complete_report_unlimited: bool = False
 
 
 class AssessmentHistoryResponse(BaseModel):
@@ -49,7 +50,7 @@ class CompleteReportHistoryItem(BaseModel):
     finished_at: datetime | None
     generation_seconds: float | None
     remaining_successful_runs: int
-    max_successful_runs: int
+    max_successful_runs: int | None
     counts_against_limit: bool
     failure_kind: str | None
     error: str | None

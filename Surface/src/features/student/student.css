@@ -13,3 +13,22 @@
 @media(max-width:900px){.st-history-card{grid-template-columns:1fr}.st-history-actions{justify-content:flex-start}.st-recent-score-list{grid-template-columns:1fr}}
 .st-payment-page{max-width:980px}.st-payment-list{display:grid;gap:12px}.st-payment-row{display:grid;grid-template-columns:52px minmax(0,1fr) auto;align-items:center;gap:17px;padding:18px;border:1px solid var(--st-line);border-radius:12px;background:#fff}.st-payment-row:hover{border-color:#d5cee7}.st-payment-symbol{display:grid;place-items:center;width:44px;height:44px;border-radius:11px;background:#f3f1fa;color:#6651ae}.st-payment-main{display:grid;gap:5px;min-width:0}.st-payment-title{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.st-payment-title h3{font-size:13px;font-weight:650;text-transform:capitalize}.st-payment-main p{font-size:11px;color:#74717d;overflow-wrap:anywhere}.st-payment-main small{font-size:9px;color:#9d96a7}.st-payment-amount{font:400 27px/1.1 var(--st-serif);letter-spacing:-.04em;color:#5d4cc2;white-space:nowrap}
 @media(max-width:720px){.st-payment-row{grid-template-columns:1fr}.st-payment-symbol{width:40px;height:40px}.st-payment-amount{font-size:24px}}
+
+.st-cycle-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 24px;
+  margin-bottom: 22px;
+  padding: 22px;
+  border: 1px solid var(--st-line);
+  border-radius: 12px;
+  background: #fff;
+}
+.st-cycle-heading, .st-cycle-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.st-cycle-heading h2 { font-family: var(--st-serif); font-size: 24px; }
+.st-cycle-card p { margin-top: 6px; font-size: 14px; color: #605b6b; }
+.st-cycle-card [role="alert"] { color: #8e382c; }
+.st-cycle-notice { background: #fcf3df; color: #624616; }
+.st-cycle-notice a { font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }

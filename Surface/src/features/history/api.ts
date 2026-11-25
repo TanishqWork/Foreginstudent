@@ -14,6 +14,7 @@ export type AssessmentHistoryItem = {
   has_complete_report_access: boolean
   complete_report_remaining_runs: number
   complete_report_max_runs: number | null
+  complete_report_unlimited?: boolean
 }
 
 export type CompleteReportHistoryItem = {
@@ -33,7 +34,7 @@ export type CompleteReportHistoryItem = {
   finished_at: string | null
   generation_seconds: number | null
   remaining_successful_runs: number
-  max_successful_runs: number
+  max_successful_runs: number | null
   counts_against_limit: boolean
   failure_kind: string | null
   error: string | null
@@ -104,6 +105,7 @@ function parseAssessmentItem(value: unknown): AssessmentHistoryItem {
     has_complete_report_access: row.has_complete_report_access,
     complete_report_remaining_runs: nonnegativeInteger(row.complete_report_remaining_runs),
     complete_report_max_runs: max as number | null,
+    complete_report_unlimited: row.complete_report_unlimited === true,
   }
 }
 
@@ -132,7 +134,7 @@ function parseCompleteItem(value: unknown): CompleteReportHistoryItem {
     finished_at: row.finished_at,
     generation_seconds: optionalSeconds(row.generation_seconds),
     remaining_successful_runs: nonnegativeInteger(row.remaining_successful_runs),
-    max_successful_runs: positiveInteger(row.max_successful_runs),
+    max_successful_runs: row.max_successful_runs === null ? null : positiveInteger(row.max_successful_runs),
     counts_against_limit: row.counts_against_limit,
     failure_kind: row.failure_kind,
     error: row.error,

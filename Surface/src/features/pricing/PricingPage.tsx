@@ -76,8 +76,8 @@ export default function PricingPage() {
             <aside className="rounded-[18px] border border-[rgba(11,32,52,.11)] bg-white/86 p-7 shadow-[0_28px_70px_rgba(11,32,52,.09)]">
               <span className="text-[.6rem] font-extrabold tracking-[.13em] text-accent uppercase">Most applicants choose</span>
               <strong className="mt-3 mb-2 block text-[1.25rem] font-bold text-navy">Application cycle access</strong>
-              <p className="mb-5 text-[.7rem] leading-[1.65] text-muted">Five assessments over 60 days gives enough room to improve the statement, tailor it, and compare revisions.</p>
-              <Link className={`${actionClasses} ${ui.primary}`} to="/pricing?panel=checkout&plan=cycle">Choose the recommended plan</Link>
+              <p className="mb-5 text-[.7rem] leading-[1.65] text-muted">Get unlimited complete reports for 12 months as you revise and tailor your statements to different programs.</p>
+              <Link className={`${actionClasses} ${ui.primary}`} to="/dashboard/payments">Choose the recommended plan</Link>
             </aside>
           </header>
 
@@ -121,7 +121,7 @@ export default function PricingPage() {
                       <li className={`relative pl-5 text-[.68rem] leading-[1.5] before:absolute before:left-0 before:font-black before:content-['✓'] ${featured ? 'text-white/78 before:text-[#e6b582]' : 'text-slate before:text-positive'}`} key={feature}>{feature}</li>
                     ))}
                   </ul>
-                  <Link className={`${actionClasses} mt-auto w-full ${plan.id === 'free' ? 'bg-transparent text-ink hover:bg-white/50' : plan.id === 'expert' ? 'border-navy bg-navy text-white hover:bg-navy-soft' : ui.primary}`} to={plan.id === 'free' ? '/assessment' : `/pricing?panel=checkout&plan=${plan.id}`}>{plan.action}</Link>
+                  <Link className={`${actionClasses} mt-auto w-full ${plan.id === 'free' ? 'bg-transparent text-ink hover:bg-white/50' : plan.id === 'expert' ? 'border-navy bg-navy text-white hover:bg-navy-soft' : ui.primary}`} to={plan.id === 'free' ? '/assessment' : plan.id === 'cycle' ? '/dashboard/payments' : `/pricing?panel=checkout&plan=${plan.id}`}>{plan.action}</Link>
                 </article>
               )
             })}

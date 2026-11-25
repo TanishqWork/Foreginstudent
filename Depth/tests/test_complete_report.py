@@ -46,7 +46,7 @@ class MemoryReports:
         self.sources[(source.assessment.report.assessment_id, owner)] = source
         return source
 
-    def load(self, assessment_id, owner_id, stale_after_seconds, *, include_input=False):
+    def load(self, assessment_id, owner_id, stale_after_seconds, *, include_input=False, attempt_id=None):
         self.loaded_input = include_input
         source = self.sources.get((assessment_id, owner_id))
         if source is None:
@@ -467,7 +467,7 @@ def test_record_services_roll_back_and_hide_database_errors(caplog):
 
 def app_for(reports, owner):
     app = FastAPI()
-    app.state.settings = SimpleNamespace()
+    app.state.settings = SimpleNamespace(payments_mode="mock")
     app.state.background_tasks = set()
     register_exception_handlers(app)
     app.include_router(router)

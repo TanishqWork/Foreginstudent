@@ -6,8 +6,8 @@ from depth.services.complete_report_record_service import CompleteReportRecordSe
 from depth.services.complete_report_service import ReportFactory
 
 
-def get(assessment_id: str, owner_id: str, reports: CompleteReportRecordService) -> CompleteReportState:
-    return complete_report_service.complete_report_state(assessment_id, owner_id, reports)
+def get(assessment_id: str, owner_id: str, reports: CompleteReportRecordService, attempt_id: str | None = None) -> CompleteReportState:
+    return complete_report_service.complete_report_state(assessment_id, owner_id, reports, attempt_id)
 
 
 def mark_paid(assessment_id: str, owner_id: str, reports: CompleteReportRecordService) -> CompleteReportState:

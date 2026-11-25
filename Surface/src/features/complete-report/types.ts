@@ -75,5 +75,6 @@ export type CompleteReportState = {
   assessment_id: string; status: CompleteReportStatus; assessment: DiagnosticResponse; report: CompleteReportContent | null
   generation_seconds: number | null; free_generation_seconds: number | null
   remaining_successful_runs: number; successful_runs: number; max_successful_runs: number | null
+  can_generate: boolean; cycle_expires_at: string | null
   error: string | null
 }

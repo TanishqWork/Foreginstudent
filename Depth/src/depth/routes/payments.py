@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, Request, Response
 from depth.controllers import auth_controller, payment_controller
 from depth.dependencies import get_auth_service, get_complete_report_records, get_payment_history_service
 from depth.models.auth_session import AuthSession
-from depth.schemas.payments import PaymentHistoryResponse, WebhookResponse
+from depth.schemas.payments import CheckoutSessionResponse, CycleAccessResponse, CycleCheckoutRequest, PaymentHistoryResponse, WebhookResponse
 from depth.services.auth_service import AuthService
 from depth.services.complete_report_record_service import CompleteReportRecordService
 from depth.services.payment_history_service import PaymentHistoryService
@@ -20,6 +20,16 @@ def require_session(request: Request, response: Response, service: Annotated[Aut
 
 
 CurrentSession = Annotated[AuthSession, Depends(require_session)]
+
+
+@router.post("/cycle/checkout", response_model=CheckoutSessionResponse)
+def checkout_cycle(body: CycleCheckoutRequest, request: Request, session: CurrentSession, reports: Reports) -> CheckoutSessionResponse:
+    return payment_controller.cycle_checkout(body.request_id, session.user_id, session.user.email, reports, request)
+
+
+@router.get("/cycle", response_model=CycleAccessResponse)
+def cycle_access(request: Request, session: CurrentSession, reports: Reports) -> CycleAccessResponse:
+    return payment_controller.cycle_access(session.user_id, reports, request)
 
 
 @router.get("/history", response_model=PaymentHistoryResponse)

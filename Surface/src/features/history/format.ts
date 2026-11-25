@@ -8,13 +8,14 @@ export function contextLine(item: { degree: string | null; field: string | null;
   return [item.degree, item.field, item.target_program, item.target_institution].filter(Boolean).join(' · ') || 'Saved assessment'
 }
 
-export function formatDateTime(value: string): string {
+export function formatDateTime(value: string, showTimeZone = false): string {
   return new Intl.DateTimeFormat(undefined, {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
     hour: 'numeric',
     minute: '2-digit',
+    ...(showTimeZone ? { second: '2-digit', timeZoneName: 'short' } : {}),
   }).format(new Date(value))
 }
 

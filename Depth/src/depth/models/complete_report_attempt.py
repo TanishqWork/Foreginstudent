@@ -19,8 +19,8 @@ class CompleteReportAttempt(Base):
         Index("ix_complete_report_attempts_assessment_created_at", "assessment_id", "created_at", postgresql_ops={"created_at": "DESC"}),
         Index("ix_complete_report_attempts_user_created_at", "user_id", "created_at", postgresql_ops={"created_at": "DESC"}),
         Index(
-            "uq_complete_report_attempts_generating_entitlement",
-            "entitlement_id",
+            "uq_complete_report_attempts_generating_assessment",
+            "assessment_id",
             unique=True,
             postgresql_where=text("status = 'generating'"),
         ),

@@ -1,5 +1,6 @@
 """HTTP state for the temporary structured complete-report prototype."""
 
+from datetime import datetime
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
@@ -22,4 +23,6 @@ class CompleteReportState(BaseModel):
     remaining_successful_runs: int
     successful_runs: int
     max_successful_runs: int | None
+    can_generate: bool = False
+    cycle_expires_at: datetime | None = None
     error: str | None

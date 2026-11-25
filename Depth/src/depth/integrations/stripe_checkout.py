@@ -19,7 +19,8 @@ class StripeCheckoutClient:
 
     def create_checkout_session(
         self, *, price_id: str, success_url: str, cancel_url: str,
-        assessment_id: str, user_id: str, customer_email: str | None,
+        user_id: str, customer_email: str | None, assessment_id: str | None = None,
+        product: str = "complete_report", purchase_id: str | None = None,
     ) -> str:
         data: dict[str, str] = {
             "mode": "payment",
@@ -27,19 +28,43 @@ class StripeCheckoutClient:
             "line_items[0][quantity]": "1",
             "success_url": success_url,
             "cancel_url": cancel_url,
-            "client_reference_id": f"{user_id}:{assessment_id}",
-            "metadata[product]": "complete_report",
-            "metadata[assessment_id]": assessment_id,
+            "client_reference_id": f"{user_id}:{assessment_id or purchase_id}",
+            "metadata[product]": product,
             "metadata[user_id]": user_id,
         }
+        if assessment_id is not None:
+            data["metadata[assessment_id]"] = assessment_id
+        headers = {}
+        if purchase_id is not None:
+            data["adaptive_pricing[enabled]"] = "false"
+            data["custom_text[submit][message]"] = "This test payment activates 12 months of Application Cycle Access."
+            data["metadata[purchase_id]"] = purchase_id
+            # Stripe copies PaymentIntent metadata to the Charge used for refund notifications.
+            data["payment_intent_data[metadata][purchase_id]"] = purchase_id
+            data["payment_intent_data[metadata][product]"] = product
+            data["payment_intent_data[metadata][user_id]"] = user_id
+            headers["Idempotency-Key"] = purchase_id
         if customer_email:
             data["customer_email"] = customer_email
+        payload = self._request("POST", "checkout/sessions", data=data, headers=headers)
+        url = payload.get("url")
+        parsed = urlsplit(url if isinstance(url, str) else "")
+        if parsed.scheme != "https" or not parsed.hostname:
+            raise PaymentError("provider_unavailable")
+        return url
+
+    def get_checkout_session(self, session_id: str) -> dict[str, Any]:
+        if not session_id.startswith("cs_test_") or not session_id.removeprefix("cs_test_").isalnum():
+            raise PaymentError("invalid_webhook")
+        return self._request("GET", f"checkout/sessions/{session_id}", params=[
+            ("expand[]", "line_items"), ("expand[]", "payment_intent.latest_charge"),
+        ])
+
+    def _request(self, method: str, path: str, **kwargs: Any) -> dict[str, Any]:
         try:
             with httpx.Client(timeout=20.0) as client:
-                response = client.post(
-                    f"{STRIPE_API_URL}/checkout/sessions",
-                    data=data,
-                    auth=(self.secret_key, ""),
+                response = client.request(
+                    method, f"{STRIPE_API_URL}/{path}", auth=(self.secret_key, ""), **kwargs,
                 )
         except httpx.HTTPError as error:
             raise PaymentError("provider_unavailable") from error
@@ -49,11 +74,9 @@ class StripeCheckoutClient:
             payload = response.json()
         except ValueError as error:
             raise PaymentError("provider_unavailable") from error
-        url = payload.get("url")
-        parsed = urlsplit(url if isinstance(url, str) else "")
-        if parsed.scheme != "https" or not parsed.hostname:
+        if not isinstance(payload, dict):
             raise PaymentError("provider_unavailable")
-        return url
+        return payload
 
 
 def _signature_parts(header: str) -> tuple[int, list[str]]:

@@ -41,6 +41,7 @@ def register_exception_handlers(app: FastAPI) -> None:
             "not_configured": (503, "Payments are not configured. Please try again later."),
             "provider_unavailable": (502, "Checkout is unavailable. Please try again later."),
             "invalid_webhook": (400, "Invalid payment event."),
+            "cycle_active": (409, "Application Cycle Access is already active."),
         }
         code, detail = errors[error.code]
         return JSONResponse(status_code=code, content={"detail": detail}, headers={"Cache-Control": "no-store"})

@@ -128,6 +128,12 @@ Desktop database clients can use the project's PostgreSQL connection details wit
 | POST | `/api/auth/reset-password` | Accept `password` and `password_confirmation`, update through Supabase, and revoke sessions |
 | POST | `/api/assessments/free` | Save the signed-in user's draft as a `generating` assessment, start the AI review in the background, and return `202` with its `assessment_id` |
 | GET | `/api/assessments/{id}/free` | The owner's assessment status: `generating`, `ready` with the validated `free-diagnostic.v1` report, or `failed` with a safe message |
+| POST | `/api/payments/cycle/checkout` | Open Stripe test Checkout for Application Cycle Access |
+| GET | `/api/payments/cycle` | Return the signed-in customer's cycle status and expiry |
+
+Application Cycle Access unlocks unlimited complete reports for 12 calendar months
+from confirmed payment. The dashboard displays the test charge before checkout
+and shows a notice seven days before expiry. See [Stripe test configuration](Depth/README.md#application-cycle-access).
 
 Sign-in works from the frontend or Swagger's **Try it out**. Browser authentication requests must come from the configured `FRONTEND_URL` or `API_URL`; other origins are rejected. Command-line requests without an `Origin` header are also supported.
 

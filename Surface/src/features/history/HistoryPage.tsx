@@ -27,7 +27,8 @@ function AssessmentCard({ item }: { item: AssessmentHistoryItem }) {
       <div className="st-history-card-title"><Badge tone={assessmentTone(item.status)}>{item.status === 'ready' ? 'Score ready' : item.status === 'failed' ? 'Could not finish' : 'Reviewing'}</Badge><h3>{statementTypeLabel(item.statement_type)}</h3></div>
       <p>{contextLine(item)}</p>
       <small>{formatDateTime(item.created_at)} · {relativeTime(item.created_at)}</small>
-      {item.has_complete_report_access && <span className="st-history-note">{item.complete_report_remaining_runs} of {item.complete_report_max_runs ?? 2} detailed reports remaining</span>}
+      {item.complete_report_unlimited ? <span className="st-history-note">Included with Application Cycle Access</span>
+        : item.complete_report_max_runs !== null && <span className="st-history-note">{item.complete_report_remaining_runs} of {item.complete_report_max_runs} detailed reports remaining</span>}
     </div>
     <div className="st-history-actions">
       {item.status === 'ready' && <Link className="st-btn st-btn-secondary" to={`/dashboard/assessment?assessment=${encodeURIComponent(item.assessment_id)}`}>View score</Link>}
@@ -39,8 +40,10 @@ function AssessmentCard({ item }: { item: AssessmentHistoryItem }) {
 
 function ReportCard({ item }: { item: CompleteReportHistoryItem }) {
   const ready = item.status === 'ready'
+  const reportParams = new URLSearchParams({ assessment: item.assessment_id })
+  if (ready && item.attempt_id) reportParams.set('attempt', item.attempt_id)
   return <article className="st-history-card st-history-card-report">
-    <div className="st-history-score"><Icon name="file" size={26}/><span>{item.remaining_successful_runs} of {item.max_successful_runs} left</span></div>
+    <div className="st-history-score"><Icon name="file" size={26}/><span>{item.max_successful_runs === null ? 'Cycle access' : `${item.remaining_successful_runs} of ${item.max_successful_runs} left`}</span></div>
     <div className="st-history-card-main">
       <div className="st-history-card-title"><Badge tone={reportTone(item.status)}>{ready ? 'Detailed report' : item.status === 'failed' ? 'Attempt failed' : item.status === 'generating' ? 'Generating' : 'Access ready'}</Badge><h3>{statementTypeLabel(item.statement_type)}</h3></div>
       <p>{contextLine(item)}</p>
@@ -49,7 +52,7 @@ function ReportCard({ item }: { item: CompleteReportHistoryItem }) {
       {ready && item.generation_seconds !== null && <span className="st-history-note">Generated in {item.generation_seconds.toFixed(1)} seconds.</span>}
     </div>
     <div className="st-history-actions">
-      <Link className="st-btn st-btn-primary" to={`/dashboard/complete-report?assessment=${encodeURIComponent(item.assessment_id)}`}>{ready ? 'View report' : item.status === 'failed' ? 'Try again' : 'Open'}</Link>
+      <Link className="st-btn st-btn-primary" to={`/dashboard/complete-report?${reportParams}`}>{ready ? 'View report' : item.status === 'failed' ? 'Try again' : 'Open'}</Link>
     </div>
   </article>
 }

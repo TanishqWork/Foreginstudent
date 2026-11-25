@@ -27,6 +27,7 @@ export default function HomeDialogs() {
 
   if (panel === 'checkout') {
     const planId = searchParams.get('plan')
+    if (planId === 'cycle') return <Navigate to="/dashboard/payments" replace/>
     const plan = plans.find((item) => item.id === planId && item.id !== 'free')
 
     return (

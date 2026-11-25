@@ -55,6 +55,9 @@ export function parseCompleteReportState(value: unknown, expectedAssessmentId?: 
   if (typeof remaining !== 'number' || !Number.isInteger(remaining) || remaining < 0) invalidResponse()
   if (typeof successful !== 'number' || !Number.isInteger(successful) || successful < 0) invalidResponse()
   if (max !== null && (typeof max !== 'number' || !Number.isInteger(max) || max < 1)) invalidResponse()
+  const cycleExpiresAt = row.cycle_expires_at ?? null
+  if (cycleExpiresAt !== null && (typeof cycleExpiresAt !== 'string' || !Number.isFinite(Date.parse(cycleExpiresAt)))) invalidResponse()
+  if (row.can_generate !== undefined && typeof row.can_generate !== 'boolean') invalidResponse()
   return {
     assessment_id: row.assessment_id,
     status,
@@ -65,6 +68,8 @@ export function parseCompleteReportState(value: unknown, expectedAssessmentId?: 
     remaining_successful_runs: remaining,
     successful_runs: successful,
     max_successful_runs: max,
+    can_generate: row.can_generate ?? (status !== 'locked' && status !== 'generating' && remaining > 0),
+    cycle_expires_at: cycleExpiresAt,
     error: row.error,
   }
 }
@@ -106,8 +111,9 @@ async function stateResponse(response: Response, assessmentId: string): Promise<
   return parseCompleteReportState(value, assessmentId)
 }
 
-export async function getCompleteReport(assessmentId: string, signal?: AbortSignal): Promise<CompleteReportState> {
-  return stateResponse(await request(assessmentId, 'complete', 'GET', signal), assessmentId)
+export async function getCompleteReport(assessmentId: string, signal?: AbortSignal, attemptId?: string): Promise<CompleteReportState> {
+  const suffix = attemptId ? `complete?${new URLSearchParams({ attempt_id: attemptId })}` : 'complete'
+  return stateResponse(await request(assessmentId, suffix, 'GET', signal), assessmentId)
 }
 
 export async function purchaseCompleteReport(assessmentId: string, signal?: AbortSignal): Promise<CompleteReportState> {

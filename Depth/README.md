@@ -294,7 +294,7 @@ and `public.complete_report_attempts` (migration
 `max_successful_runs = 2`, and `complete_report_attempts` stores each AI generation
 try. Failed attempts store only safe error metadata and do not count against the
 paid limit; successful ready reports store the report JSON once on the attempt.
-`POST /complete/purchase` marks the paid entitlement for now, and `POST /complete`
+`POST /complete/purchase` grants a simulated entitlement in mock mode, and `POST /complete`
 creates a `generating` attempt only when paid access remains. Clients poll
 `GET /complete`. A run's result is saved only if its attempt id and `started_at`
 still match, so a late run can never overwrite a newer one. Stopping the API marks
@@ -313,6 +313,29 @@ two database connections in the background at startup. Connections are not pinge
 per request; TCP keepalives detect dropped links and connections are recycled after
 30 minutes.
 See [the complete-report implementation and debug guide](../docs/complete-report-structure.md).
+
+### Application Cycle Access
+
+Apply migration `0011_cycle_access` before starting the updated API. It extends
+the existing report entitlement with `expires_at`. A cycle grant belongs to one
+account and has unlimited generations for 12 calendar months from payment. Cycle
+grants take priority over per-assessment credits, and every report claim checks
+access again. Saved attempts stay readable after expiry and can be opened with
+`GET /api/assessments/{id}/complete?attempt_id=…`.
+
+In `PAYMENTS_MODE=stripe_test`, the cycle purchase uses
+`STRIPE_COMPLETE_REPORT_PRICE_ID` when `STRIPE_CYCLE_PRICE_ID` is empty. Checkout
+uses the existing $29 test price and Payment History records the actual amount.
+Set `STRIPE_CYCLE_PRICE_ID` to the one-time $99 USD sandbox price when available.
+Keep the Stripe key and webhook signing secret in the ignored backend environment.
+
+`POST /api/payments/cycle/checkout` accepts a request UUID for retry-safe Checkout
+creation. The signed `POST /api/payments/stripe/webhook` confirms the paid price
+and records its purchase and grant in one transaction. Configure the webhook for
+`checkout.session.completed`, `checkout.session.async_payment_succeeded`, and
+`charge.refunded` to test card payments, delayed payment success, and full refunds.
+`GET /api/payments/cycle` returns status, UTC expiry and whether expiry is within
+seven days. The dashboard displays those notices in the student's local time.
 
 ## Run FastAPI with Supabase
 

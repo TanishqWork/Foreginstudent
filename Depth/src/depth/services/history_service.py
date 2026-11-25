@@ -46,18 +46,17 @@ class HistoryService:
         items = []
         for row in self.assessments.list_history_for_user(user_id, limit=limit):
             access = self.reports.get_access(row.id, user_id, include_input=False)
-            remaining = 0
-            if access is not None and access.entitlement is not None:
-                remaining = max(access.entitlement.max_successful_runs - access.successful_runs, 0)
+            max_runs = access.entitlement.max_successful_runs if access and access.entitlement else None
             items.append(AssessmentHistoryItem(
                 assessment_id=str(row.id),
                 status=row.status,
                 created_at=row.created_at,
                 generation_seconds=_seconds(row.generation_seconds),
                 error=row.error,
-                has_complete_report_access=bool(access and access.entitlement),
-                complete_report_remaining_runs=remaining,
-                complete_report_max_runs=None if access is None or access.entitlement is None else access.entitlement.max_successful_runs,
+                has_complete_report_access=bool(access and (access.entitlement or access.cycle or access.latest_attempt)),
+                complete_report_remaining_runs=max(max_runs - access.successful_runs, 0) if max_runs is not None else 0,
+                complete_report_max_runs=max_runs,
+                complete_report_unlimited=bool(access and access.cycle),
                 **_history_bits(row),
             ))
         return AssessmentHistoryResponse(items=items)
@@ -67,42 +66,22 @@ class HistoryService:
         if user_id is None:
             return CompleteReportHistoryResponse(items=[])
         items = []
-        for access in self.reports.list_history_for_user(user_id, limit=limit):
-            remaining = max(access.max_successful_runs - access.successful_runs, 0)
-            if not access.attempts:
-                items.append(CompleteReportHistoryItem(
-                    assessment_id=str(access.assessment_id),
-                    attempt_id=None,
-                    status="unlocked",
-                    report_status=None,
-                    created_at=access.entitlement_created_at,
-                    started_at=None,
-                    finished_at=None,
-                    generation_seconds=None,
-                    remaining_successful_runs=remaining,
-                    max_successful_runs=access.max_successful_runs,
-                    counts_against_limit=False,
-                    failure_kind=None,
-                    error=None,
-                    **_history_bits(access),
-                ))
-                continue
-            for row in access.attempts:
-                items.append(CompleteReportHistoryItem(
-                    assessment_id=str(access.assessment_id),
-                    attempt_id=str(row.id),
-                    status=row.status,
-                    report_status=row.report_status,
-                    created_at=row.created_at,
-                    started_at=row.started_at,
-                    finished_at=row.finished_at,
-                    generation_seconds=_seconds(row.generation_seconds),
-                    remaining_successful_runs=remaining,
-                    max_successful_runs=access.max_successful_runs,
-                    counts_against_limit=row.counts_against_limit,
-                    failure_kind=row.failure_kind,
-                    error=row.error,
-                    **_history_bits(access),
-                ))
-        items.sort(key=lambda item: item.created_at, reverse=True)
-        return CompleteReportHistoryResponse(items=items[:limit])
+        for row in self.reports.list_history_for_user(user_id, limit=limit):
+            max_runs = row.max_successful_runs
+            items.append(CompleteReportHistoryItem(
+                assessment_id=str(row.assessment_id),
+                attempt_id=str(row.attempt_id) if row.attempt_id else None,
+                status=row.status,
+                report_status=row.report_status,
+                created_at=row.created_at,
+                started_at=row.started_at,
+                finished_at=row.finished_at,
+                generation_seconds=_seconds(row.generation_seconds),
+                remaining_successful_runs=max(max_runs - row.successful_runs, 0) if max_runs is not None else 0,
+                max_successful_runs=max_runs,
+                counts_against_limit=row.counts_against_limit,
+                failure_kind=row.failure_kind,
+                error=row.error,
+                **_history_bits(row),
+            ))
+        return CompleteReportHistoryResponse(items=items)

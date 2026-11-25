@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { getPaymentHistory, PaymentHistoryError } from '../src/features/payments/api.ts'
+import { createCycleCheckout, getCycleAccess, getPaymentHistory, PaymentHistoryError } from '../src/features/payments/api.ts'
 
 function jsonResponse(value, status = 200) {
   return Response.json(value, { status })
@@ -36,4 +36,28 @@ test('payment history rejects malformed rows safely', async (t) => {
     assert.ok(!error.message.includes('purchase-1'))
     return true
   })
+})
+
+test('cycle access displays the backend expiry and test charge', async (t) => {
+  const access = {
+    status: 'active', paid_at: '2026-11-26T10:00:00Z', expires_at: '2027-11-26T10:00:00Z',
+    expires_soon: true, checkout_amount_cents: 2900,
+  }
+  t.mock.method(globalThis, 'fetch', async (url, options) => {
+    assert.equal(url, '/api/payments/cycle')
+    assert.equal(options.credentials, 'include')
+    return jsonResponse(access)
+  })
+  assert.deepEqual(await getCycleAccess(), access)
+})
+
+test('cycle checkout sends an idempotency reference and accepts the hosted Stripe URL', async (t) => {
+  const stripeUrl = 'https://checkout.stripe.com/c/session-test'
+  t.mock.method(globalThis, 'fetch', async (url, options) => {
+    assert.equal(url, '/api/payments/cycle/checkout')
+    assert.equal(options.method, 'POST')
+    assert.deepEqual(JSON.parse(options.body), { request_id: 'test-request' })
+    return jsonResponse({ url: stripeUrl })
+  })
+  assert.equal(await createCycleCheckout('test-request'), stripeUrl)
 })

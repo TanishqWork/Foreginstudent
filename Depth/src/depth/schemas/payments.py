@@ -1,4 +1,6 @@
 from datetime import datetime
+from typing import Literal
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl
 
@@ -7,6 +9,20 @@ class CheckoutSessionResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     url: HttpUrl
+
+
+class CycleCheckoutRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    request_id: UUID
+
+
+class CycleAccessResponse(BaseModel):
+    status: Literal["none", "active", "expired", "refunded"]
+    paid_at: datetime | None = None
+    expires_at: datetime | None = None
+    expires_soon: bool = False
+    checkout_amount_cents: int | None = None
 
 
 class WebhookResponse(BaseModel):

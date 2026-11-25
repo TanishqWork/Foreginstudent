@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import type { MouseEvent } from 'react'
-import { useLocation, useNavigate, useSearchParams } from 'react-router'
+import { Navigate, useLocation, useNavigate, useSearchParams } from 'react-router'
 import { ui } from '../landing-page/ui'
 import { checkoutPlans } from './data'
 
@@ -83,7 +83,9 @@ export default function PricingCheckoutDialog() {
   const location = useLocation()
   const navigate = useNavigate()
   const planId = searchParams.get('plan')
-  if (searchParams.get('panel') !== 'checkout' || !planId || !Object.hasOwn(checkoutPlans, planId)) return null
+  if (searchParams.get('panel') !== 'checkout' || !planId) return null
+  if (planId === 'cycle') return <Navigate to="/dashboard/payments" replace/>
+  if (!Object.hasOwn(checkoutPlans, planId)) return null
 
   function dismiss() {
     const next = new URLSearchParams(searchParams)

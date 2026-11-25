@@ -15,6 +15,7 @@ import { FreeAssessmentError, getFreeAssessment, startFreeAssessment, waitForFre
 import type { DiagnosticResponse } from './diagnostic/types'
 import { rememberAssessmentId } from '../complete-report/session'
 import RecentAssessments from '../history/RecentAssessments'
+import { useCycleAccess } from '../payments/use-cycle-access'
 import ReviewLoader from './review-loader/ReviewLoader'
 import { preloadReviewLoader } from './review-loader/preload'
 
@@ -32,7 +33,7 @@ const pasteGuide = [
   ['Review the document check', 'Resolve any warning before running the assessment.'],
 ] as const
 
-function AssessmentScreen({ initialPathway, embedded = false }: { initialPathway: PathwayId; embedded?: boolean }) {
+function AssessmentScreen({ initialPathway, embedded, cycleActive }: { initialPathway: PathwayId; embedded: boolean; cycleActive: boolean }) {
   const navigate = useNavigate()
   const { session } = useAuth()
   const [searchParams] = useSearchParams()
@@ -189,7 +190,7 @@ function AssessmentScreen({ initialPathway, embedded = false }: { initialPathway
         <title>Diagnostic findings | Statement Studio</title>
         {!embedded && <SiteHeader />}
         <main className={styles.shell} id="main" aria-labelledby="diagnostic-heading">
-          <DiagnosticResult response={result} generationSeconds={generationSeconds} onStartAnother={() => {
+          <DiagnosticResult response={result} generationSeconds={generationSeconds} cycleActive={cycleActive} onStartAnother={() => {
             setResult(null)
             requestAnimationFrame(() => headingRef.current?.focus({ preventScroll: false }))
           }} />
@@ -338,8 +339,10 @@ function AssessmentScreen({ initialPathway, embedded = false }: { initialPathway
   )
 }
 
-export default function AssessmentPage({ embedded = false }: { embedded?: boolean }) {
+export default function AssessmentPage({ embedded = false, cycleActive = false }: { embedded?: boolean; cycleActive?: boolean }) {
   const [searchParams] = useSearchParams()
+  const { session } = useAuth()
+  const standaloneCycle = useCycleAccess(false, !embedded && Boolean(session))
   const initialPathway = assessmentPathways.find((pathway) => pathway.id === searchParams.get('pathway'))?.id ?? 'health'
-  return <AssessmentScreen key={initialPathway} initialPathway={initialPathway} embedded={embedded} />
+  return <AssessmentScreen key={initialPathway} initialPathway={initialPathway} embedded={embedded} cycleActive={cycleActive || (!embedded && Boolean(session) && standaloneCycle.access?.status === 'active')} />
 }

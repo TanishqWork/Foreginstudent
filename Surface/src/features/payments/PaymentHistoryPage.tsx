@@ -4,6 +4,8 @@ import { Badge, EmptyState, Icon, PageHeading } from '../student/ui'
 import { formatDateTime, relativeTime } from '../history/format'
 import { getPaymentHistory } from './api'
 import type { PaymentHistoryItem } from './api'
+import CycleAccessPanel from './CycleAccessPanel'
+import type { useCycleAccess } from './use-cycle-access'
 
 function formatMoney(item: PaymentHistoryItem): string {
   return new Intl.NumberFormat(undefined, {
@@ -13,6 +15,7 @@ function formatMoney(item: PaymentHistoryItem): string {
 }
 
 function productLabel(value: string): string {
+  if (value === 'application_cycle') return 'Application Cycle Access'
   return value === 'complete_report' ? 'Complete report' : value.replace(/_/g, ' ')
 }
 
@@ -42,7 +45,7 @@ function PaymentRow({ item }: { item: PaymentHistoryItem }) {
   </article>
 }
 
-export default function PaymentHistoryPage() {
+export default function PaymentHistoryPage({ cycle }: { cycle: ReturnType<typeof useCycleAccess> }) {
   const [payments, setPayments] = useState<PaymentHistoryItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -59,11 +62,12 @@ export default function PaymentHistoryPage() {
       if (!controller.signal.aborted) setLoading(false)
     })
     return () => controller.abort()
-  }, [])
+  }, [cycle.access?.paid_at, cycle.access?.status])
 
   return <section className="st-payment-page" aria-labelledby="payment-history-heading">
     <title>Payment history | Statement Studio</title>
-    <PageHeading eyebrow="Billing" title="Payment history" description="A simple record of complete report payments stored in your account." />
+    <PageHeading eyebrow="Billing" title="Payment history" description="Manage your cycle pass and review your payments." />
+    <CycleAccessPanel cycle={cycle}/>
     {loading ? <div className="st-history-loading" role="status"><StatementLoader/>Opening payment history...</div> : error ? (
       <EmptyState title="Payment history is unavailable" description={error}><button className="st-btn st-btn-secondary" type="button" onClick={() => window.location.reload()}>Try again</button></EmptyState>
     ) : payments.length === 0 ? (

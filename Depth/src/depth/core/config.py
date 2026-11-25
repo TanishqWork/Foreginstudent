@@ -37,6 +37,7 @@ class Settings(BaseSettings):
     payments_mode: Literal["mock", "stripe_test"] = "mock"
     stripe_secret_key: SecretStr | None = Field(default=None, repr=False)
     stripe_complete_report_price_id: str | None = None
+    stripe_cycle_price_id: str | None = None
     stripe_webhook_secret: SecretStr | None = Field(default=None, repr=False)
     free_assessment_max_output_tokens: int = Field(default=16384, gt=0)
     free_assessment_model: str = Field(default="gpt-5", min_length=1)

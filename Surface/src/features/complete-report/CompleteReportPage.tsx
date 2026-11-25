@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router'
 import { useAuth } from '../account/auth-context'
+import { formatDateTime } from '../history/format'
 import { pricingPlans } from '../pricing/data'
 import StatementLoader from '../shared/StatementLoader'
 import { CompleteReportError, createCompleteReportCheckout, generateCompleteReport, getCompleteReport } from './api'
@@ -55,7 +56,7 @@ function EmptyReport({ message }: { message: string }) {
   return <section className={styles.page} aria-labelledby="complete-report-heading"><title>Complete report | Statement Studio</title><p className={styles.eyebrow}>Complete assessment</p><h1 id="complete-report-heading">Start with your free assessment.</h1><p className={styles.intro}>{message}</p><Link className={styles.primaryButton} to="/dashboard/assessment">Run a free assessment</Link></section>
 }
 
-function CompleteReportFlow({ assessmentId, userId, returnPath }: { assessmentId: string; userId: string; returnPath: string }) {
+function CompleteReportFlow({ assessmentId, userId, returnPath, attemptId }: { assessmentId: string; userId: string; returnPath: string; attemptId?: string }) {
   const navigate = useNavigate()
   const headingRef = useRef<HTMLHeadingElement>(null)
   const operationRef = useRef<AbortController | null>(null)
@@ -72,6 +73,9 @@ function CompleteReportFlow({ assessmentId, userId, returnPath }: { assessmentId
   const serverStatus = reportState?.status
   const generating = busy === 'generating' || serverStatus === 'generating'
   const remainingRuns = reportState?.remaining_successful_runs ?? 0
+  const expiresAt = reportState?.cycle_expires_at
+  const canGenerate = !attemptId && reportState?.can_generate
+  const canBuy = !attemptId && reportState?.max_successful_runs === null && !expiresAt
 
   const handleFailure = useCallback((cause: unknown) => {
     if (cause instanceof CompleteReportError && cause.status === 401) {
@@ -79,18 +83,18 @@ function CompleteReportFlow({ assessmentId, userId, returnPath }: { assessmentId
       return
     }
     if (cause instanceof CompleteReportError && cause.status === 404) {
-      clearAssessmentId(userId, assessmentId)
+      if (!attemptId) clearAssessmentId(userId, assessmentId)
       setUnavailable(true)
       setReportState(null)
       setError('')
       return
     }
     setError(cause instanceof CompleteReportError ? cause.message : 'The complete report could not finish. Please try again.')
-  }, [assessmentId, navigate, returnPath, userId])
+  }, [assessmentId, attemptId, navigate, returnPath, userId])
 
   useEffect(() => {
     const controller = new AbortController()
-    void getCompleteReport(assessmentId, controller.signal).then((state) => {
+    void getCompleteReport(assessmentId, controller.signal, attemptId).then((state) => {
       if (controller.signal.aborted) return
       rememberAssessmentId(userId, assessmentId)
       setReportState(state)
@@ -101,7 +105,14 @@ function CompleteReportFlow({ assessmentId, userId, returnPath }: { assessmentId
       if (!controller.signal.aborted) setLoading(false)
     })
     return () => controller.abort()
-  }, [assessmentId, handleFailure, reload, userId])
+  }, [assessmentId, attemptId, handleFailure, reload, userId])
+
+  useEffect(() => {
+    if (!expiresAt) return
+    const delay = Math.max(1_000, Date.parse(expiresAt) - Date.now() + 100)
+    const timer = window.setTimeout(() => setReload((value) => value + 1), Math.min(delay, 2_147_000_000))
+    return () => window.clearTimeout(timer)
+  }, [expiresAt, reload])
 
   // The free-result unlock prompt links here with checkout=1; open checkout once, only while locked.
   const [searchParams] = useSearchParams()
@@ -150,7 +161,7 @@ function CompleteReportFlow({ assessmentId, userId, returnPath }: { assessmentId
       if (controller.signal.aborted) return
       if (document.visibilityState !== 'visible') { schedule(); return }
       try {
-        const state = await getCompleteReport(assessmentId, controller.signal)
+        const state = await getCompleteReport(assessmentId, controller.signal, attemptId)
         if (controller.signal.aborted) return
         setReportState(state)
         setError('')
@@ -163,7 +174,7 @@ function CompleteReportFlow({ assessmentId, userId, returnPath }: { assessmentId
     }
     schedule()
     return () => { controller.abort(); clearTimeout(timer) }
-  }, [assessmentId, handleFailure, serverStatus])
+  }, [assessmentId, attemptId, handleFailure, serverStatus])
 
   async function unlock() {
     if (operationRef.current || !reportState || reportState.assessment.report.status === 'needs_input') return
@@ -183,9 +194,6 @@ function CompleteReportFlow({ assessmentId, userId, returnPath }: { assessmentId
   }
 
   async function generate() {
-    const canGenerate = reportState && reportState.remaining_successful_runs > 0 && (
-      ['unlocked', 'failed'].includes(reportState.status) || reportState.status === 'ready'
-    )
     if (operationRef.current || !reportState || !canGenerate || reportState.assessment.report.status === 'needs_input') return
     const controller = new AbortController()
     operationRef.current = controller
@@ -223,7 +231,7 @@ function CompleteReportFlow({ assessmentId, userId, returnPath }: { assessmentId
     catch { setCopyStatus('Copy is unavailable. Select the report text and copy it directly.') }
   }
 
-  if (unavailable) return <EmptyReport message="This assessment is no longer available. Run a new free assessment to continue." />
+  if (unavailable) return <EmptyReport message={attemptId ? 'This saved report is unavailable. Open History to find your saved reports.' : 'This assessment is no longer available. Run a new free assessment to continue.'} />
   const baseline = reportState?.assessment.report
   const context = reportState?.assessment.context
   const needsInput = baseline?.status === 'needs_input'
@@ -266,20 +274,44 @@ function CompleteReportFlow({ assessmentId, userId, returnPath }: { assessmentId
         {displayedError && <p className={styles.error} role="alert">{displayedError}</p>}
         {needsInput ? (
           <div className={styles.panel}><h2>Complete the assessment context first.</h2><p>A complete report needs a usable first assessment. Add the missing information and run the free assessment again.</p><Link className={styles.primaryButton} to="/dashboard/assessment">Return to free assessment</Link></div>
-        ) : reportState.status === 'locked' ? (
+        ) : reportState.status === 'locked' || reportState.status === 'failed' && canBuy ? (
           <div className={styles.unlockPanel}>
             <div><span className={styles.label}>Two complete reports</span><h2>Follow the argument, sentence by sentence.</h2><p>Unlock two successful detailed reviews of your existing statement and its revision priorities.</p><ul className={styles.features}><li>Sentence, paragraph, evidence, and revision feedback</li><li>Failed AI attempts do not use paid access</li><li>The full response to read and copy</li></ul></div>
-            <div className={styles.unlockAction}><strong>{completePlan?.price ?? '$29'}</strong><span>2 successful complete reports</span><button className={styles.primaryButton} type="button" onClick={() => { setError(''); setCheckoutOpen(true) }}>Pay {completePlan?.price ?? '$29'}</button></div>
+            <div className={styles.unlockAction}><strong>{completePlan?.price ?? '$29'}</strong><span>2 successful complete reports</span><button className={styles.primaryButton} type="button" onClick={() => { setError(''); setCheckoutOpen(true) }}>Pay {completePlan?.price ?? '$29'}</button><Link className={styles.backLink} to="/dashboard/payments">View Application Cycle Access</Link></div>
           </div>
         ) : reportState.status === 'ready' && reportState.report !== null ? (
           <section className={styles.structuredReport} aria-labelledby="complete-report-response-heading">
-            <div className={styles.reportToolbar}><div><span className={styles.label}>Complete report</span><h2 id="complete-report-response-heading">Detailed assessment</h2><div className={styles.generationTimings}><p>{remainingRuns} of {reportState.max_successful_runs ?? 2} paid generations remaining</p>{reportState.free_generation_seconds !== null && <p>Free assessment: {reportState.free_generation_seconds.toFixed(1)} seconds</p>}{reportState.generation_seconds !== null && <p>Complete report: {reportState.generation_seconds.toFixed(1)} seconds</p>}{reportState.free_generation_seconds !== null && reportState.generation_seconds !== null && <p>Total generation time: {(reportState.free_generation_seconds + reportState.generation_seconds).toFixed(1)} seconds</p>}</div></div><div className={styles.toolbarActions}><button className={styles.secondaryButton} type="button" onClick={() => void copyReport()}>Copy report</button>{remainingRuns > 0 && reportState.report.report_status !== 'incomplete' && <button className={styles.primaryButton} type="button" disabled={busy !== null} onClick={() => void generate()}>Generate another report</button>}</div></div>
+            <div className={styles.reportToolbar}>
+              <div><span className={styles.label}>Complete report</span><h2 id="complete-report-response-heading">Detailed assessment</h2>
+                <div className={styles.generationTimings}>
+                  {expiresAt ? <p>Unlimited complete reports until {formatDateTime(expiresAt, true)}.</p> : reportState.max_successful_runs !== null && <p>{remainingRuns} of {reportState.max_successful_runs} paid generations remaining</p>}
+                  {reportState.free_generation_seconds !== null && <p>Free assessment: {reportState.free_generation_seconds.toFixed(1)} seconds</p>}
+                  {reportState.generation_seconds !== null && <p>Complete report: {reportState.generation_seconds.toFixed(1)} seconds</p>}
+                  {reportState.free_generation_seconds !== null && reportState.generation_seconds !== null && <p>Total generation time: {(reportState.free_generation_seconds + reportState.generation_seconds).toFixed(1)} seconds</p>}
+                </div>
+              </div>
+              <div className={styles.toolbarActions}>
+                <button className={styles.secondaryButton} type="button" onClick={() => void copyReport()}>Copy report</button>
+                {canGenerate && reportState.report.report_status !== 'incomplete' && <button className={styles.primaryButton} type="button" disabled={busy !== null} onClick={() => void generate()}>Generate another report</button>}
+                {canBuy && <button className={styles.primaryButton} type="button" onClick={() => { setError(''); setCheckoutOpen(true) }}>Unlock more reports</button>}
+                {attemptId && <Link className={styles.backLink} to={`/dashboard/complete-report?assessment=${encodeURIComponent(assessmentId)}`}>Open current assessment</Link>}
+              </div>
+            </div>
             <p className={styles.copyStatus} role="status">{copyStatus}</p>
-            {reportState.report.report_status === 'incomplete' && <div className={styles.panel}><h3>Finish the full review.</h3><p>This generation did not cover every required part. Your paid access was not used.</p><button className={styles.primaryButton} type="button" disabled={busy !== null || remainingRuns <= 0} onClick={() => void generate()}>Retry full report</button></div>}
+            {reportState.report.report_status === 'incomplete' && <div className={styles.panel}><h3>Finish the full review.</h3><p>This generation did not cover every required part. Your paid access was not used.</p>{canGenerate && <button className={styles.primaryButton} type="button" disabled={busy !== null} onClick={() => void generate()}>Retry full report</button>}</div>}
             <CompleteReport report={reportState.report} assessment={reportState.assessment} />
           </section>
         ) : (
-          <div className={styles.panel}><span className={styles.label}>Payment confirmed</span><h2>{reportState.status === 'failed' ? 'Try generating your report again.' : remainingRuns > 0 ? 'Your complete report access is ready.' : 'No paid generations remaining.'}</h2><p>{reportState.status === 'failed' ? 'The last attempt did not finish, and your paid access was not used.' : remainingRuns > 0 ? `Generate the full review using the statement and score from your free assessment. You have ${remainingRuns} successful ${remainingRuns === 1 ? 'generation' : 'generations'} remaining.` : 'You can still read and copy your saved complete reports.'}</p>{reportState.status === 'failed' && reportState.generation_seconds !== null && <p>Last attempt: {reportState.generation_seconds.toFixed(1)} seconds</p>}{remainingRuns > 0 && <button className={styles.primaryButton} type="button" disabled={busy !== null} onClick={() => void generate()}>{reportState.status === 'failed' ? 'Try generating again' : 'Generate complete report'}</button>}</div>
+          <div className={styles.panel}>
+            <span className={styles.label}>{expiresAt ? 'Application Cycle Access' : 'Payment confirmed'}</span>
+            <h2>{reportState.status === 'failed' ? 'Try generating your report again.' : canGenerate ? 'Your complete report access is ready.' : 'No paid generations remaining.'}</h2>
+            {expiresAt && <p>Unlimited complete reports until {formatDateTime(expiresAt, true)}.</p>}
+            {reportState.status === 'failed' ? <p>The last attempt did not finish, and your paid access was not used.</p>
+              : canGenerate ? <p>Generate the full review using the statement and score from your free assessment.{expiresAt ? '' : ` You have ${remainingRuns} successful ${remainingRuns === 1 ? 'generation' : 'generations'} remaining.`}</p>
+                : <p>You can still read and copy your saved complete reports.</p>}
+            {reportState.status === 'failed' && reportState.generation_seconds !== null && <p>Last attempt: {reportState.generation_seconds.toFixed(1)} seconds</p>}
+            {canGenerate && <button className={styles.primaryButton} type="button" disabled={busy !== null} onClick={() => void generate()}>{reportState.status === 'failed' ? 'Try generating again' : 'Generate complete report'}</button>}
+          </div>
         )}
         <p className={styles.temporaryNote}>Your report is saved to your account. You can leave and come back to it any time.</p>
         <p className={styles.assessmentId}>Assessment {reportState.assessment_id}</p>
@@ -295,11 +327,12 @@ export default function CompleteReportPage() {
   const location = useLocation()
   const userId = session?.user.id
   const assessmentId = searchParams.get('assessment') || (userId ? readAssessmentId(userId) : null)
+  const attemptId = searchParams.get('attempt') || undefined
   const returnParams = new URLSearchParams(location.search)
   if (assessmentId) returnParams.set('assessment', assessmentId)
   const returnPath = `${location.pathname}${returnParams.size ? `?${returnParams.toString()}` : ''}`
   if (loading) return <div className={styles.loading} role="status"><StatementLoader/>Opening your account…</div>
   if (!userId) return <section className={styles.page}><h1>Sign in to open your report.</h1><Link className={styles.primaryButton} to={`/account?next=${encodeURIComponent(returnPath)}`}>Sign in</Link></section>
   if (!assessmentId) return <EmptyReport message="Run a free assessment first, then open its complete report from the results page." />
-  return <CompleteReportFlow key={`${userId}:${assessmentId}`} assessmentId={assessmentId} userId={userId} returnPath={returnPath} />
+  return <CompleteReportFlow key={`${userId}:${assessmentId}:${attemptId ?? ''}`} assessmentId={assessmentId} userId={userId} returnPath={returnPath} attemptId={attemptId} />
 }

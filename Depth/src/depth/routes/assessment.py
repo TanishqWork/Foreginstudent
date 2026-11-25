@@ -4,6 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Request, Response
 
 from depth.controllers import assessment_controller, auth_controller, complete_report_controller, payment_controller
+from depth.core.exceptions import PaymentError
 from depth.dependencies import (
     get_assessment_record_factory, get_assessment_records, get_auth_service, get_background_tasks,
     get_complete_report_record_factory, get_complete_report_records, get_history_service,
@@ -64,14 +65,20 @@ def free_state(assessment_id: str, response: Response, session: CurrentSession, 
 
 
 @router.get("/{assessment_id}/complete", response_model=CompleteReportState)
-def complete_state(assessment_id: str, response: Response, session: CurrentSession, reports: Reports) -> CompleteReportState:
+def complete_state(
+    assessment_id: str, response: Response, session: CurrentSession, reports: Reports, attempt_id: str | None = None,
+) -> CompleteReportState:
     response.headers["Cache-Control"] = "no-store"
-    return complete_report_controller.get(assessment_id, str(session.user_id), reports)
+    return complete_report_controller.get(assessment_id, str(session.user_id), reports, attempt_id)
 
 
 @router.post("/{assessment_id}/complete/purchase", response_model=CompleteReportState)
-def purchase_complete_report(assessment_id: str, response: Response, session: CurrentSession, reports: Reports) -> CompleteReportState:
+def purchase_complete_report(
+    assessment_id: str, request: Request, response: Response, session: CurrentSession, reports: Reports,
+) -> CompleteReportState:
     response.headers["Cache-Control"] = "no-store"
+    if request.app.state.settings.payments_mode != "mock":
+        raise PaymentError("not_configured")
     return complete_report_controller.mark_paid(assessment_id, str(session.user_id), reports)
 
 

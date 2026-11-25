@@ -6,6 +6,8 @@ import AssessmentPage from '../assessment/AssessmentPage'
 import CompleteReportPage from '../complete-report/CompleteReportPage'
 import HistoryPage from '../history/HistoryPage'
 import PaymentHistoryPage from '../payments/PaymentHistoryPage'
+import { useCycleAccess } from '../payments/use-cycle-access'
+import { formatDateTime } from '../history/format'
 import { Icon } from './ui'
 import './student.css'
 
@@ -20,6 +22,8 @@ function WorkspaceShell() {
   const { session, logout } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
+  const cycle = useCycleAccess(location.pathname === '/dashboard/payments' && new URLSearchParams(location.search).get('cycle') === 'success')
+  const access = cycle.access
   const currentTitle = location.pathname.includes('/complete-report') ? 'Complete report' : location.pathname.includes('/history') ? 'History' : location.pathname.includes('/payments') ? 'Payment history' : 'Free assessment'
   const profileName = session?.user.email.split('@')[0].split(/[._-]/u)[0] || 'Account'
   const initial = profileName.slice(0, 1).toUpperCase()
@@ -47,13 +51,15 @@ function WorkspaceShell() {
       </div>
     </aside>
     <div className="st-app-body"><header className="st-topbar"><div className="st-topbar-left"><span className="st-breadcrumb">My dashboard<Icon name="chevronRight" size={13}/><strong>{currentTitle}</strong></span></div><div className="st-topbar-actions"><Link className="st-help-link" to="/methodology" aria-label="Assessment methodology"><Icon name="help" size={20}/></Link><span className="st-top-avatar" aria-label="Your account">{initial}</span></div></header>
-      <div className="st-workspace-notice"><span className="st-dot"/><span>Your student dashboard</span><span className="st-notice-divider"/><span>Free assessments and complete reports stay tied to your signed-in session.</span></div>
+      {access?.expires_at && (access.expires_soon || access.status === 'expired')
+        ? <div className="st-workspace-notice st-cycle-notice" role="status"><span>{access.expires_soon ? 'Cycle access expires' : 'Cycle access ended'} {formatDateTime(access.expires_at, true)}.</span><Link to="/dashboard/payments">{access.status === 'expired' ? 'Renew access' : 'View access'}</Link></div>
+        : <div className="st-workspace-notice"><span className="st-dot"/><span>Your student dashboard</span><span className="st-notice-divider"/><span>Free assessments and complete reports stay tied to your signed-in session.</span></div>}
       <main id="student-main" className="st-main" tabIndex={-1}><Routes>
         <Route index element={<Navigate to="/dashboard/assessment" replace/>}/>
-        <Route path="assessment" element={<div className="st-embedded-assessment"><AssessmentPage embedded/></div>}/>
+        <Route path="assessment" element={<div className="st-embedded-assessment"><AssessmentPage embedded cycleActive={access?.status === 'active'}/></div>}/>
         <Route path="complete-report" element={<CompleteReportPage/>}/>
         <Route path="history" element={<HistoryPage/>}/>
-        <Route path="payments" element={<PaymentHistoryPage/>}/>
+        <Route path="payments" element={<PaymentHistoryPage cycle={cycle}/>}/>
         <Route path="*" element={<Navigate to="/dashboard/assessment" replace/>}/>
       </Routes></main>
     </div>

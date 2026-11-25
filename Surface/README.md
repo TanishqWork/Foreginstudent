@@ -40,6 +40,12 @@ The assessment form from the handoff's `#assessment` view is implemented at `src
 
 The signed-in `/dashboard` opens Free assessment. Its sidebar includes Free assessment and Complete report, the signed-in identity, and sign-out. Complete report reopens the latest assessment in this browser tab at `/dashboard/complete-report?assessment=...`. A $29 complete-report purchase unlocks two successful detailed GPT-5 report generations for that assessment; failed AI attempts do not reduce the remaining count. The fixed `complete-report.v1` renderer displays all report sections and maps every returned item to reusable components, without fixed card quotas. The model supplies typed content; React owns section headings and layout. Free and complete generation times are shown, and Copy report produces readable text. See [the complete-report guide](../docs/complete-report-structure.md). Legacy `/workspace` URLs redirect to `/dashboard`.
 
+The Application Cycle Access button opens `/dashboard/payments`. It displays the
+backend's Stripe test charge, the student's expiry date and time, and a dashboard
+notice during the last seven days. An active pass includes unlimited complete
+reports across the account for 12 months from payment. Students renew manually
+from Payments and can reopen individual saved reports in History after expiry.
+
 Homepage section navigation remains available at `/#pathways` and `/#pricing`. The shorter homepage process overview and report extract remain available at `/#methodology` and `/#sample-report`. Homepage dialogs use `?panel=privacy|outcomes|checkout`, with an optional `plan` parameter for checkout. Browser back/forward and direct links work through React Router. Unrecognized paths show a 404 with a homepage link.
 
 This migration includes the homepage, methodology, pricing, account, assessment form, live diagnostic renderer, persisted complete report attempts, and fictional sample report pages. Email/password authentication and AI assessment are connected to Depth. Gallery documents and the diagnostic development fixture are clearly marked fictional examples. No legacy assessment engine, account code, or checkout scripts are loaded.

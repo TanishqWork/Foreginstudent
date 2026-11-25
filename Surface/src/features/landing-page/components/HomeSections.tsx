@@ -154,7 +154,7 @@ export function PricingSection() {
         {plans.map((plan) => {
           const recommended = plan.id === 'cycle'
           return (
-            <Link className={`${ui.focus} grid w-full grid-cols-[1fr_auto] items-center gap-[30px] border-b border-line px-2 py-[26px] text-left no-underline transition-all duration-200 hover:px-[18px] motion-reduce:transition-none ${recommended ? 'my-2.5 rounded-[22px] border-0 bg-navy bg-[radial-gradient(circle_at_92%_0%,rgba(87,88,232,.5),transparent_17rem)] px-5 py-[30px] text-white shadow-soft hover:bg-navy-soft' : 'hover:bg-parchment'}`} to={plan.id === 'free' ? '/assessment' : `/?panel=checkout&plan=${plan.id}`} key={plan.id}>
+            <Link className={`${ui.focus} grid w-full grid-cols-[1fr_auto] items-center gap-[30px] border-b border-line px-2 py-[26px] text-left no-underline transition-all duration-200 hover:px-[18px] motion-reduce:transition-none ${recommended ? 'my-2.5 rounded-[22px] border-0 bg-navy bg-[radial-gradient(circle_at_92%_0%,rgba(87,88,232,.5),transparent_17rem)] px-5 py-[30px] text-white shadow-soft hover:bg-navy-soft' : 'hover:bg-parchment'}`} to={plan.id === 'free' ? '/assessment' : plan.id === 'cycle' ? '/dashboard/payments' : `/?panel=checkout&plan=${plan.id}`} key={plan.id}>
               <span>
                 {recommended && <b className="mb-2 inline-block rounded-full bg-accent px-2 py-[5px] text-[.8rem] font-bold tracking-[.1em] text-white uppercase">Recommended</b>}
                 <strong className="block text-[1.05rem] font-bold">{plan.title}</strong>
@@ -166,7 +166,7 @@ export function PricingSection() {
           )
         })}
       </div>
-      <p className="col-start-3 mt-4 text-[.84rem] leading-[1.6] text-[#555967] max-[940px]:col-start-1">Planned one-time pricing. Assessments, paid reports, and checkout are not available in this homepage preview.</p>
+      <p className="col-start-3 mt-4 text-[.84rem] leading-[1.6] text-[#555967] max-[940px]:col-start-1">One-time pricing. The dashboard shows the Stripe test payment amount before checkout.</p>
     </section>
   )
 }

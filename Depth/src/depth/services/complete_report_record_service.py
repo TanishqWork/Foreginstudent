@@ -8,9 +8,11 @@ from uuid import UUID
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
+from depth.core.exceptions import AssessmentError, PaymentError
 from depth.database.base import utcnow
 from depth.repositories.complete_reports import CompleteReportRepository
 from depth.schemas.complete_report_content import CompleteReportContent
+from depth.schemas.payments import CycleAccessResponse
 from depth.services.assessment_record_service import SavedAssessment, saved_assessment
 
 logger = logging.getLogger(__name__)
@@ -35,6 +37,16 @@ class LoadedReport:
     remaining_successful_runs: int
     successful_runs: int
     max_successful_runs: int | None
+    cycle_expires_at: datetime | None = None
+
+    @property
+    def can_generate(self) -> bool:
+        return (
+            self.source.assessment.report.overall_score is not None
+            and self.source.assessment.report.status != "needs_input"
+            and (self.record is None or self.record.status != "generating")
+            and (self.cycle_expires_at is not None or self.remaining_successful_runs > 0)
+        )
 
 
 def _uuid(value: str) -> UUID | None:
@@ -49,12 +61,16 @@ class CompleteReportRecordService:
         self.db = db
         self.repository = repository
 
-    def load(self, assessment_id: str, owner_id: str, stale_after_seconds: float, *, include_input: bool = False) -> LoadedReport | None:
+    def load(
+        self, assessment_id: str, owner_id: str, stale_after_seconds: float,
+        *, include_input: bool = False, attempt_id: str | None = None,
+    ) -> LoadedReport | None:
         """The owner's ready free assessment and paid report access. Stale attempts are marked failed."""
         record_id, user_id = _uuid(assessment_id), _uuid(owner_id)
-        if record_id is None or user_id is None:
+        selected_attempt = _uuid(attempt_id) if attempt_id is not None else None
+        if record_id is None or user_id is None or (attempt_id is not None and selected_attempt is None):
             return None
-        found = self.repository.get_access(record_id, user_id, include_input=include_input)
+        found = self.repository.get_access(record_id, user_id, include_input=include_input, attempt_id=selected_attempt)
         source = None if found is None else saved_assessment(found.assessment, include_input=include_input)
         if source is None:  # Missing, another user's, or a free assessment that is not ready.
             return None
@@ -62,13 +78,14 @@ class CompleteReportRecordService:
         row = found.latest_attempt
         successful_runs = found.successful_runs
         max_runs = None if entitlement is None else entitlement.max_successful_runs
-        remaining = 0 if entitlement is None else max(max_runs - successful_runs, 0)
+        remaining = 0 if max_runs is None else max(max_runs - successful_runs, 0)
+        cycle_expires_at = found.cycle.expires_at if found.cycle else None
         if row is not None and row.status == "generating":
             if row.started_at < utcnow() - timedelta(seconds=stale_after_seconds):
                 if self.repository.mark_failed(row.id, row.started_at, INTERRUPTED_MESSAGE, None, "interrupted"):
                     self.db.commit()
                 self.db.refresh(row)
-        record = None if entitlement is None else ReportRecord(
+        record = None if row is None and entitlement is None and cycle_expires_at is None else ReportRecord(
             status="unlocked" if row is None else row.status,
             attempt_id=None if row is None else str(row.id),
             report=None if row is None or row.report is None else CompleteReportContent.model_validate(row.report),
@@ -77,7 +94,48 @@ class CompleteReportRecordService:
             generation_seconds=None if row is None or row.generation_seconds is None else float(row.generation_seconds),
             started_at=None if row is None else row.started_at,
         )
-        return LoadedReport(source, record, remaining, successful_runs, max_runs)
+        return LoadedReport(source, record, remaining, successful_runs, max_runs, cycle_expires_at)
+
+    def cycle_access(self, owner_id: UUID, *, checkout_amount_cents: int | None = None) -> CycleAccessResponse:
+        now = utcnow()
+        active = self.repository.get_cycle(owner_id, active_at=now)
+        latest = active or self.repository.get_cycle(owner_id)
+        if latest is None:
+            return CycleAccessResponse(status="none", checkout_amount_cents=checkout_amount_cents)
+        entitlement, purchase = latest
+        expires_at = entitlement.expires_at
+        return CycleAccessResponse(
+            status="active" if active else "refunded" if purchase.status == "refunded" else "expired",
+            paid_at=purchase.paid_at, expires_at=expires_at, checkout_amount_cents=checkout_amount_cents,
+            expires_soon=active is not None and expires_at is not None and expires_at - now <= timedelta(days=7),
+        )
+
+    def lock_purchaser(self, owner_id: UUID) -> None:
+        if not self.repository.lock_purchaser(owner_id):
+            raise PaymentError("invalid_webhook")
+
+    def record_cycle_payment(
+        self, purchase_id: UUID, owner_id: UUID, session_id: str, amount_cents: int, paid_at: datetime,
+        *, refunded: bool,
+    ) -> None:
+        # Adding a calendar year clamps February 29 to February 28.
+        day = 28 if paid_at.month == 2 and paid_at.day == 29 else paid_at.day
+        expires_at = paid_at.replace(year=paid_at.year + 1, day=day)
+        try:
+            self.repository.add_cycle_payment(purchase_id, owner_id, session_id, amount_cents, paid_at, expires_at, refunded=refunded)
+            self.db.commit()
+        except SQLAlchemyError:
+            self.db.rollback()
+            raise
+
+    def refund_cycle_payment(self, purchase_id: UUID, owner_id: UUID) -> None:
+        try:
+            self.lock_purchaser(owner_id)
+            self.repository.refund_cycle_payment(purchase_id, owner_id)
+            self.db.commit()
+        except SQLAlchemyError:
+            self.db.rollback()
+            raise
 
     def mark_paid(
         self, assessment_id: str, owner_id: str, *, provider: str = "mock",
@@ -98,12 +156,24 @@ class CompleteReportRecordService:
         record_id, user_id = _uuid(assessment_id), _uuid(owner_id)
         if record_id is None or user_id is None:
             return None
-        started_at = utcnow()
         try:
-            access = self.repository.get_access(record_id, user_id, include_input=False)
-            if access is None or access.entitlement is None:
+            access = self.repository.get_access(record_id, user_id, include_input=False, for_claim=True)
+            if access is None:
+                self.db.rollback()
                 return None
-            claimed = self.repository.claim_attempt(access.entitlement, access.successful_runs, model=model, started_at=started_at)
+            if access.latest_attempt is not None and access.latest_attempt.status == "generating":
+                self.db.rollback()
+                return None
+            started_at = utcnow()
+            cycle = access.cycle
+            entitlement = cycle if cycle and cycle.expires_at and cycle.expires_at > started_at else access.entitlement
+            if entitlement is None:
+                self.db.rollback()
+                raise AssessmentError("locked")
+            if entitlement.max_successful_runs is not None and access.successful_runs >= entitlement.max_successful_runs:
+                self.db.rollback()
+                raise AssessmentError("exhausted")
+            claimed = self.repository.claim_attempt(record_id, entitlement, access.successful_runs, model=model, started_at=started_at)
             self.db.commit()
         except IntegrityError:
             self.db.rollback()

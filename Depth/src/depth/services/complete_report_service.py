@@ -3,6 +3,7 @@
 import asyncio
 import json
 import logging
+from dataclasses import replace
 from collections.abc import Callable
 from contextlib import AbstractContextManager
 from datetime import datetime
@@ -39,9 +40,12 @@ def complete_report_prompt() -> str:
     return files("depth.prompts").joinpath("complete-report-structured.md").read_text(encoding="utf-8").strip()
 
 
-def _load(reports: CompleteReportRecordService, assessment_id: str, owner_id: str, include_input: bool = False) -> LoadedReport:
+def _load(
+    reports: CompleteReportRecordService, assessment_id: str, owner_id: str,
+    include_input: bool = False, *, attempt_id: str | None = None,
+) -> LoadedReport:
     """Status reads skip the statement; only starting a generation loads it for the model."""
-    loaded = reports.load(assessment_id, owner_id, COMPLETE_REPORT_STALE_SECONDS, include_input=include_input)
+    loaded = reports.load(assessment_id, owner_id, COMPLETE_REPORT_STALE_SECONDS, include_input=include_input, attempt_id=attempt_id)
     if loaded is None:  # Missing, another user's, or a free assessment that is not ready.
         raise AssessmentError("not_found")
     return loaded
@@ -72,22 +76,22 @@ def _loaded_state(loaded: LoadedReport) -> CompleteReportState:
     state.remaining_successful_runs = loaded.remaining_successful_runs
     state.successful_runs = loaded.successful_runs
     state.max_successful_runs = loaded.max_successful_runs
+    state.can_generate = loaded.can_generate
+    state.cycle_expires_at = loaded.cycle_expires_at
     return state
 
 
-def _retryable_ready(record: ReportRecord) -> bool:
-    return record.status == "ready" and record.report is not None and record.report.report_status == "incomplete"
-
-
-def complete_report_state(assessment_id: str, owner_id: str, reports: CompleteReportRecordService) -> CompleteReportState:
-    loaded = _load(reports, assessment_id, owner_id)
+def complete_report_state(
+    assessment_id: str, owner_id: str, reports: CompleteReportRecordService, attempt_id: str | None = None,
+) -> CompleteReportState:
+    loaded = _load(reports, assessment_id, owner_id, attempt_id=attempt_id)
     return _loaded_state(loaded)
 
 
 def mark_paid(assessment_id: str, owner_id: str, reports: CompleteReportRecordService) -> CompleteReportState:
     loaded = _load(reports, assessment_id, owner_id)
     _require_score(loaded.source)
-    if loaded.record is None:
+    if loaded.max_successful_runs is None and loaded.cycle_expires_at is None:
         reports.mark_paid(assessment_id, owner_id)
         loaded = _load(reports, assessment_id, owner_id)
     return _loaded_state(loaded)
@@ -101,24 +105,18 @@ async def start_complete_report(
     loaded = await asyncio.to_thread(_load, reports, assessment_id, owner_id, True)
     source, record = loaded.source, loaded.record
     _require_score(source)
-    if record is None:
-        raise AssessmentError("locked")
-    if record.status == "generating":
+    if record is not None and record.status == "generating":
         raise AssessmentError("generating")
-    if loaded.remaining_successful_runs <= 0 and not _retryable_ready(record):
-        raise AssessmentError("exhausted")
-    # One atomic UPDATE decides the winner, so double clicks or several API processes start one run.
+    if not loaded.can_generate:
+        raise AssessmentError("exhausted" if loaded.max_successful_runs is not None else "locked")
+    # The database claim rechecks access and enforces one running attempt per assessment.
     claimed = await asyncio.to_thread(reports.claim, assessment_id, owner_id, COMPLETE_REPORT_MODEL)
     if claimed is None:
         raise AssessmentError("generating")
     attempt_id, started_at = claimed
     spawn(_run_generation(assessment_id, attempt_id, started_at, source, report_factory), tasks)
-    return _loaded_state(LoadedReport(
-        source,
-        ReportRecord("generating", attempt_id, None, None, None, None, started_at),
-        loaded.remaining_successful_runs,
-        loaded.successful_runs,
-        loaded.max_successful_runs,
+    return _loaded_state(replace(
+        loaded, record=ReportRecord("generating", attempt_id, None, None, None, None, started_at),
     ))
 
 

@@ -26,6 +26,6 @@ export const applicantStories = [
 export const plans = [
   { id: 'free', title: 'Free assessment', description: 'Biggest issue, genuine strength, priority fixes, and rebuild or refine recommendation', action: 'Start free assessment', price: '$0' },
   { id: 'complete', title: 'Complete statement assessment', description: 'Complete report, sentence analysis, evidence map, paragraph review, and one revised-draft check', action: 'Unlock the report + revision check', price: '$29' },
-  { id: 'cycle', title: 'Application cycle access', description: 'Five assessments over 60 days, draft comparison, program fit checks, and report history', action: 'Choose cycle access', price: '$99' },
+  { id: 'cycle', title: 'Application cycle access', description: 'Unlimited complete reports for 12 months from payment, with program fit checks and saved report history', action: 'Choose cycle access', price: '$99' },
   { id: 'expert', title: 'Application cycle + human review', description: 'Everything in cycle access plus one detailed strategic and line-level human review', action: 'Add human review', price: '$249' },
 ] as const

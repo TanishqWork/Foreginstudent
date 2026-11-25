@@ -8,7 +8,7 @@ import type { CategoryFinding, DiagnosticResponse, SentenceFinding } from './typ
 import styles from './DiagnosticResult.module.css'
 import UnlockPrompt from './UnlockPrompt'
 
-type DiagnosticProps = { response: DiagnosticResponse; onStartAnother: () => void; generationSeconds?: number | null }
+type DiagnosticProps = { response: DiagnosticResponse; onStartAnother: () => void; generationSeconds?: number | null; cycleActive?: boolean }
 
 const pathwayLabels = { health: 'Health and public health', business: 'Business and management', stem: 'STEM and research', policy: 'Policy and social impact' }
 
@@ -55,7 +55,7 @@ function ScoreCard({ report }: { report: DiagnosticResponse['report'] }) {
   )
 }
 
-function FreeDiagnosticV1({ response, onStartAnother, generationSeconds }: DiagnosticProps) {
+function FreeDiagnosticV1({ response, onStartAnother, generationSeconds, cycleActive }: DiagnosticProps) {
   const { report, context, diagnostic } = response
   const headingRef = useRef<HTMLHeadingElement>(null)
   const unlockSectionRef = useRef<HTMLElement>(null)
@@ -116,9 +116,9 @@ function FreeDiagnosticV1({ response, onStartAnother, generationSeconds }: Diagn
 
       {(report.integrity_flags.length > 0 || verificationItems.length > 0 || report.uncertain_prompt_requirements.length > 0) && <details className={styles.limitations}><summary>Evidence checks and assessment limitations</summary>{report.integrity_flags.map((flag, index) => <div key={index}><h3>{flag.concern}</h3><p>{flag.action}</p></div>)}{verificationItems.length > 0 && <TextList items={verificationItems} fallback="" />}{report.uncertain_prompt_requirements.length > 0 && <TextList items={report.uncertain_prompt_requirements} fallback="" />}</details>}
 
-      {report.overall_score !== null && <section ref={unlockSectionRef} className={styles.lockedPreview} aria-labelledby="diagnostic-complete-preview"><div className={styles.previewVisual} aria-hidden="true"><strong>{report.overall_score}<small>/100</small></strong><div className={styles.previewLines}>{[...report.strongest_categories, ...report.weakest_categories].map((item) => <span key={item.dimension_id}><i style={{ width: `${item.score}%` }} /></span>)}</div><span className={styles.lockIcon}>◇</span></div><div className={styles.lockedCopy}><span className={styles.label}>Complete assessment</span><h2 id="diagnostic-complete-preview">See what each sentence contributes, and what to change first.</h2><ul><li>Sentence and paragraph diagnosis</li><li>Prompt and evidence maps</li><li>Ranked revision sequence</li></ul></div><div className={styles.lockedActions}><Link className={styles.primaryLink} to={`/dashboard/complete-report?assessment=${encodeURIComponent(report.assessment_id)}`}>Unlock complete report{completePlan ? ` · ${completePlan.price}` : ''}</Link><Link className={styles.secondaryLink} to="/sample-report">View sample report</Link><Link className={styles.reviewLink} to="/pricing">Explore human review</Link></div></section>}
+      {report.overall_score !== null && <section ref={unlockSectionRef} className={styles.lockedPreview} aria-labelledby="diagnostic-complete-preview"><div className={styles.previewVisual} aria-hidden="true"><strong>{report.overall_score}<small>/100</small></strong><div className={styles.previewLines}>{[...report.strongest_categories, ...report.weakest_categories].map((item) => <span key={item.dimension_id}><i style={{ width: `${item.score}%` }} /></span>)}</div><span className={styles.lockIcon}>◇</span></div><div className={styles.lockedCopy}><span className={styles.label}>Complete assessment</span><h2 id="diagnostic-complete-preview">See what each sentence contributes, and what to change first.</h2><ul><li>Sentence and paragraph diagnosis</li><li>Prompt and evidence maps</li><li>Ranked revision sequence</li></ul></div><div className={styles.lockedActions}><Link className={styles.primaryLink} to={`/dashboard/complete-report?assessment=${encodeURIComponent(report.assessment_id)}`}>{cycleActive ? 'Generate complete report' : `Unlock complete report${completePlan ? ` · ${completePlan.price}` : ''}`}</Link><Link className={styles.secondaryLink} to="/sample-report">View sample report</Link><Link className={styles.reviewLink} to="/pricing">Explore human review</Link></div></section>}
 
-      <UnlockPrompt key={report.assessment_id} response={response} unlockSectionRef={unlockSectionRef} />
+      {!cycleActive && <UnlockPrompt key={report.assessment_id} response={response} unlockSectionRef={unlockSectionRef} />}
 
       <footer className={styles.reportFooter}><p>{report.score_meaning}</p><span>Assessment {report.assessment_id}</span></footer>
     </section>
